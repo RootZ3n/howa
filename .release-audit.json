@@ -1,0 +1,14 @@
+{
+  "suppressions": [
+    {
+      "ruleId": "secret-aws-key",
+      "path": "tests/velum.test.ts",
+      "reason": "Test fixture: dummy AWS access key ID used to verify findSecrets() detects aws_access_key_id patterns. Not a real credential."
+    },
+    {
+      "ruleId": "secret-github-token",
+      "path": "tests/velum.test.ts",
+      "reason": "Test fixture: dummy GitHub token used to verify findSecrets() detects github_token patterns. Not a real credential."
+    }
+  ]
+}

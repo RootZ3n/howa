@@ -1,0 +1,292 @@
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { api, type Receipt, type TrialSummary } from "../api.js";
+import { VerdictPill } from "../components/VerdictPill.js";
+import { ScoreBar } from "../components/ScoreBar.js";
+import { ArenaRails, SectionDivider } from "../components/ArenaRails.js";
+import { HonestyChips } from "../components/HonestyChips.js";
+import { buildAgentFixReport, copyText, downloadText } from "../report.js";
+import {
+  buildReceiptsJsonExport,
+  failureTypeLabel,
+  formatCostStatus,
+  formatModelStatus,
+  trialVerdictCopy,
+} from "../trust-display.js";
+
+export function TrialResults() {
+  const { id } = useParams();
+  const [trial, setTrial] = useState<TrialSummary | null>(null);
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+
+  useEffect(() => {
+    if (!id) return;
+    Promise.all([api.trial(id), api.receipts(id)])
+      .then(([t, rs]) => {
+        setTrial(t);
+        setReceipts(rs);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) return <div className="page">Loading…</div>;
+  if (!trial) return <div className="page">No such trial.</div>;
+
+  const head = trialVerdictCopy(trial);
+  const agentReport = buildAgentFixReport(trial, receipts);
+  const actionCount = receipts.filter((r) =>
+    ["fail", "warn", "error"].includes(String(r.verdict)),
+  ).length;
+
+  async function copyReport() {
+    try {
+      await copyText(agentReport);
+      setCopyState("copied");
+      window.setTimeout(() => setCopyState("idle"), 1800);
+    } catch {
+      setCopyState("failed");
+    }
+  }
+
+  return (
+    <div className="page">
+      <ArenaRails />
+
+      <div className="row between" style={{ marginBottom: 14 }}>
+        <div>
+          <div
+            className="muted"
+            style={{
+              fontFamily: "var(--serif)",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              fontSize: 11,
+            }}
+          >
+            Trial Results
+          </div>
+          <div className="muted mono">{trial.trialId}</div>
+        </div>
+        <Link to="/new" className="btn ghost">▶ New Trial</Link>
+      </div>
+
+      {/* Verdict marquee — the dominant judgment surface */}
+      <section className={`verdict-marquee ${trial.verdict}`}>
+        <div>
+          <div
+            className="muted"
+            style={{
+              fontFamily: "var(--serif)",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              fontSize: 12,
+              marginBottom: 6,
+            }}
+          >
+            Judge’s Verdict
+          </div>
+          <div className="headline">
+            {head.headline} · {trial.verdict.toUpperCase()}
+          </div>
+          <div className="sub">{head.sub}</div>
+          <HonestyChips trial={trial} />
+          <div style={{ marginTop: 14 }}>
+            <ul style={{ margin: 0, paddingLeft: 18, color: "var(--marble-1)" }}>
+              {trial.score.reasons.slice(0, 3).map((r, i) => (
+                <li key={i} style={{ fontSize: 13.5 }}>{r}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="stat-rail">
+          <div className="stat">
+            <div className="label">Trust</div>
+            <div className="value">{Math.round(trial.score.trust * 100)}%</div>
+            <div style={{ width: 110, marginTop: 6 }}>
+              <ScoreBar value={trial.score.trust} />
+            </div>
+          </div>
+          <div className="stat">
+            <div className="label">Pass</div>
+            <div className="value">
+              {trial.passCount}/{trial.testCount}
+            </div>
+          </div>
+          <div className="stat">
+            <div className="label">Velum</div>
+            <div className="value" style={{ fontSize: 18 }}>
+              {trial.velumDecision}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <SectionDivider label="Agent Fix Report" />
+
+      <div className="stone report-panel">
+        <div className="report-head">
+          <div>
+            <h2 style={{ margin: 0 }}>Copy-paste report</h2>
+            <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+              {actionCount} failing or warning receipt{actionCount === 1 ? "" : "s"} packaged for another agent.
+            </div>
+          </div>
+          <div className="report-actions">
+            <button type="button" className="btn ghost" onClick={copyReport}>
+              {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy report"}
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() => downloadText(`${trial.trialId}-fix-report.md`, agentReport)}
+            >
+              Download .md
+            </button>
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={() =>
+                downloadText(
+                  `${trial.trialId}-receipts.json`,
+                  buildReceiptsJsonExport(trial, receipts),
+                )
+              }
+            >
+              Download receipts JSON
+            </button>
+          </div>
+        </div>
+        <details>
+          <summary>Preview report</summary>
+          <pre className="receipt report-preview">{agentReport}</pre>
+        </details>
+      </div>
+
+      <SectionDivider label="Test-by-test verdicts" />
+
+      <div className="cols">
+        <div className="vault" style={{ gridColumn: "span 2" }}>
+          <div className="vault-header">
+            <h3>Evidence Vault</h3>
+            <span className="count">
+              {receipts.length} receipt{receipts.length === 1 ? "" : "s"}
+            </span>
+          </div>
+          <div className="vault-list">
+            {receipts.map((r) => (
+              <div key={r.testId} className={`vault-row ${r.verdict}`}>
+                <div className="verdict-cell">
+                  <VerdictPill verdict={r.verdict} />
+                  {r.failureType ? (
+                    <span className="fail-type">{failureTypeLabel(r.failureType)}</span>
+                  ) : null}
+                  {r.evaluationCategory ? (
+                    <span className="fail-type">{r.evaluationCategory}</span>
+                  ) : null}
+                </div>
+                <div className="test-cell">
+                  <div className="testid">{r.testId}</div>
+                  <div className="desc">{r.expectedBehavior}</div>
+                  {r.reasons[0] ? (
+                    <div
+                      className="muted"
+                      style={{ fontSize: 12, marginTop: 4 }}
+                    >
+                      {r.reasons[0]}
+                    </div>
+                  ) : null}
+                </div>
+                <div className="meta">
+                  {(() => {
+                    const model = formatModelStatus(r.modelInfo);
+                    const cost = formatCostStatus(r.costInfo);
+                    return (
+                      <>
+                        <div>{model.primary}</div>
+                        <div className="muted">{model.detail}</div>
+                        <div>{cost.primary}</div>
+                        <div className="muted">{cost.detail}</div>
+                      </>
+                    );
+                  })()}
+                  <div style={{ marginTop: 4 }}>
+                    <Link
+                      to={`/receipt/${trial.trialId}/${encodeURIComponent(r.testId)}`}
+                    >
+                      open receipt →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="stone">
+          <h2 style={{ marginTop: 0 }}>Score breakdown</h2>
+          {trial.score.perCategory
+            .filter((c) => c.n > 0)
+            .map((c) => (
+              <div key={c.category} style={{ marginBottom: 14 }}>
+                <div className="row between">
+                  <strong style={{ textTransform: "capitalize" }}>{c.category}</strong>
+                  <span>{Math.round(c.value * 100)}%</span>
+                </div>
+                <ScoreBar value={c.value} />
+                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                  {c.reasons[0]}
+                </div>
+              </div>
+            ))}
+          <div className="divider" />
+          <div className="row between">
+            <strong>Cost efficiency</strong>
+            <span>{Math.round(trial.score.costEfficiency.value * 100)}%</span>
+          </div>
+          <ScoreBar value={trial.score.costEfficiency.value} />
+          <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+            {trial.score.costEfficiency.reasons[0]}
+          </div>
+        </div>
+      </div>
+
+      {/* Arena Timeline section — flatten all receipts' events newest-last */}
+      <SectionDivider label="Arena Timeline" />
+
+      <div className="stone">
+        <div
+          className="muted"
+          style={{ fontSize: 12, marginBottom: 8 }}
+        >
+          Aggregated agent events from every test in this trial. Each receipt
+          carries its own narrow timeline; this is the wide-angle view.
+          Timeline mode: {trial.liveMode ?? receipts[0]?.streamMode ?? "buffered"}.
+        </div>
+        <div className="timeline">
+          {receipts
+            .flatMap((r) =>
+              (r.events ?? []).map((e) => ({
+                ts: e.ts,
+                kind: e.kind,
+                text: `${r.testId}: ${e.text ?? ""}`.slice(0, 240),
+              })),
+            )
+            .sort((a, b) => a.ts - b.ts)
+            .slice(-200)
+            .map((e, i) => (
+              <div key={i} className={`row kind-${e.kind}`}>
+                <div className="ts">
+                  {new Date(e.ts).toLocaleTimeString()}
+                </div>
+                <div className="body">
+                  <strong>{e.kind}</strong> {e.text}
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+    </div>
+  );
+}
