@@ -8,6 +8,7 @@ import type {
   SessionHandle,
 } from "../types.js";
 import type { AgentAdapter } from "./types.js";
+import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
 
 type SquidleyVariant = "public" | "v2";
 
@@ -93,8 +94,25 @@ function createSquidleyHttpAdapter(config: {
 
     async health() {
       const endpoint = normalizeEndpoint(process.env[config.envVar] ?? config.defaultEndpoint);
-      const healthPath = config.variant === "v2" ? "/health" : "/api/local/health";
-      const url = `${endpoint}${healthPath}`;
+      // The v2 variant now ships the canonical Lab Agent Contract surface
+      // at /health (docs/architecture/lab-agent-contract.md §1.1). The
+      // legacy "public" variant still uses /api/local/health, so the
+      // probeAgentContract helper is reserved for v2; public falls back
+      // to the historical path.
+      if (config.variant === "v2") {
+        const probe = await probeAgentContract({ baseUrl: endpoint });
+        if (!probe.ok) {
+          return {
+            ok: false,
+            reason:
+              `${config.name} contract probe failed: ${probe.reason ?? "unknown"}. ` +
+              `Start the local service or set ${config.envVar}.`,
+          };
+        }
+        const ms = probe.healthMs ?? -1;
+        return { ok: true, reason: `${config.name} /health=${ms}ms at ${endpoint} (service=${probe.health?.service})` };
+      }
+      const url = `${endpoint}/api/local/health`;
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
         if (!res.ok) {
@@ -115,6 +133,14 @@ function createSquidleyHttpAdapter(config: {
             `${config.envVar}. Error: ${(err as Error).message}`,
         };
       }
+    },
+
+    async probeContract(): Promise<ContractProbeResult> {
+      const endpoint = normalizeEndpoint(process.env[config.envVar] ?? config.defaultEndpoint);
+      // Both variants expose /health, /agent, /capabilities now, but the
+      // public variant remains historically inconsistent — callers should
+      // treat probeContract on the public variant as best-effort.
+      return probeAgentContract({ baseUrl: endpoint });
     },
 
     async startSession(opts: RunOptions): Promise<SessionHandle> {

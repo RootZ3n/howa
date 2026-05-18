@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { createGenericCliAdapter } from "./generic-cli.js";
 import { parseShellWords } from "./aedis.js";
 import type { AgentAdapter } from "./types.js";
+import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
 import type {
   AgentEvent,
   AgentRunResult,
@@ -87,21 +88,22 @@ export function createPtahAdapter(): AgentAdapter {
 
     async health() {
       const baseUrl = getPtahBaseUrl();
-      try {
-        const data = (await ptahFetch(baseUrl, "/api/health")) as { status?: string };
-        if (data?.status === "ok") {
-          return { ok: true, reason: `Ptah server healthy at ${baseUrl}` };
-        }
+      // Ptah now exposes the canonical Lab Agent Contract /health
+      // alongside the legacy /api/health rich snapshot. Probe the
+      // canonical surface first so we stay aligned with peers.
+      const probe = await probeAgentContract({ baseUrl });
+      if (!probe.ok) {
         return {
           ok: false,
-          reason: `Ptah server at ${baseUrl} returned unexpected status: ${JSON.stringify(data).slice(0, 200)}`,
-        };
-      } catch (err) {
-        return {
-          ok: false,
-          reason: `Cannot reach Ptah server at ${baseUrl}: ${(err as Error).message}. Is ptah running?`,
+          reason: `Ptah contract probe failed: ${probe.reason ?? "unknown"}. Is ptah running?`,
         };
       }
+      const ms = probe.healthMs ?? -1;
+      return { ok: true, reason: `Ptah /health=${ms}ms at ${baseUrl} (service=${probe.health?.service})` };
+    },
+
+    async probeContract(): Promise<ContractProbeResult> {
+      return probeAgentContract({ baseUrl: getPtahBaseUrl() });
     },
 
     async startSession(opts: RunOptions): Promise<SessionHandle> {

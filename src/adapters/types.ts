@@ -82,6 +82,17 @@ export interface AgentAdapter {
   /** Confirm the adapter is ready to use (binary on PATH, env vars, etc.). */
   health(): Promise<{ ok: boolean; reason?: string }>;
 
+  /**
+   * Probe the canonical Lab Agent Contract introspection surface
+   * (/health, /agent, /capabilities). HTTP-speaking adapters implement
+   * this; CLI-only adapters may omit it.
+   *
+   * Returns the contract-shape responses with the /health timing.
+   * Callers (registry, OpenClaw, UI) inspect `result.ok` and degrade
+   * gracefully when /agent or /capabilities is missing.
+   */
+  probeContract?(): Promise<import("./contract-probe.js").ContractProbeResult>;
+
   /** Open a session attached to a workspace. Idempotent w.r.t. session reuse forbidden. */
   startSession(opts: RunOptions): Promise<SessionHandle>;
 

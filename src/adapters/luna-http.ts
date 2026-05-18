@@ -8,6 +8,7 @@ import type {
   SessionHandle,
 } from "../types.js";
 import type { AgentAdapter } from "./types.js";
+import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
 
 interface LunaSession {
   endpoint: string;
@@ -67,27 +68,21 @@ export function createLunaAdapter(): AgentAdapter {
 
     async health() {
       const endpoint = endpointFromEnv();
-      const url = `${endpoint}/health`;
-      try {
-        const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
-        const text = await res.text().catch(() => "");
-        if (!res.ok) {
-          return {
-            ok: false,
-            reason:
-              `Luna adapter reached ${url}, but it returned HTTP ${res.status}. ` +
-              `${text.slice(0, 240) || "Start/configure the local Luna API before testing."}`,
-          };
-        }
-        return { ok: true, reason: `Luna API reachable at ${url}` };
-      } catch (err) {
+      const probe = await probeAgentContract({ baseUrl: endpoint });
+      if (!probe.ok) {
         return {
           ok: false,
           reason:
-            `Luna adapter could not reach ${url}. Start Luna API or set LUNA_URL. ` +
-            `Error: ${(err as Error).message}`,
+            `Luna contract probe failed: ${probe.reason ?? "unknown"}. ` +
+            `Start Luna API or set LUNA_URL.`,
         };
       }
+      const ms = probe.healthMs ?? -1;
+      return { ok: true, reason: `Luna /health=${ms}ms at ${endpoint} (service=${probe.health?.service})` };
+    },
+
+    async probeContract(): Promise<ContractProbeResult> {
+      return probeAgentContract({ baseUrl: endpointFromEnv() });
     },
 
     async startSession(opts: RunOptions): Promise<SessionHandle> {
