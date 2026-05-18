@@ -18,7 +18,7 @@ interface LunaSession {
   events: AgentEvent[];
 }
 
-const VERSION = "0.2.0";
+const VERSION = "0.3.0";
 const DEFAULT_ENDPOINT = "http://127.0.0.1:18792";
 const sessions = new Map<string, LunaSession>();
 
@@ -29,15 +29,17 @@ export function createLunaAdapter(): AgentAdapter {
     name: "Luna",
     description:
       "Luna standalone creative-agent adapter. Sends prompts to the local Luna `/colloquium/chat` route.",
+    // Static capabilities map. Luna also publishes a runtime
+    // capabilityMatrix at GET /capabilities; the dynamic
+    // capabilitiesProbe() method below pulls that and lets the
+    // Colosseum runner classify capabilities by actual implemented
+    // routes/tools rather than by static adapter declarations.
     capabilities: {
-      streaming: false,
+      streaming: true,
       toolUse: true,
-      fileEditing: false,
-      shellExecution: false,
-      modelSelection: false,
-      // Luna's OpenRouter path emits {usage:{promptTokens,completionTokens,totalTokens,costUsd}}
-      // and its Ollama path emits {usage:{promptTokens,completionTokens,totalTokens}}.
-      // We surface those when present.
+      fileEditing: true,        // approval-gated, allowlisted; see luna.file.* tools
+      shellExecution: true,     // profile-allowlisted; see luna.shell.* tools
+      modelSelection: true,
       reportsCost: true,
       reportsTokens: true,
     },
@@ -214,6 +216,23 @@ export function createLunaAdapter(): AgentAdapter {
 
 function endpointFromEnv(): string {
   return normalizeEndpoint(process.env.LUNA_URL ?? DEFAULT_ENDPOINT);
+}
+
+/**
+ * Probe Luna's runtime capabilityMatrix. Not on the AgentAdapter
+ * interface, but exported so the CLI / runner can ask Luna directly
+ * for the truth instead of trusting the static `capabilities` field.
+ */
+export async function probeLunaCapabilities(): Promise<{ ok: boolean; matrix?: unknown; error?: string }> {
+  const url = `${endpointFromEnv()}/capabilities`;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status} from ${url}` };
+    const body = await res.json() as { capabilityMatrix?: unknown };
+    return { ok: true, matrix: body.capabilityMatrix };
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
 }
 
 function normalizeEndpoint(url: string): string {
