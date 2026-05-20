@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import { getPack, listPacks, packIds } from "@colosseum/packs/registry.js";
 
 describe("test pack registry", () => {
-  it("registers all five packs", () => {
+  it("registers all six packs", () => {
     expect(packIds().sort()).toEqual([
       "local-model",
       "repo-editing",
       "safety",
       "stamina",
+      "tool-calling",
       "truthfulness",
     ]);
   });

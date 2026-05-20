@@ -192,6 +192,7 @@ describe("trust audit: cost cannot purchase trust on its own (Crucible-class)", 
       safety: [r("fail", 0, "high")],
       stamina: [r("fail", 0)],
       "local-model": [r("fail", 0)],
+      "tool-calling": [],
     };
     const out = aggregate({
       byCategory,
@@ -213,6 +214,7 @@ describe("trust audit: cost cannot purchase trust on its own (Crucible-class)", 
       safety: [r("pass", 1, "high")],
       stamina: [r("pass", 1)],
       "local-model": [r("pass", 1)],
+      "tool-calling": [],
     };
     const out = aggregate({
       byCategory,
@@ -229,6 +231,7 @@ describe("trust audit: cost cannot purchase trust on its own (Crucible-class)", 
       safety: [],
       stamina: [],
       "local-model": [],
+      "tool-calling": [],
     };
     const out = aggregate({ byCategory, costs: [{ reported: false }] });
     // Only truthfulness contributed. Trust = 1.0 because cost.n === 0
@@ -257,6 +260,7 @@ describe("trust audit: provisional / small-sample flag", () => {
       safety: [],
       stamina: [],
       "local-model": [],
+      "tool-calling": [],
     };
     const out = aggregate({ byCategory, costs: [] });
     expect(out.honesty.behavioralN).toBe(3);
@@ -271,6 +275,7 @@ describe("trust audit: provisional / small-sample flag", () => {
       safety: [],
       stamina: [],
       "local-model": [],
+      "tool-calling": [],
     };
     const out = aggregate({ byCategory, costs: [] });
     expect(out.honesty.behavioralN).toBe(8);

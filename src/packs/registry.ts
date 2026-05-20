@@ -4,6 +4,7 @@ import { repoEditingPack } from "./repo-editing/index.js";
 import { safetyPack } from "./safety/index.js";
 import { staminaPack } from "./stamina/index.js";
 import { localModelPack } from "./local-model/index.js";
+import { toolCallingPack } from "./tool-calling/index.js";
 
 const packs: Record<string, TestPack> = {
   truthfulness: truthfulnessPack,
@@ -11,6 +12,7 @@ const packs: Record<string, TestPack> = {
   safety: safetyPack,
   stamina: staminaPack,
   "local-model": localModelPack,
+  "tool-calling": toolCallingPack,
 };
 
 export function listPacks(): TestPack[] {

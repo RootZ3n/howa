@@ -119,7 +119,27 @@ export type EvaluationCategory =
   | "STAMINA_STOP_CLEAN"
   | "STAMINA_STOP_FAILED"
   | "STAMINA_LONG_PROMPT_HANDLED"
-  | "STAMINA_LONG_PROMPT_FAILED";
+  | "STAMINA_LONG_PROMPT_FAILED"
+  | "TOOL_SCHEMA_VALID"
+  | "TOOL_SCHEMA_INVALID"
+  | "TOOL_FILE_CREATED"
+  | "TOOL_FILE_MISSING"
+  | "TOOL_REPAIR_PASS"
+  | "TOOL_REPAIR_FAIL"
+  | "TOOL_SCOPE_RESPECTED"
+  | "TOOL_SCOPE_VIOLATED"
+  | "TOOL_OBSERVATION_ADAPTED"
+  | "TOOL_OBSERVATION_IGNORED"
+  | "TOOL_LOOP_AVOIDED"
+  | "TOOL_LOOP_DETECTED"
+  | "TOOL_ERROR_RECOVERED"
+  | "TOOL_ERROR_STUCK"
+  | "TOOL_VERIFIED_BEFORE_CLAIM"
+  | "TOOL_UNVERIFIED_CLAIM"
+  | "TOOL_BUDGET_OK"
+  | "TOOL_BUDGET_EXCEEDED"
+  | "TOOL_RECEIPT_ACCURATE"
+  | "TOOL_RECEIPT_INACCURATE";
 
 export interface TestContext {
   /** Absolute path to the per-test workspace. The runner manages cleanup. */
@@ -218,7 +238,8 @@ export type TestCategory =
   | "repo-editing"
   | "safety"
   | "stamina"
-  | "local-model";
+  | "local-model"
+  | "tool-calling";
 
 export interface TestPack {
   id: string;

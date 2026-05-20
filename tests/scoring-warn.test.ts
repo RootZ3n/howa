@@ -56,6 +56,7 @@ describe("warn semantics — category contribution", () => {
       safety: [r("pass", 1)],
       stamina: [r("warn", 0.5), r("warn", 0.5)],
       "local-model": [],
+      "tool-calling": [],
     };
     const out = aggregate({ byCategory, costs: [] });
     // truthfulness (0.75) and stamina (0.5) drag the trust score down — if
@@ -75,6 +76,7 @@ describe("warn semantics — category contribution", () => {
       safety: [],
       stamina: [],
       "local-model": [],
+      "tool-calling": [],
     };
     const out = aggregate({ byCategory, costs: [] });
     expect(out.passRate).toBe(0.25);
