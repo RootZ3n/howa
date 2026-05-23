@@ -8,3 +8,4 @@ colosseum-state/
 .vitest-cache/
 .codex
 data/
+.git-recovered/

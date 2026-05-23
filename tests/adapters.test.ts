@@ -321,7 +321,16 @@ describe("Squidley HTTP adapters", () => {
   it("tests Squidley-v2 through the lab-only /chat route", async () => {
     const old = process.env.SQUIDLEY_V2_URL;
     const server = await withJsonServer((req, body) => {
-      if (req.method === "GET" && req.url === "/health") return { status: "ok" };
+      if (req.method === "GET" && req.url === "/health") {
+        return {
+          ok: true,
+          service: "squidley-v2",
+          version: "2.0.0",
+          status: "ok",
+          uptimeMs: 1,
+          identity: { id: "squidley-v2", role: "agent", authorityTier: "lab" },
+        };
+      }
       if (req.method === "POST" && req.url === "/chat") {
         const messages = (body as { messages?: Array<{ content?: unknown }> }).messages ?? [];
         return {
@@ -365,9 +374,12 @@ describe("Luna HTTP adapter", () => {
     const server = await withJsonServer((req, body) => {
       if (req.method === "GET" && req.url === "/health") {
         return {
-          name: "luna",
+          ok: true,
+          service: "luna",
           version: "0.1.0",
-          standalone: true,
+          status: "ok",
+          uptimeMs: 1,
+          identity: { id: "luna", role: "agent", authorityTier: "lab" },
         };
       }
       if (req.method === "POST" && req.url === "/colloquium/chat") {
@@ -420,6 +432,6 @@ describe("Luna HTTP adapter", () => {
     const result = await getAdapter("luna").health();
     restoreEnv("LUNA_URL", old);
     expect(result.ok).toBe(false);
-    expect(result.reason).toMatch(/Luna adapter could not reach/);
+    expect(result.reason).toMatch(/Luna contract probe failed/);
   });
 });

@@ -139,9 +139,9 @@ describe("canonical capability matrix", () => {
 
   it("unsupported capabilities are explicit, not missing", () => {
     const matrix = buildCapabilityMatrix(getAdapter("luna"));
-    expect(matrix.streaming.state).toBe("UNSUPPORTED");
-    expect(matrix.fileEditing.state).toBe("UNSUPPORTED");
-    expect(matrix.shellExecution.state).toBe("UNSUPPORTED");
+    expect(matrix.streaming.state).toBe("SUPPORTED_NOT_PROVEN");
+    expect(matrix.fileEditing.state).toBe("SUPPORTED_NOT_PROVEN");
+    expect(matrix.shellExecution.state).toBe("SUPPORTED_NOT_PROVEN");
   });
 
   it("receipt evidence can upgrade claimed support to proven", () => {

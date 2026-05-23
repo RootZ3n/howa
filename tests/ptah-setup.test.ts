@@ -51,7 +51,7 @@ describe("Ptah adapter — health()", () => {
     process.env.PTAH_URL = "http://127.0.0.1:19999";
     const r = await getAdapter("ptah").health();
     expect(r.ok).toBe(false);
-    expect(r.reason).toMatch(/Cannot reach Ptah/i);
+    expect(r.reason).toMatch(/Ptah contract probe failed/i);
     process.env.PTAH_URL = old;
   });
 
