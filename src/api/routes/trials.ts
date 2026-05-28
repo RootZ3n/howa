@@ -3,7 +3,7 @@ import { getAdapter } from "../../adapters/registry.js";
 import { getPack } from "../../packs/registry.js";
 import { runTrial } from "../../runner/trial-runner.js";
 import { TrialStore, TRIAL_SCHEMA_VERSION } from "../../storage/index.js";
-import { COLOSSEUM_VERSION, getGitCommit } from "../../version.js";
+import { HOWA_VERSION, getGitCommit } from "../../version.js";
 import type { TrialEvent } from "../../types.js";
 
 interface LiveTrial {
@@ -136,7 +136,7 @@ export function trialsRouter(stateRoot: string): Router {
         passCount: 0,
         failCount: 0,
         velumDecision: "warn",
-        colosseumVersion: COLOSSEUM_VERSION,
+        colosseumVersion: HOWA_VERSION,
         gitCommit: getGitCommit(),
         adapterVersion: "unknown",
         packVersions: Object.fromEntries(body.packs.map((p) => [p, "unknown"])),

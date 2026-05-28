@@ -57,7 +57,10 @@ function isPublicAdapter(id: string): boolean {
 
 function isLabAdapterEnabled(id: string): boolean {
   if (!LAB_ADAPTERS.has(id)) return false;
-  const enabled = process.env.COLOSSEUM_LAB_ADAPTERS ?? "";
+  // HOWA_LAB_ADAPTERS is the canonical env var; COLOSSEUM_LAB_ADAPTERS
+  // is honored for backward compatibility with pre-rename deployments.
+  const enabled =
+    process.env.HOWA_LAB_ADAPTERS ?? process.env.COLOSSEUM_LAB_ADAPTERS ?? "";
   return enabled
     .split(",")
     .map((x) => x.trim().toLowerCase())

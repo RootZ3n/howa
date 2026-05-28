@@ -1,7 +1,7 @@
 {
   "name": "colosseum",
   "version": "0.1.0",
-  "description": "Colosseum — Agent Proving Ground. Stop guessing if your agent works. Put it in the arena.",
+  "description": "Howa — Agent Proving Ground. Stop guessing if your agent works. Put it in the arena. (npm package name `colosseum` is preserved for v0.1 install compatibility.)",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -22,7 +22,8 @@
     "SECURITY.md"
   ],
   "bin": {
-    "colosseum": "./dist/cli/index.js"
+    "colosseum": "./dist/cli/index.js",
+    "howa": "./dist/cli/index.js"
   },
   "scripts": {
     "dev": "concurrently -k -n api,ui -c yellow,cyan \"npm:dev:api\" \"npm:dev:ui\"",

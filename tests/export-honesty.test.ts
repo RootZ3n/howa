@@ -133,7 +133,7 @@ describe("export honesty: stale receipts (Receipt not present)", () => {
     delete (t as Partial<TrialSummary>).honesty;
     delete (t.score as { honesty?: unknown }).honesty;
     const md = buildAgentFixReport(t, []);
-    expect(md).toMatch(/^# Colosseum Trial Fix Report/);
+    expect(md).toMatch(/^# Howa Trial Fix Report/);
   });
 });
 

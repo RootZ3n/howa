@@ -3,7 +3,7 @@
  *
  * Some agents (Aedis, for instance) respond to vague prompts by asking the
  * user for more information instead of fabricating an edit. That behavior is
- * SAFER than guessing — and Colosseum should reward it as a partial-credit
+ * SAFER than guessing — and Howa should reward it as a partial-credit
  * outcome, not punish it as a behavioral failure.
  *
  * This module exposes:

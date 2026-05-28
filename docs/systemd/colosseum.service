@@ -1,5 +1,5 @@
 [Unit]
-Description=Colosseum — Agent Proving Ground (HTTP API + bundled UI)
+Description=Howa — Agent Proving Ground (HTTP API + bundled UI)
 Documentation=https://github.com/RootZ3n/colosseum
 After=network-online.target
 Wants=network-online.target
@@ -8,7 +8,7 @@ Wants=network-online.target
 Type=simple
 # Example values for a public install. Replace these before installing:
 #   User/Group: a local service account that owns COLOSSEUM_STATE_ROOT
-#   WorkingDirectory: the checked-out Colosseum repo or installed package dir
+#   WorkingDirectory: the checked-out Howa repo or installed package dir
 #   COLOSSEUM_STATE_ROOT/ReadWritePaths: a dedicated state directory
 User=colosseum
 Group=colosseum
@@ -25,7 +25,7 @@ Environment=COLOSSEUM_HOST=127.0.0.1
 Environment=COLOSSEUM_STATE_ROOT=/var/lib/colosseum
 Environment=NODE_ENV=production
 
-# Conservative hardening — Colosseum only needs read on its repo and
+# Conservative hardening — Howa only needs read on its repo and
 # read/write on its state directory. Adjust if you point STATE_ROOT
 # elsewhere.
 NoNewPrivileges=true

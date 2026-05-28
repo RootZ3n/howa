@@ -1,4 +1,4 @@
-# Running Colosseum
+# Running Howa
 
 This doc covers three modes: **dev** (hot-reload), **local production**
 (single-process serves API + UI), and **advanced Linux systemd** (long-running
@@ -12,7 +12,7 @@ service).
 | Vite dev server   | `5180`  | `COLOSSEUM_UI_PORT`      |
 | Bind host         | `127.0.0.1` | `COLOSSEUM_HOST`     |
 
-The API server binds **127.0.0.1 by default** — Colosseum is a local tool. Set
+The API server binds **127.0.0.1 by default** — Howa is a local tool. Set
 `COLOSSEUM_HOST=0.0.0.0` if you want it reachable from the LAN, and put a real
 reverse proxy in front of it for anything beyond that.
 

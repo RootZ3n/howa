@@ -54,7 +54,7 @@ describe("agent fix report", () => {
     } satisfies Receipt;
 
     const report = buildAgentFixReport(trial, [receipt]);
-    expect(report).toContain("# Colosseum Trial Fix Report");
+    expect(report).toContain("# Howa Trial Fix Report");
     expect(report).toContain("stamina.stop-behavior");
     expect(report).toContain("incomplete_execution");
     expect(report).toContain("FailoverError: No API key found");

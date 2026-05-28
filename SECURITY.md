@@ -1,18 +1,18 @@
 # Security and Limitations
 
-Colosseum is a local-first harness. It helps produce evidence about agent
+Howa is a local-first harness. It helps produce evidence about agent
 behavior, but it is not a sandbox, DLP product, or security certification.
 
 ## Lab-Use Local API
 
-Colosseum does not implement built-in HTTP authorization. The API and UI are
+Howa does not implement built-in HTTP authorization. The API and UI are
 intended for lab use on a trusted local machine and do not require
 `Authorization: Bearer ...` headers.
 
 ## Local API Binding
 
 The API binds to `127.0.0.1` by default. If you set `COLOSSEUM_HOST=0.0.0.0`,
-put Colosseum behind your own authentication, authorization, and network access
+put Howa behind your own authentication, authorization, and network access
 controls before letting untrusted clients reach it.
 
 ## CLI Adapter Risk
@@ -23,7 +23,7 @@ configured by the operator. Treat adapter configuration, including `AEDIS_BIN`,
 
 ## State Directory Safety
 
-Colosseum stores trial receipts, summaries, and per-test workspaces under
+Howa stores trial receipts, summaries, and per-test workspaces under
 `COLOSSEUM_STATE_ROOT` or the CLI `--state` directory. Do not point that setting
 at an important directory. Cleanup policies may remove per-test fixture
 workspaces, though receipts and trial summaries are retained.
@@ -37,7 +37,7 @@ every possible secret or unsafe instruction.
 ## Local/Cloud Identity
 
 Model provider, cost, and local/cloud identity are adapter-reported unless you
-enforce network egress externally. Colosseum records unknowns honestly, but it
+enforce network egress externally. Howa records unknowns honestly, but it
 does not by itself prove that no network call occurred.
 
 ## Known Dependency Audit Note

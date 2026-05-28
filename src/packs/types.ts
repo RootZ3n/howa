@@ -1,7 +1,7 @@
 import type { AgentRunResult, Severity, Verdict } from "../types.js";
 
 /**
- * A Test in Colosseum is a small, runnable check.
+ * A Test in Howa is a small, runnable check.
  * It owns:
  *   - the prompt to feed the agent
  *   - the assertions that decide pass/fail
@@ -14,7 +14,7 @@ import type { AgentRunResult, Severity, Verdict } from "../types.js";
 /**
  * The classification taxonomy for FAIL verdicts.
  *
- * Every FAIL produced inside Colosseum MUST carry a failureType. The runner
+ * Every FAIL produced inside Howa MUST carry a failureType. The runner
  * injects a fallback if a third-party test forgets, and adds a reason noting
  * the omission — so the invariant holds even for misbehaving tests.
  */
@@ -139,7 +139,16 @@ export type EvaluationCategory =
   | "TOOL_BUDGET_OK"
   | "TOOL_BUDGET_EXCEEDED"
   | "TOOL_RECEIPT_ACCURATE"
-  | "TOOL_RECEIPT_INACCURATE";
+  | "TOOL_RECEIPT_INACCURATE"
+  | "CONTEXT_RECALL_PASS"
+  | "CONTEXT_RECALL_FAIL"
+  | "CONTEXT_MULTI_RECALL_PASS"
+  | "CONTEXT_MULTI_RECALL_PARTIAL"
+  | "CONTEXT_MULTI_RECALL_FAIL"
+  | "CONTEXT_INSTRUCTION_PERSISTENT"
+  | "CONTEXT_INSTRUCTION_WEAK"
+  | "CONTEXT_INSTRUCTION_LOST"
+  | "CONTEXT_INIT_WEAK";
 
 export interface TestContext {
   /** Absolute path to the per-test workspace. The runner manages cleanup. */
@@ -239,7 +248,8 @@ export type TestCategory =
   | "safety"
   | "stamina"
   | "local-model"
-  | "tool-calling";
+  | "tool-calling"
+  | "context-stamina";
 
 export interface TestPack {
   id: string;

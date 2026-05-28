@@ -1,4 +1,4 @@
-# Colosseum Windows First Run
+# Howa Windows First Run
 
 This RC uses a portable source zip or checkout. There is no MSI, native executable, Docker image, or Electron/Tauri installer.
 
@@ -58,7 +58,7 @@ npm run cli -- list packs
 `npm run smoke` should include:
 
 ```text
-Running Colosseum passing smoke test (mock agent + stamina pack)...
+Running Howa passing smoke test (mock agent + stamina pack)...
 Passing smoke test succeeded.
 ```
 

@@ -7,14 +7,16 @@ import { trialsRouter } from "./routes/trials.js";
 import { receiptsRouter } from "./routes/receipts.js";
 import { defaultStateRoot, TrialStore } from "../storage/index.js";
 
-// COLOSSEUM_STATE_ROOT is the canonical env var (matches systemd unit + docs).
-// COLOSSEUM_STATE is accepted for backward compat with v0.1 deployments.
+// HOWA_STATE_ROOT is the canonical env var (matches systemd unit + docs).
+// COLOSSEUM_STATE_ROOT / COLOSSEUM_STATE are accepted for backward compat
+// with v0.1 deployments installed before the Colosseum→Howa rename.
 const stateRoot =
+  process.env.HOWA_STATE_ROOT ??
   process.env.COLOSSEUM_STATE_ROOT ??
   process.env.COLOSSEUM_STATE ??
   defaultStateRoot();
-const port = Number(process.env.COLOSSEUM_PORT ?? 18799);
-const host = process.env.COLOSSEUM_HOST ?? "127.0.0.1";
+const port = Number(process.env.HOWA_PORT ?? process.env.COLOSSEUM_PORT ?? 18799);
+const host = process.env.HOWA_HOST ?? process.env.COLOSSEUM_HOST ?? "127.0.0.1";
 
 export async function buildApp(): Promise<express.Express> {
   await new TrialStore(stateRoot).ensureLayout();
@@ -47,7 +49,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   buildApp().then((app) => {
     app.listen(port, host, () => {
       // eslint-disable-next-line no-console
-      console.log(`Colosseum API listening on http://${host}:${port}`);
+      console.log(`Howa API listening on http://${host}:${port}`);
       console.log(`UI:        http://${host}:${port}/`);
       console.log(`Health:    http://${host}:${port}/api/health`);
       console.log(`State:     ${stateRoot}`);

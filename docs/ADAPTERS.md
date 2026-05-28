@@ -1,6 +1,6 @@
 # Adapters
 
-An **adapter** is the only thing Colosseum ever knows about an agent. Every
+An **adapter** is the only thing Howa ever knows about an agent. Every
 agent — Aedis, OpenClaw, Hermes, Claude Code, Codex, your in-house CLI — is
 reachable through one small interface.
 
@@ -57,7 +57,7 @@ These are not suggestions:
 2. **Cost must be truthful.** If your adapter cannot introspect cost, set
    `costInfo.reported = false` and put a one-sentence note in `costInfo.note`
    ("generic CLI adapter does not introspect cost/tokens"). Never fabricate
-   numbers. Colosseum's scoring layer holds cost efficiency neutral when
+   numbers. Howa's scoring layer holds cost efficiency neutral when
    nothing is reported — it does *not* assume zero.
 3. **Adapters do not grade.** Don't read other adapters' state, don't modify
    receipts, don't reach into scoring. Adapters only translate from the agent's
@@ -70,7 +70,7 @@ These are not suggestions:
 
 | Id            | Wraps                                         | Default location | Notes                                                         |
 |---------------|-----------------------------------------------|------------------|---------------------------------------------------------------|
-| `mock`        | Nothing — in-process deterministic agent      | `local`          | Used by Colosseum's self-tests. Reads simple prompt keywords. |
+| `mock`        | Nothing — in-process deterministic agent      | `local`          | Used by Howa's self-tests. Reads simple prompt keywords. |
 | `generic-cli` | Any CLI passed as `extra.command`             | `unknown`        | Truthfully marks model/cost as `unknown` / `not reported`.    |
 | `aedis`       | `aedis submit <prompt>` (or `$AEDIS_BIN` / `extra.command`) | `unknown` | Health verifies the binary and `submit` protocol before tests run. |
 | `betterclaw`  | `betterclaw agent --local --session-id <id> --message <prompt>` | `unknown` | Uses isolated per-test state; override with `$BETTERCLAW_BIN` or `extra.command`. |
@@ -241,7 +241,7 @@ Adapters that implement a real async event source can surface live `thought`,
 `tool_call`, `stdout`, `stderr`, `final`, and `error` events while a test is
 still running. The runner redacts streamed text before it reaches the API/UI.
 
-Adapters that do not provide a live stream still work. Colosseum emits runner
+Adapters that do not provide a live stream still work. Howa emits runner
 lifecycle events (`test_started`, `receipt_written`, `scoring`, `complete`) and
 marks the timeline as `buffered` with this operator-facing message:
 
@@ -291,17 +291,17 @@ Ptah currently ships as a long-running HTTP/WS service (default port
 **18810**), not as a verb-style CLI. The Ptah adapter is wired with the
 same `<bin> submit <prompt>` shape we use for Aedis so it'll work the
 moment a real Ptah CLI lands. Until then, point `PTAH_BIN` at a thin
-wrapper that satisfies two contracts at once: Colosseum's adapter shape
+wrapper that satisfies two contracts at once: Howa's adapter shape
 *and* a real submit→poll→answer round-trip against the Ptah HTTP API.
 
 ### Why the wrapper has to wait
 
 A naive wrapper that just POSTs `/api/tasks` and prints the 202 response
-is what Colosseum used to ship, and the trial results were a lie:
-Colosseum saw a 14 ms duration, no final answer, and Ptah's truthfulness
+is what Howa used to ship, and the trial results were a lie:
+Howa saw a 14 ms duration, no final answer, and Ptah's truthfulness
 score reflected the wrapper, not the agent. The wrapper below polls
 `GET /api/tasks/:id` until Ptah writes a receipt and prints the
-synthesized summary, so Colosseum measures Ptah's actual answer.
+synthesized summary, so Howa measures Ptah's actual answer.
 
 ### What the wrapper does
 
@@ -337,7 +337,7 @@ synthesized summary, so Colosseum measures Ptah's actual answer.
 
 | Code | Meaning |
 |------|---------|
-| 0    | Ptah returned a receipt — `success`, `partial`, `escalated`, or `failed`. The wrapper does not editorialize; receipt status is printed and Colosseum scores the actual answer. |
+| 0    | Ptah returned a receipt — `success`, `partial`, `escalated`, or `failed`. The wrapper does not editorialize; receipt status is printed and Howa scores the actual answer. |
 | 2    | Misuse (`submit` with no prompt, unknown verb). |
 | 124  | Wrapper timeout exceeded before a receipt arrived. The task is best-effort-cancelled before exit. |
 | 1    | Network error, malformed JSON, or missing `curl`/`jq`. |
@@ -386,7 +386,7 @@ AEDIS_BIN=/bin/echo npm run cli -- run --agent aedis --pack truthfulness
 
 Expected outcome with `/bin/echo` as the agent: the pack FAILs honestly. Echo
 produces output, but it cannot edit files, cannot surface the `/etc/passwd`
-tool failure, and does not answer the Colosseum opening-year prompt with `80
+tool failure, and does not answer the Howa opening-year prompt with `80
 CE`. The point of the smoke is that every step of the pipeline (binary
 resolution, subprocess spawn, event capture, diff computation, receipt write,
 scoring) executes end-to-end without the mock.

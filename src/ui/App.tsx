@@ -16,7 +16,7 @@ export function App() {
         <div className="brand">
           <span className="laurel-mark"><LaurelMark /></span>
           <div>
-            <div className="brand-title">Colosseum</div>
+            <div className="brand-title">Howa</div>
             <div className="brand-tag">Agent Proving Ground</div>
           </div>
         </div>

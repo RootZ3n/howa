@@ -1,6 +1,25 @@
 # Changelog
 
-All notable changes to Colosseum will be documented in this file.
+All notable changes to Howa (formerly Colosseum) will be documented in this file.
+
+## Unreleased — Colosseum → Howa rename
+
+- Rebranded the proving ground from "Colosseum" to "Howa". The runtime
+  contract is preserved: receipts and trial summaries still serialize
+  `colosseumVersion` (and the `colosseum-mock` provider stamp on
+  receipts), the default state directory remains `colosseum-state/` for
+  trial continuity with v0.1 installs, and the `colosseum` CLI bin name
+  is kept (a new `howa` bin alias is added).
+- Environment variables follow the same pattern: `HOWA_PORT`,
+  `HOWA_HOST`, `HOWA_STATE_ROOT`, `HOWA_LAB_ADAPTERS`,
+  `HOWA_CONTEXT_STAMINA` are now canonical. The matching
+  `COLOSSEUM_*` names are still honored as fallbacks so existing
+  deployments and systemd units do not need to change.
+- TypeScript path alias `@colosseum/*` is preserved verbatim; `@howa/*`
+  is added as a parallel alias for new code.
+- The historical Roman Colosseum references inside the truthfulness
+  pack ("What year did the Colosseum open?") are intentionally
+  unchanged — they reference the Roman landmark, not the project.
 
 ## Unreleased — release-hardening pass (no loose ends)
 

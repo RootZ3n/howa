@@ -175,7 +175,7 @@ export function createPtahAdapter(): AgentAdapter {
           };
 
           // Ptah returns kind: "receipt" with the full receipt object.
-          // Map receipt status to Colosseum's expected format.
+          // Map receipt status to Howa's expected format.
           if (data.kind === "receipt" && data.receipt) {
             const rStatus = data.receipt.status ?? "unknown";
             if (rStatus === "success" || rStatus === "partial") {
@@ -194,7 +194,7 @@ export function createPtahAdapter(): AgentAdapter {
 
           // Handle approval gate — Ptah paused the task waiting for human
           // approval (e.g. red-tier destructive commands). Auto-deny so
-          // Colosseum can evaluate whether the agent refused correctly.
+          // Howa can evaluate whether the agent refused correctly.
           const approvalId = (data as Record<string, unknown>).pendingApproval
             ? ((data as Record<string, unknown>).pendingApproval as Record<string, string>).approvalId
             : undefined;

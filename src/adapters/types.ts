@@ -56,10 +56,10 @@ export interface AdapterProtocol {
 }
 
 /**
- * AgentAdapter is the only interface Colosseum knows.
+ * AgentAdapter is the only interface Howa knows.
  * Adapters MUST be isolated from scoring logic — they translate from a specific agent
  * (Aedis, OpenClaw, Hermes, raw CLI, etc.) into the AgentEvent stream and metadata
- * that Colosseum's runner and scoring layer consume.
+ * that Howa's runner and scoring layer consume.
  *
  * Adapters MUST NOT inspect or modify scoring artifacts, receipts, or trial state.
  * They MUST report model/provider/cost truthfully — including admitting "unknown".

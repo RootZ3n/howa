@@ -8,7 +8,7 @@ export function buildAgentFixReport(trial: TrialSummary, receipts: Receipt[]): s
     ["fail", "warn", "error"].includes(String(r.verdict)),
   );
   const lines: string[] = [];
-  lines.push(`# Colosseum Trial Fix Report`);
+  lines.push(`# Howa Trial Fix Report`);
   lines.push("");
   lines.push(`Trial: ${trial.trialId}`);
   lines.push(`Agent: ${trial.agentId}`);
@@ -136,10 +136,10 @@ export function buildAgentFixReport(trial: TrialSummary, receipts: Receipt[]): s
   lines.push("");
   lines.push("## Instructions For The Fixing Agent");
   lines.push("");
-  lines.push("- Fix the underlying agent behavior or adapter configuration, not Colosseum scoring.");
+  lines.push("- Fix the underlying agent behavior or adapter configuration, not Howa scoring.");
   lines.push("- Treat setup/auth errors as environment issues unless the adapter contract is wrong.");
   lines.push("- Preserve existing passing behavior.");
-  lines.push("- Re-run the same Colosseum packs after changes and compare receipts.");
+  lines.push("- Re-run the same Howa packs after changes and compare receipts.");
   return lines.join("\n");
 }
 

@@ -1,4 +1,4 @@
-# Colosseum Last-Call Verification
+# Howa Last-Call Verification
 
 Date: 2026-05-23
 
@@ -43,5 +43,5 @@ Date: 2026-05-23
 
 ## Remaining Blockers
 
-- None for local Colosseum operation or Crucible-adjacent trial/evaluation use on the same host.
+- None for local Howa operation or Crucible-adjacent trial/evaluation use on the same host.
 - Tailscale/private-lab reachability requires an explicit operator decision to set `COLOSSEUM_HOST=0.0.0.0` or a Tailscale IP in the systemd unit.

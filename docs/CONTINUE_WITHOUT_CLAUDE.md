@@ -1,8 +1,8 @@
-# Continue Without Claude — Colosseum
+# Continue Without Claude — Howa
 
 ## What this repo does
 
-Colosseum is the lab's model-evaluation arena. Runs trials (tool-calling,
+Howa is the lab's model-evaluation arena. Runs trials (tool-calling,
 verdict-ui, harness scenarios) and produces verdicts you can trust. Tasks
 live in `tasks/`, runs in `colosseum-state/`.
 

@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes how Colosseum is put together and how a trial flows from
+This document describes how Howa is put together and how a trial flows from
 "start" to "receipts on disk." The goal is for any reader — engineering, security,
 product — to understand the system in one sitting.
 
@@ -48,7 +48,7 @@ product — to understand the system in one sitting.
       `colosseum-state/fixtures/<trialId>/<testId>-<rand>/`. The host repo is
       *never* the working directory.
    2. The test's optional `setup(ctx)` seeds files in the workspace.
-   3. **Velum** scans the prompt before it leaves Colosseum.
+   3. **Velum** scans the prompt before it leaves Howa.
    4. The adapter `startSession({ workspace, … })` and `sendPrompt(handle, prompt)`
       executes the agent and returns events, stdout/stderr, model info, cost,
       and artifacts.
@@ -152,7 +152,7 @@ src/
 2. **Velum records, never hides.** Velum redacts secrets in *stored bytes*, but
    the *finding* is preserved on the receipt — kind, severity, decision, reason.
    You always see that something happened.
-3. **No fake precision.** When something is unknown ("model? cost?"), Colosseum
+3. **No fake precision.** When something is unknown ("model? cost?"), Howa
    says so on the receipt and on the UI. Cost efficiency is held neutral when
    nothing is reported — never assumed zero.
 4. **No host-repo mutation.** Every test gets a fresh workspace under

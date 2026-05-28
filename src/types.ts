@@ -1,5 +1,5 @@
 /**
- * Shared type definitions for the Colosseum core.
+ * Shared type definitions for the Howa core.
  * These types are imported across adapters, packs, runner, scoring, and receipts.
  */
 

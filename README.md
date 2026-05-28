@@ -1,8 +1,15 @@
-# Colosseum
+# Howa
 
 > **Stop guessing if your agent works. Put it in the arena.**
 
-Colosseum is a local-first **agent proving ground**. It runs AI agents through
+> Howa is the proving ground formerly known as Colosseum. The runtime
+> contract is preserved: receipts, trial bundles, the `colosseum-state/`
+> directory, and the `colosseumVersion` schema field are all kept
+> verbatim so v0.1 evidence remains valid and comparable. The `colosseum`
+> CLI and npm package name keep working; a `howa` bin alias has been
+> added.
+
+Howa is a local-first **agent proving ground**. It runs AI agents through
 repeatable trials, writes JSON + Markdown receipts, and makes unknowns explicit
 instead of turning them into green checkmarks.
 
@@ -16,10 +23,10 @@ Agents enter the arena and are judged on five core behaviors:
 | **Stamina**      | Does it complete multi-step work, bound its retries, and stop cleanly? |
 | **Evidence**     | Does every verdict come with a receipt you can read?                  |
 
-Colosseum is **standalone**. It is not a feature of any other product. Visually
+Howa is **standalone**. It is not a feature of any other product. Visually
 it stands on its own — marble, bronze, dark stone, torchlight.
 
-Colosseum is a **lab-use local tool**. The HTTP API/UI do not implement built-in
+Howa is a **lab-use local tool**. The HTTP API/UI do not implement built-in
 authorization and do not require `Authorization: Bearer ...` headers. Bind it to
 `127.0.0.1` for normal use; if you expose it beyond the lab machine, put it
 behind your own access controls.
@@ -33,7 +40,7 @@ where the agent “did the thing.” And then a year of production where you slo
 learn the agent silently fails, lies about success, leaks secrets, or burns
 through tokens on the wrong model.
 
-Colosseum exists so you can stop guessing. Every trial produces a **receipt** —
+Howa exists so you can stop guessing. Every trial produces a **receipt** —
 a JSON + Markdown record of the prompt, the model used, the cost (or honest
 "not reported"), the agent's output, the test verdict, the reasons, the
 artifacts produced, and any safety findings. You can audit it. You can diff
@@ -46,9 +53,9 @@ two runs. You can hand it to your security team.
 - **Transparency** — every verdict comes with reasons. There are no opaque scores.
 - **Receipts** — every test produces JSON + a human-readable Markdown summary.
 - **Model & provider agnostic** — local or cloud, Anthropic or Ollama or LM Studio
-  or your own. Adapters declare what they are. Colosseum never lies about it.
+  or your own. Adapters declare what they are. Howa never lies about it.
 - **Local + cloud evidence** — local model packs check adapter-reported
-  local/cloud identity and cost signals. Colosseum records that evidence, but
+  local/cloud identity and cost signals. Howa records that evidence, but
   does not enforce network egress isolation by itself.
 - **Token / cost aware** — when adapters report tokens and cost, they go on the
   receipt. When they can't, the receipt says **"not reported"**. We never invent
@@ -127,7 +134,7 @@ It exits non-zero if any of these guards regress.
 
 ## What the arena looks like
 
-The Colosseum UI is intentionally **not** the look of any other product. Inspired
+The Howa UI is intentionally **not** the look of any other product. Inspired
 by the Roman Colosseum, the visual language is:
 
 - **Dark stone** background with two warm radial torch glows in the upper corners
@@ -148,7 +155,7 @@ Pages: **Arena** (dashboard + Champion Board), **New Trial**, **Trials**,
 - Node.js **18.17 or newer**
 - npm (the version bundled with your Node install is fine)
 
-Colosseum v0.1.0 is a **source install** release: clone the repo and run npm
+Howa v0.1.0 is a **source install** release: clone the repo and run npm
 commands from the checkout. It is not documented as a global `npm install -g`
 or `npx` package yet.
 
@@ -178,7 +185,7 @@ API key, local model, shell alias, or systemd service.
 Expected passing smoke output:
 
 ```text
-Running Colosseum passing smoke test (mock agent + stamina pack)...
+Running Howa passing smoke test (mock agent + stamina pack)...
 State directory: ...
 
 Trial trial-... — PASS
@@ -245,7 +252,7 @@ failure receipt:
 npm run smoke:fail
 ```
 
-`npm run smoke:fail` succeeds when Colosseum correctly reports `FAIL` and the
+`npm run smoke:fail` succeeds when Howa correctly reports `FAIL` and the
 underlying trial exits `2`.
 
 ### Smoke against a real local agent
@@ -279,7 +286,7 @@ agent-induced workspace changes.
 
 State lives under `./colosseum-state/` (override with `--state` or
 `COLOSSEUM_STATE`). Do not point `COLOSSEUM_STATE_ROOT` or `--state` at an
-important directory; Colosseum may remove per-test fixture workspaces according
+important directory; Howa may remove per-test fixture workspaces according
 to the cleanup policy.
 
 ## Testing
@@ -359,7 +366,7 @@ colosseum/
 ## Security and Limitations
 
 - The API binds to `127.0.0.1` by default. If you expose it with
-  `COLOSSEUM_HOST=0.0.0.0`, put it behind your own access controls. Colosseum
+  `COLOSSEUM_HOST=0.0.0.0`, put it behind your own access controls. Howa
   does not provide built-in HTTP authorization.
 - CLI adapters can execute local commands. Treat adapter configuration as
   trusted operator input, especially `generic-cli`, `AEDIS_BIN`, and `PTAH_BIN`.
@@ -372,7 +379,7 @@ colosseum/
 
 ## Status
 
-Colosseum v0.1 is an MVP. The core runner, adapters, packs, Velum, scoring,
+Howa v0.1 is an MVP. The core runner, adapters, packs, Velum, scoring,
 receipts, CLI, API, and UI are present and tested. Adapter implementations for
 Aedis, BetterClaw, OpenClaw, and Hermes wrap a default CLI. Squidley uses its
 local HTTP API. Replace with richer SDK integrations as those stabilize.

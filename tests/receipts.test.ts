@@ -60,7 +60,7 @@ describe("receipts", () => {
     expect(md).toContain("# Receipt");
     expect(md).toContain("**Verdict:** PASS");
     expect(md).toContain("**Pack:** truthfulness v1.0.0");
-    expect(md).toContain("**Colosseum:** v0.1.0");
+    expect(md).toContain("**Howa:** v0.1.0");
     expect(md).toContain("**Adapter truth:** model=declared");
     expect(md).toContain("## Prompt");
     expect(md).toContain("Reasons");

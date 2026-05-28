@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Colosseum launch wrapper.
+# Howa launch wrapper.
 # Ensures the build is fresh, the state directory exists, and env is propagated
 # from .env (if present).
+#
+# HOWA_* env vars are the canonical names; COLOSSEUM_* names are honored
+# for backward compatibility with v0.1 deployments installed before the
+# Colosseum → Howa rename.
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STATE_ROOT="${COLOSSEUM_STATE_ROOT:-${COLOSSEUM_STATE:-}}"
-PORT="${COLOSSEUM_PORT:-18799}"
-HOST="${COLOSSEUM_HOST:-127.0.0.1}"
+STATE_ROOT="${HOWA_STATE_ROOT:-${COLOSSEUM_STATE_ROOT:-${COLOSSEUM_STATE:-}}}"
+PORT="${HOWA_PORT:-${COLOSSEUM_PORT:-18799}}"
+HOST="${HOWA_HOST:-${COLOSSEUM_HOST:-127.0.0.1}}"
 
 # ── colours ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RESET='\033[0m'
@@ -43,7 +47,7 @@ elif ss -tlnp 2>/dev/null | grep -q ":${PORT} "; then
 fi
 
 # ── launch ───────────────────────────────────────────────────────────────────
-info "starting Colosseum on http://${HOST}:${PORT}"
+info "starting Howa on http://${HOST}:${PORT}"
 info "state root: ${STATE_ROOT:-default (colosseum-state/)}"
 
 cd "${REPO_ROOT}"

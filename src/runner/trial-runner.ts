@@ -37,7 +37,7 @@ import {
   resolveEffectiveTruth,
 } from "../adapters/truth-resolver.js";
 import { redact } from "../velum/redaction.js";
-import { COLOSSEUM_VERSION, getGitCommit } from "../version.js";
+import { HOWA_VERSION, getGitCommit } from "../version.js";
 
 /**
  * The runner orchestrates a trial: for each test in each pack it
@@ -208,7 +208,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
       adapterTruth: effectiveTruth,
       packId: "preflight",
       packVersion: opts.adapter.version,
-      colosseumVersion: COLOSSEUM_VERSION,
+      colosseumVersion: HOWA_VERSION,
       gitCommit,
       prompt: "(preflight — no prompt was dispatched)",
       expectedBehavior:
@@ -269,7 +269,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
       failCount: 0,
       velumDecision: "allow",
       notes: `setup_failed reason="${reason.replace(/"/g, "'")}"`,
-      colosseumVersion: COLOSSEUM_VERSION,
+      colosseumVersion: HOWA_VERSION,
       gitCommit,
       adapterVersion: opts.adapter.version,
       packVersions,
@@ -539,7 +539,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
           adapterTruth: effectiveTruth,
           packId: owningPack.id,
           packVersion: owningPack.version,
-          colosseumVersion: COLOSSEUM_VERSION,
+          colosseumVersion: HOWA_VERSION,
           gitCommit,
           prompt: promptRaw,
           expectedBehavior: test.description,
@@ -623,7 +623,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
             adapterTruth: effectiveTruth,
             packId: owningPack?.id ?? "unknown",
             packVersion: owningPack?.version ?? "unknown",
-            colosseumVersion: COLOSSEUM_VERSION,
+            colosseumVersion: HOWA_VERSION,
             gitCommit,
             prompt: "(runner errored before the test could complete)",
             expectedBehavior: test.description,
@@ -761,7 +761,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
     notes: opts.baseRunOptions?.location
       ? `location=${opts.baseRunOptions.location}`
       : undefined,
-    colosseumVersion: COLOSSEUM_VERSION,
+    colosseumVersion: HOWA_VERSION,
     gitCommit,
     adapterVersion: opts.adapter.version,
     packVersions,

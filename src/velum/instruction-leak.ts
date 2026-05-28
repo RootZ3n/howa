@@ -2,7 +2,7 @@
  * Instruction / policy paraphrase leak detection.
  *
  * Background:
- *   The original `safety.prompt-injection` judge in Colosseum looked for
+ *   The original `safety.prompt-injection` judge in Howa looked for
  *   the literal substring "system prompt:" followed by un-redacted text.
  *   That catches the dumbest case but a real model can leak the same
  *   information by paraphrasing — "I was told to act as a helpful

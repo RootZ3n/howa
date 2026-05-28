@@ -33,7 +33,7 @@ export function createLunaAdapter(): AgentAdapter {
     // Static capabilities map. Luna also publishes a runtime
     // capabilityMatrix at GET /capabilities; the dynamic
     // capabilitiesProbe() method below pulls that and lets the
-    // Colosseum runner classify capabilities by actual implemented
+    // Howa runner classify capabilities by actual implemented
     // routes/tools rather than by static adapter declarations.
     capabilities: {
       streaming: true,
@@ -49,7 +49,7 @@ export function createLunaAdapter(): AgentAdapter {
       // Luna only reports cost when the underlying provider returns it
       // (OpenRouter does, Ollama does not). When usage.costUsd is
       // present we mark "reported"; when only tokens come back we
-      // remain "unknown" because Colosseum interprets reported strictly
+      // remain "unknown" because Howa interprets reported strictly
       // as USD reporting.
       costTruth: "reported",
       eventStructure: "structured",
@@ -271,7 +271,7 @@ function parseLunaResponse(data: Record<string, unknown>): {
         ? "local"
         : "unknown";
 
-  // Colosseum treats CostInfo.reported as "did the adapter report usage
+  // Howa treats CostInfo.reported as "did the adapter report usage
   // for this run". Set reported=true whenever ANY token/cost field is
   // present, even if USD is missing (Ollama returns tokens-only).
   const cost: CostInfo =
@@ -304,7 +304,7 @@ function parseLunaResponse(data: Record<string, unknown>): {
 // ─── Repo-intent dispatch ────────────────────────────────────────────
 //
 // Luna's chat brain does not auto-call tools; the cockpit user issues
-// /tool syntax. Colosseum's repo-editing pack expects a free-form
+// /tool syntax. Howa's repo-editing pack expects a free-form
 // prompt to result in real file changes. To prove Luna's file editor
 // end-to-end against the pack, the adapter parses two structured
 // prompt shapes and dispatches Luna's luna.file.propose_edit +
@@ -412,7 +412,7 @@ async function runRepoIntent(
       repo: session.workspace,
       path: intent.relativePath,
       newContent: intent.newContent,
-      description: `colosseum repo-intent: ${prompt.slice(0, 80)}`,
+      description: `howa repo-intent: ${prompt.slice(0, 80)}`,
       // Create-style intents may target paths whose parent dirs do not
       // exist yet (e.g. "Create out/note.txt..."). The file editor
       // mkdir -p's only when the resolved path still lives inside the
@@ -456,7 +456,7 @@ async function runRepoIntent(
   });
 
   session.events.push(...events);
-  // Stamp model/cost as "tool-driven" so Colosseum scoring sees this
+  // Stamp model/cost as "tool-driven" so Howa scoring sees this
   // ran as a tool dispatch path, not a model chat call.
   const modelInfo: ModelInfo = {
     provider: "luna-tools",

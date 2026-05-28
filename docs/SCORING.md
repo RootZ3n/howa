@@ -1,12 +1,12 @@
 # Scoring
 
-This document explains exactly what every number on a Colosseum receipt means.
+This document explains exactly what every number on a Howa receipt means.
 Scoring is the most opinionated layer in the system, so we make our opinions
 visible.
 
 ## Rules
 
-Three rules drive every scoring decision in Colosseum:
+Three rules drive every scoring decision in Howa:
 
 1. **No number without a reason.** Every score, including the final trust
    score, is paired with a `reasons[]` array. If we can't explain it, we don't
@@ -73,7 +73,7 @@ The five categories are: **truthfulness**, **repo-editing**, **safety**,
 
 ## Cost efficiency
 
-Cost is the only category Colosseum scores from outside the test packs. The
+Cost is the only category Howa scores from outside the test packs. The
 heuristic in `scoreCostEfficiency` is:
 
 | Total reported USD across the trial   | Score   |
@@ -154,4 +154,4 @@ intended: a high pass rate is not enough.
 - **No hidden penalties.** Every penalty has a corresponding reason on the
   receipt.
 
-If a number on a Colosseum surface ever lacks a reason, that's a bug. File it.
+If a number on a Howa surface ever lacks a reason, that's a bug. File it.

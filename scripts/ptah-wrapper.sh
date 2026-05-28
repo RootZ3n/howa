@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# Colosseum Ptah wrapper.
+# Howa Ptah wrapper.
 #
-# Bridges the `<bin> submit <prompt>` shape that Colosseum's adapter expects
-# onto Ptah's HTTP API so a Colosseum trial measures a real Ptah task — not
+# Bridges the `<bin> submit <prompt>` shape that Howa's adapter expects
+# onto Ptah's HTTP API so a Howa trial measures a real Ptah task — not
 # the milliseconds it took to POST /api/tasks.
 #
 #   1. POST /api/tasks  {input, repo}      → grab taskId
 #   2. Poll GET /api/tasks/:id             → wait for kind=receipt
-#   3. Print receipt.result.summary        → Colosseum's finalAnswer
+#   3. Print receipt.result.summary        → Howa's finalAnswer
 #
 # Env vars:
 #   PTAH_URL                          (default http://127.0.0.1:18810)
@@ -19,7 +19,7 @@
 # Exit codes:
 #   0    Ptah returned a receipt — success, partial, escalated, or failed.
 #        The wrapper does not editorialize; receipt.status is printed and
-#        Colosseum scores the actual answer.
+#        Howa scores the actual answer.
 #   2    Misuse (e.g. `submit` with no prompt, unknown verb).
 #   124  Wrapper timeout exceeded before receipt arrived.
 #   1    Anything else (network error, malformed JSON, missing jq/curl).
@@ -71,7 +71,7 @@ cmd_health() {
     echo "ptah health: GET $PTAH_URL/api/health failed" >&2
     return 1
   fi
-  # First line is a `status: …` summary so Colosseum's health probe gets a
+  # First line is a `status: …` summary so Howa's health probe gets a
   # short, scrapable signal (it only reads the first line). The full JSON
   # follows so a human running `ptah health` sees the detail.
   local status
@@ -88,7 +88,7 @@ cmd_status() {
   printf '%s\n' "$body"
 }
 
-# Render a receipt response as plain text suitable for Colosseum's
+# Render a receipt response as plain text suitable for Howa's
 # finalAnswer extraction (last 2 KB of stdout). Reads JSON from stdin.
 render_receipt() {
   jq -r '
@@ -150,9 +150,9 @@ cmd_submit() {
     if (( $(date +%s) >= deadline )); then
       local msg="Ptah task $task_id did not produce a receipt within ${PTAH_WRAPPER_TIMEOUT_SECONDS}s — last kind=$last_kind, state=$last_state${last_pending_reason:+, pendingApproval=$last_pending_reason}"
       # Mirror the message to BOTH streams so callers that capture only
-      # stdout (Colosseum's generic-cli scrapes finalAnswer from stdout)
+      # stdout (Howa's generic-cli scrapes finalAnswer from stdout)
       # still see an honest "the task did not finish" signal — and so
-      # Colosseum's truthfulness pack can score the disclosure rather
+      # Howa's truthfulness pack can score the disclosure rather
       # than treating an empty stdout as `no_output`.
       printf '%s\n' "$msg"
       printf 'ptah submit: %s\n' "$msg" >&2

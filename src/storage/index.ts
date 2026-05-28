@@ -5,9 +5,15 @@ import type { TrialScore } from "../scoring/score.js";
 import type { AdapterTruthContract } from "../adapters/types.js";
 
 /**
- * Filesystem layout for Colosseum state:
+ * Filesystem layout for Howa state:
  *
- *   colosseum-state/
+ *   colosseum-state/                                 (historical directory
+ *                                                   name — preserved so
+ *                                                   existing trials,
+ *                                                   receipts, and bundles
+ *                                                   from before the Howa
+ *                                                   rename remain readable
+ *                                                   without migration)
  *     trials/<trialId>.json
  *     trial-events/<trialId>.json
  *     receipts/<trialId>/<testId>.json
@@ -39,9 +45,14 @@ export interface TrialSummary {
   /*  Phase 1: truthfulness stamps                                       */
   /* ------------------------------------------------------------------ */
 
-  /** Colosseum harness version at the time the trial ran. */
+  /**
+   * Howa harness version at the time the trial ran. Field is named
+   * `colosseumVersion` for backward compatibility — receipts written
+   * before the Howa rename use this key and the diagnostic walks them
+   * unchanged. New code should still read this field.
+   */
   colosseumVersion: string;
-  /** Short git commit of the Colosseum repo. "unknown" if not in git. */
+  /** Short git commit of the Howa repo. "unknown" if not in git. */
   gitCommit: string;
   /** Adapter version (declared by the adapter itself). */
   adapterVersion: string;
@@ -188,6 +199,14 @@ export class TrialStore {
   }
 }
 
+/**
+ * Default state directory. Stays `colosseum-state` for backward
+ * compatibility — every historical trial, receipt, and bundle written
+ * before the Howa rename lives under this name, and silently switching
+ * the default would orphan that evidence. Operators on a fresh install
+ * who prefer the new name can pass `--state howa-state` or set
+ * `HOWA_STATE_ROOT`.
+ */
 export function defaultStateRoot(): string {
   return path.resolve(process.cwd(), "colosseum-state");
 }

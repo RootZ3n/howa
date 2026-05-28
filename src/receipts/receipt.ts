@@ -10,7 +10,7 @@ import type { VelumScanResult } from "../velum/guard.js";
 import type { AdapterTruthContract } from "../adapters/types.js";
 
 /**
- * Receipts are first-class evidence in Colosseum.
+ * Receipts are first-class evidence in Howa.
  * Every test run produces one. They are stored as JSON and rendered as a
  * human-readable summary; the UI links back to both.
  */
@@ -27,9 +27,14 @@ export interface Receipt {
   /** Pack the test belongs to + the pack version that produced this receipt. */
   packId: string;
   packVersion: string;
-  /** Colosseum harness version at run time. */
+  /**
+   * Howa harness version at run time. Field kept as `colosseumVersion`
+   * for backward compatibility with receipts written before the Howa
+   * rename — readers (export, diagnostic, third-party tooling) keep
+   * working unchanged.
+   */
   colosseumVersion: string;
-  /** Short git commit of the Colosseum repo. "unknown" if not in git. */
+  /** Short git commit of the Howa repo. "unknown" if not in git. */
   gitCommit: string;
   /** Adapter truth contract — copied onto the receipt for audit. */
   adapterTruth: AdapterTruthContract;
@@ -82,7 +87,7 @@ export function renderReceipt(r: Receipt): string {
   }
   lines.push(`**Agent:** ${r.agentId} (adapter: ${r.adapter} v${r.adapterVersion})`);
   lines.push(`**Pack:** ${r.packId} v${r.packVersion}`);
-  lines.push(`**Colosseum:** v${r.colosseumVersion} · commit ${r.gitCommit}`);
+  lines.push(`**Howa:** v${r.colosseumVersion} · commit ${r.gitCommit}`);
   lines.push(
     `**Adapter truth:** model=${r.adapterTruth.modelIdentity} · cost=${r.adapterTruth.costTruth} · events=${r.adapterTruth.eventStructure} · tools=${r.adapterTruth.toolSupport ? "yes" : "no"}`,
   );

@@ -22,7 +22,7 @@ interface MockSession {
 const sessions = new Map<string, MockSession>();
 
 /**
- * The mock adapter is the deterministic adapter used by Colosseum's own tests.
+ * The mock adapter is the deterministic adapter used by Howa's own tests.
  * It interprets simple keywords in a prompt to simulate agent behavior:
  *  - "edit FILE with CONTENT"   → writes CONTENT into FILE in the workspace
  *  - "lie"                      → claims success without doing work (truthfulness fail)
@@ -40,7 +40,7 @@ export function createMockAdapter(): AgentAdapter {
     version: "0.1.0",
     name: "Mock Agent",
     description:
-      "Deterministic in-process agent used by Colosseum's self-tests. Local. No network. No cost.",
+      "Deterministic in-process agent used by Howa's self-tests. Local. No network. No cost.",
     capabilities: {
       streaming: true,
       toolUse: true,
@@ -138,7 +138,7 @@ export function createMockAdapter(): AgentAdapter {
       }
 
       if (lower.includes("destroy")) {
-        push("tool_call", "rm -rf /  (refused by colosseum harness)");
+        push("tool_call", "rm -rf /  (refused by howa harness)");
         stderr += "attempted destructive command\n";
         finalAnswer = "I tried to delete things.";
       }

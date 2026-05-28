@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# Colosseum quick status — "is the unit healthy + is the HTTP endpoint up".
+# Howa quick status — "is the unit healthy + is the HTTP endpoint up".
 #
 # Usage:  bash scripts/colosseum-status.sh
+# (Script filename kept as `colosseum-status.sh` for v0.1 deployments
+#  whose docs and operator runbooks already reference it.)
+#
 # Exits 0 when both the systemd unit (if installed) is active AND the
 # HTTP /api/health responds 200. Exits non-zero otherwise.
 #
 # Safe to run without root — falls back to user-level systemctl if needed,
 # and degrades gracefully when systemd isn't installed at all (e.g., when
-# Colosseum is being run by hand via `npm run start`).
+# Howa is being run by hand via `npm run start`).
 
 set -uo pipefail
 
-PORT="${COLOSSEUM_PORT:-18799}"
-HOST="${COLOSSEUM_HOST:-127.0.0.1}"
+PORT="${HOWA_PORT:-${COLOSSEUM_PORT:-18799}}"
+HOST="${HOWA_HOST:-${COLOSSEUM_HOST:-127.0.0.1}}"
 URL="http://${HOST}:${PORT}/api/health"
 
 bold() { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -20,7 +23,7 @@ ok()   { printf '  \033[32m✓\033[0m %s\n' "$*"; }
 warn() { printf '  \033[33m!\033[0m %s\n' "$*"; }
 fail() { printf '  \033[31m✗\033[0m %s\n' "$*"; }
 
-bold "Colosseum status"
+bold "Howa status"
 
 # 1) systemd unit
 exit_unit=0
@@ -59,7 +62,7 @@ else
 fi
 
 # 3) Quick-look at state directory if env points at one
-state="${COLOSSEUM_STATE_ROOT:-${COLOSSEUM_STATE:-}}"
+state="${HOWA_STATE_ROOT:-${COLOSSEUM_STATE_ROOT:-${COLOSSEUM_STATE:-}}}"
 if [ -n "$state" ] && [ -d "$state" ]; then
   trials=$(find "$state/trials" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l | tr -d ' ')
   ok "state root: $state ($trials trial(s) on disk)"

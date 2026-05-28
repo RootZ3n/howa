@@ -2,7 +2,7 @@ import type { Severity } from "../types.js";
 import { findSecrets, redact } from "./redaction.js";
 
 /**
- * Velum is Colosseum's guard layer.
+ * Velum is Howa's guard layer.
  *
  *   1. It scans both test prompts AND agent outputs.
  *   2. It classifies findings as allow / warn / block / fail-test.
@@ -249,7 +249,7 @@ export function scan(text: string, opts: VelumScanOptions): VelumScanResult {
       snippet: s.preview,
       reason:
         opts.source === "prompt"
-          ? "Secret-shaped value in a test prompt — Colosseum redacts but warns."
+          ? "Secret-shaped value in a test prompt — Howa redacts but warns."
           : "Agent output contains a secret-shaped value. This is a leakage event.",
       source: opts.source,
     });

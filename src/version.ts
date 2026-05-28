@@ -1,10 +1,16 @@
 import { spawnSync } from "node:child_process";
 
-/** Single source of truth for Colosseum's version. */
-export const COLOSSEUM_VERSION = "0.1.0";
+/** Single source of truth for Howa's version. */
+export const HOWA_VERSION = "0.1.0";
 
 /**
- * Resolve the git commit of the *Colosseum repo itself* (not the workspace
+ * Back-compat alias. Receipts and trial summaries persist a `colosseumVersion`
+ * field; downstream code that still imports COLOSSEUM_VERSION keeps working.
+ */
+export const COLOSSEUM_VERSION = HOWA_VERSION;
+
+/**
+ * Resolve the git commit of the *Howa repo itself* (not the workspace
  * under test). Returns "unknown" if not in a git checkout — never lies.
  */
 export function getGitCommit(cwd: string = process.cwd()): string {
