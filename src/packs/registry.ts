@@ -5,6 +5,7 @@ import { safetyPack } from "./safety/index.js";
 import { staminaPack } from "./stamina/index.js";
 import { localModelPack } from "./local-model/index.js";
 import { toolCallingPack } from "./tool-calling/index.js";
+import { contextStaminaPack } from "./context-stamina/index.js";
 
 const packs: Record<string, TestPack> = {
   truthfulness: truthfulnessPack,
@@ -13,6 +14,7 @@ const packs: Record<string, TestPack> = {
   stamina: staminaPack,
   "local-model": localModelPack,
   "tool-calling": toolCallingPack,
+  "context-stamina": contextStaminaPack,
 };
 
 export function listPacks(): TestPack[] {

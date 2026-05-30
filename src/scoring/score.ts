@@ -118,6 +118,7 @@ const WEIGHTS: Record<TestCategory | "cost", number> = {
   "tool-calling": 0.15,
   "repo-editing": 0.15,
   stamina: 0.10,
+  "context-stamina": 0.08,
   "local-model": 0.06,
   cost: 0.04,
 };
@@ -234,6 +235,7 @@ export function aggregate(args: {
     "stamina",
     "local-model",
     "tool-calling",
+    "context-stamina",
   ];
   const perCategory: CategoryScore[] = cats.map((c) =>
     scorePack(args.byCategory[c] ?? [], c),
