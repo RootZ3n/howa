@@ -22,6 +22,7 @@ describe("scoring", () => {
         stamina: [r("pass", "low")],
         "local-model": [r("pass", "low")],
         "tool-calling": [],
+        "context-stamina": [],
       },
       costs: [],
     });

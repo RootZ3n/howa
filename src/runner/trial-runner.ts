@@ -115,6 +115,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
     stamina: [],
     "local-model": [],
     "tool-calling": [],
+    "context-stamina": [],
   };
   const costs: CostInfo[] = [];
   const velumScans: Receipt["velum"][] = [];
