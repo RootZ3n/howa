@@ -17,10 +17,10 @@ import { spawnSync } from "node:child_process";
  */
 
 const GIT_ENV: Record<string, string> = {
-  GIT_AUTHOR_NAME: "colosseum",
-  GIT_AUTHOR_EMAIL: "arena@colosseum.local",
-  GIT_COMMITTER_NAME: "colosseum",
-  GIT_COMMITTER_EMAIL: "arena@colosseum.local",
+  GIT_AUTHOR_NAME: "howa",
+  GIT_AUTHOR_EMAIL: "arena@howa.local",
+  GIT_COMMITTER_NAME: "howa",
+  GIT_COMMITTER_EMAIL: "arena@howa.local",
   // Avoid inheriting the host's commit.gpgsign or hooks.
   GIT_CONFIG_GLOBAL: "/dev/null",
   GIT_CONFIG_SYSTEM: "/dev/null",
@@ -42,7 +42,7 @@ export function snapshotWorkspace(workspace: string): { ok: boolean; reason?: st
   }
   git(["add", "-A"], workspace);
   const commit = git(
-    ["commit", "-q", "--allow-empty", "-m", "colosseum: pre-agent snapshot"],
+    ["commit", "-q", "--allow-empty", "-m", "howa: pre-agent snapshot"],
     workspace,
   );
   if (commit.status !== 0) {

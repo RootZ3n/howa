@@ -66,7 +66,7 @@ export function createMockAdapter(): AgentAdapter {
       const sessionId = `mock-${nanoid(10)}`;
       const modelInfo: ModelInfo = {
         model: "mock-deterministic-1",
-        provider: "colosseum-mock",
+        provider: "howa-mock",
         location: "local",
         adapterVersion: "0.1.0",
       };

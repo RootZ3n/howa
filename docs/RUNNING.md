@@ -67,7 +67,7 @@ npm run dev:ui        # UI only
 | `npm run start`     | Local production: serves API and bundled UI on 18799     |
 | `npm run start:api` | Alias for `start`                                         |
 | `npm run start:ui`  | `vite preview` of the built bundle (UI only, no API)     |
-| `npm run cli -- …`  | Run the `colosseum` CLI without compiling                |
+| `npm run cli -- …`  | Run the `howa` CLI without compiling                |
 | `npm run smoke`     | Cross-platform passing mock trial for first-run checks   |
 | `npm run smoke:fail` | Cross-platform intentional failing demo; expects trial exit 2 |
 | `npm run verify:release` | Cross-platform release gate: typecheck, tests, build, CLI lists, smoke |
@@ -80,17 +80,17 @@ npm run dev:ui        # UI only
 `GET /api/health` returns:
 
 ```json
-{ "ok": true, "stateRoot": "/abs/path/to/colosseum-state", "version": "0.1.0" }
+{ "ok": true, "stateRoot": "/abs/path/to/howa-state", "version": "0.1.0" }
 ```
 
 ## State directory
 
 Trial summaries, receipts, fixtures, and reports all live under
-**`COLOSSEUM_STATE_ROOT`** (defaults to `./colosseum-state` relative to where
+**`COLOSSEUM_STATE_ROOT`** (defaults to `./howa-state` relative to where
 the server was launched). Layout:
 
 ```
-colosseum-state/
+howa-state/
 ├── trials/<trialId>.json
 ├── receipts/<trialId>/<testId>.json
 ├── receipts/<trialId>/<testId>.md
@@ -126,7 +126,7 @@ npm run cli -- report <trialId>
 
 The trial appears immediately on the dashboard at <http://127.0.0.1:18799/>
 (refresh the page) — every run produces a JSON + Markdown receipt under
-`colosseum-state/receipts/<trialId>/`.
+`howa-state/receipts/<trialId>/`.
 
 To smoke against a real local agent without a full Aedis install:
 
@@ -136,36 +136,36 @@ AEDIS_BIN=/bin/echo npm run cli -- run --agent aedis --pack truthfulness
 
 ## Advanced Linux: running as a systemd service
 
-A template unit lives at `docs/systemd/colosseum.service`. Copy it, replace the
+A template unit lives at `docs/systemd/howa.service`. Copy it, replace the
 placeholder user/group and paths for your machine, then install:
 
 ```bash
-sudo install -m 0644 docs/systemd/colosseum.service \
-    /etc/systemd/system/colosseum.service
+sudo install -m 0644 docs/systemd/howa.service \
+    /etc/systemd/system/howa.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now colosseum
+sudo systemctl enable --now howa
 ```
 
 Operate:
 
 ```bash
-sudo systemctl status colosseum
-sudo journalctl -u colosseum -f
-sudo systemctl restart colosseum
-sudo systemctl stop colosseum
+sudo systemctl status howa
+sudo journalctl -u howa -f
+sudo systemctl restart howa
+sudo systemctl stop howa
 ```
 
-You can also run `bash scripts/colosseum-status.sh` for a quick "is the unit
+You can also run `bash scripts/howa-status.sh` for a quick "is the unit
 healthy + is the HTTP endpoint up" summary without root.
 
 The example unit uses placeholders:
 
-- `User=colosseum`
-- `Group=colosseum`
-- `WorkingDirectory=/opt/colosseum`
+- `User=howa`
+- `Group=howa`
+- `WorkingDirectory=/opt/howa`
 - `ExecStart=/usr/bin/npm run start`
 - `Environment=COLOSSEUM_PORT=18799`
-- `Environment=COLOSSEUM_STATE_ROOT=/var/lib/colosseum`
+- `Environment=COLOSSEUM_STATE_ROOT=/var/lib/howa`
 - `Restart=on-failure`
 
 Edit these values before installing. If your `npm` isn't at `/usr/bin/npm`, run

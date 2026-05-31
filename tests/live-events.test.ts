@@ -4,17 +4,17 @@ import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { trialsRouter } from "@colosseum/api/routes/trials.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
-import type { TestPack } from "@colosseum/packs/types.js";
-import type { AgentEvent, AgentRunResult, TrialEvent } from "@colosseum/types.js";
-import { getAdapter } from "@colosseum/adapters/registry.js";
-import { getPack } from "@colosseum/packs/registry.js";
-import { TrialStore } from "@colosseum/storage/index.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { trialsRouter } from "@howa/api/routes/trials.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
+import type { TestPack } from "@howa/packs/types.js";
+import type { AgentEvent, AgentRunResult, TrialEvent } from "@howa/types.js";
+import { getAdapter } from "@howa/adapters/registry.js";
+import { getPack } from "@howa/packs/registry.js";
+import { TrialStore } from "@howa/storage/index.js";
 
 async function tmpdir(): Promise<string> {
-  const d = path.join(os.tmpdir(), `colosseum-live-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const d = path.join(os.tmpdir(), `howa-live-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   await fs.mkdir(d, { recursive: true });
   return d;
 }

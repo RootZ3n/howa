@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { getPack } from "@colosseum/packs/registry.js";
-import { renderReceipt } from "@colosseum/receipts/receipt.js";
-import { buildAgentFixReport } from "@colosseum/ui/report.js";
-import type { AgentAdapter, AdapterTruthContract } from "@colosseum/adapters/types.js";
-import type { AgentRunResult, CostInfo, ModelInfo } from "@colosseum/types.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { getPack } from "@howa/packs/registry.js";
+import { renderReceipt } from "@howa/receipts/receipt.js";
+import { buildAgentFixReport } from "@howa/ui/report.js";
+import type { AgentAdapter, AdapterTruthContract } from "@howa/adapters/types.js";
+import type { AgentRunResult, CostInfo, ModelInfo } from "@howa/types.js";
 
 async function tmpdir(prefix: string): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-local-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-local-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;
@@ -287,8 +287,8 @@ describe("local-model pack audit: empty, provider, timeout, fixture integrity, a
     const pack = getPack("local-model");
     for (const test of pack.tests) {
       const prompt = await test.prompt({
-        workspace: "/tmp/colosseum-local-audit",
-        fixtureRoot: "/tmp/colosseum-local-audit",
+        workspace: "/tmp/howa-local-audit",
+        fixtureRoot: "/tmp/howa-local-audit",
       } as never);
       expect(prompt).not.toMatch(/llama3-local|ollama|estimatedCostUsd|promptTokens|outputTokens/);
     }

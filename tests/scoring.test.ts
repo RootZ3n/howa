@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { aggregate, scoreCostEfficiency, scorePack } from "@colosseum/scoring/score.js";
-import { overallVerdict } from "@colosseum/scoring/verdict.js";
-import type { TestResult } from "@colosseum/packs/types.js";
+import { aggregate, scoreCostEfficiency, scorePack } from "@howa/scoring/score.js";
+import { overallVerdict } from "@howa/scoring/verdict.js";
+import type { TestResult } from "@howa/packs/types.js";
 
 const r = (verdict: TestResult["verdict"], severity: TestResult["severity"], score = verdict === "pass" ? 1 : 0): TestResult => ({
   testId: "t",

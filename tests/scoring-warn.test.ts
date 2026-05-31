@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { aggregate, scorePack } from "@colosseum/scoring/score.js";
-import { overallVerdict } from "@colosseum/scoring/verdict.js";
-import type { TestResult, TestCategory } from "@colosseum/packs/types.js";
+import { aggregate, scorePack } from "@howa/scoring/score.js";
+import { overallVerdict } from "@howa/scoring/verdict.js";
+import type { TestResult, TestCategory } from "@howa/packs/types.js";
 
 function r(
   verdict: TestResult["verdict"],

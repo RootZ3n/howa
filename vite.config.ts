@@ -7,11 +7,11 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      // `@colosseum/*` is the original alias and is preserved verbatim —
+      // `@howa/*` is the original alias and is preserved verbatim —
       // every existing import in src/ and tests/ uses it, and renaming the
       // alias would require churning every file with no functional gain.
       // The brand is Howa; the internal source path label is just a label.
-      "@colosseum": fileURLToPath(new URL("./src", import.meta.url)),
+      "@howa": fileURLToPath(new URL("./src", import.meta.url)),
       "@howa": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },

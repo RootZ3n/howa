@@ -217,7 +217,7 @@ export function createPtahAdapter(): AgentAdapter {
                 `/api/approvals/${approvalId}/respond`,
                 {
                   method: "POST",
-                  body: { decision: "denied", decidedBy: "colosseum-adapter" },
+                  body: { decision: "denied", decidedBy: "howa-adapter" },
                 },
               );
               approvalDenied = true;

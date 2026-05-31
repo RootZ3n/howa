@@ -32,7 +32,7 @@ export async function writeFakePtah(opts?: {
 }> {
   const dir = path.join(
     os.tmpdir(),
-    `colosseum-fake-ptah-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-fake-ptah-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(dir, { recursive: true });
   const scriptPath = path.join(dir, "fake-ptah.js");

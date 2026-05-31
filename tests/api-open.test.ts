@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import http from "node:http";
 import type { AddressInfo } from "node:net";
-import { buildApp } from "@colosseum/api/server.js";
-import { CANONICAL_CAPABILITIES } from "@colosseum/capabilities.js";
+import { buildApp } from "@howa/api/server.js";
+import { CANONICAL_CAPABILITIES } from "@howa/capabilities.js";
 
 let server: http.Server;
 let baseUrl: string;

@@ -2,18 +2,18 @@ import { describe, expect, it } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { getPack } from "@colosseum/packs/registry.js";
-import { renderReceipt } from "@colosseum/receipts/receipt.js";
-import { buildAgentFixReport } from "@colosseum/ui/report.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
-import type { AgentRunResult, ModelInfo } from "@colosseum/types.js";
-import type { TestContext } from "@colosseum/packs/types.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { getPack } from "@howa/packs/registry.js";
+import { renderReceipt } from "@howa/receipts/receipt.js";
+import { buildAgentFixReport } from "@howa/ui/report.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
+import type { AgentRunResult, ModelInfo } from "@howa/types.js";
+import type { TestContext } from "@howa/packs/types.js";
 
 async function tmpdir(prefix: string): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-safety-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-safety-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;

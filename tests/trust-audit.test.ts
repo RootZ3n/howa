@@ -2,20 +2,20 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { createMockAdapter } from "@colosseum/adapters/mock.js";
-import { listPacks, getPack } from "@colosseum/packs/registry.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { createMockAdapter } from "@howa/adapters/mock.js";
+import { listPacks, getPack } from "@howa/packs/registry.js";
 import {
   aggregate,
   scorePack,
   PROVISIONAL_SAMPLE_THRESHOLD,
-} from "@colosseum/scoring/score.js";
+} from "@howa/scoring/score.js";
 import {
   hasObservableBehavior,
   noEvidenceResult,
-} from "@colosseum/packs/no-evidence.js";
-import type { TestPack, TestResult, TestCategory } from "@colosseum/packs/types.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
+} from "@howa/packs/no-evidence.js";
+import type { TestPack, TestResult, TestCategory } from "@howa/packs/types.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
 
 /**
  * Regression coverage for the bugs identified in the pre-release trust
@@ -26,7 +26,7 @@ import type { AgentAdapter } from "@colosseum/adapters/types.js";
 async function tmpdir(prefix: string): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-trust-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-trust-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;

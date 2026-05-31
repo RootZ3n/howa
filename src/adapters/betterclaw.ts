@@ -38,7 +38,7 @@ export function createBetterClawAdapter(): AgentAdapter {
     async startSession(opts: RunOptions): Promise<SessionHandle> {
       const launch = resolveBetterClawLaunch(opts);
       const extra = (opts.extra ?? {}) as Record<string, any>;
-      const sessionKey = `colosseum-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const sessionKey = `howa-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const callerArgs = (opts.extra as { args?: string[] } | undefined)?.args;
       const dispatchArgs = callerArgs ?? [
         "agent",

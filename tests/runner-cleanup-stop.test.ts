@@ -2,17 +2,17 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { mergeArtifacts } from "@colosseum/runner/trial-runner.js";
-import { createMockAdapter } from "@colosseum/adapters/mock.js";
-import { getPack } from "@colosseum/packs/registry.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
-import type { TestPack, TestSpec } from "@colosseum/packs/types.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { mergeArtifacts } from "@howa/runner/trial-runner.js";
+import { createMockAdapter } from "@howa/adapters/mock.js";
+import { getPack } from "@howa/packs/registry.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
+import type { TestPack, TestSpec } from "@howa/packs/types.js";
 
 async function tmpdir(): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-cleanup-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-cleanup-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;

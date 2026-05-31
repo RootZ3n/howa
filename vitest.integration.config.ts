@@ -4,7 +4,7 @@ import { fileURLToPath, URL } from "node:url";
 export default defineConfig({
   resolve: {
     alias: {
-      "@colosseum": fileURLToPath(new URL("./src", import.meta.url)),
+      "@howa": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },
   test: {

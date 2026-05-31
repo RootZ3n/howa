@@ -2,17 +2,17 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial, detectInfrastructureFailure } from "@colosseum/runner/trial-runner.js";
-import { createMockAdapter } from "@colosseum/adapters/mock.js";
-import { listPacks, getPack } from "@colosseum/packs/registry.js";
-import { scorePack } from "@colosseum/scoring/score.js";
-import type { TestPack, TestResult, TestSpec, FailureType } from "@colosseum/packs/types.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
+import { runTrial, detectInfrastructureFailure } from "@howa/runner/trial-runner.js";
+import { createMockAdapter } from "@howa/adapters/mock.js";
+import { listPacks, getPack } from "@howa/packs/registry.js";
+import { scorePack } from "@howa/scoring/score.js";
+import type { TestPack, TestResult, TestSpec, FailureType } from "@howa/packs/types.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
 
 async function tmpdir(): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-failures-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-failures-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;
@@ -158,7 +158,7 @@ describe("failure_type taxonomy", () => {
 
 describe("adapter truth contract", () => {
   it("every registered adapter declares the four contract fields", async () => {
-    const { listAdapters } = await import("@colosseum/adapters/registry.js");
+    const { listAdapters } = await import("@howa/adapters/registry.js");
     for (const a of listAdapters()) {
       expect(typeof a.version).toBe("string");
       expect(a.version.length).toBeGreaterThan(0);
@@ -171,7 +171,7 @@ describe("adapter truth contract", () => {
   });
 
   it("CLI-wrapping adapters honestly admit unknown identity/cost", async () => {
-    const { getAdapter } = await import("@colosseum/adapters/registry.js");
+    const { getAdapter } = await import("@howa/adapters/registry.js");
     for (const id of ["aedis", "ptah", "openclaw", "hermes", "generic-cli"]) {
       const a = getAdapter(id);
       expect(a.truth.modelIdentity).toBe("unknown");
@@ -300,14 +300,14 @@ describe("infrastructure failure scoring exclusion", () => {
 });
 
 describe("version stamping + no fake cost/model values", () => {
-  it("trial summary carries colosseum, git, adapter, and pack versions", async () => {
+  it("trial summary carries howa, git, adapter, and pack versions", async () => {
     const stateRoot = await tmpdir();
     const summary = await runTrial({
       adapter: createMockAdapter(),
       packs: [getPack("local-model")],
       stateRoot,
     });
-    expect(summary.colosseumVersion).toBe("0.1.0");
+    expect(summary.howaVersion).toBe("0.1.0");
     expect(summary.gitCommit).toMatch(/^([a-f0-9]{6,}|unknown)$/);
     expect(summary.adapterVersion).toBe("0.1.0");
     expect(summary.packVersions["local-model"]).toBe("1.2.0");
@@ -328,7 +328,7 @@ describe("version stamping + no fake cost/model values", () => {
         adapterVersion: string;
         packVersion: string;
         packId: string;
-        colosseumVersion: string;
+        howaVersion: string;
         gitCommit: string;
         modelInfo: { model: string; provider: string; location: string };
         costInfo: { reported: boolean; estimatedCostUsd?: number };
@@ -338,7 +338,7 @@ describe("version stamping + no fake cost/model values", () => {
       // truthfulness pack bumped to 1.4.0 — artifact-content and
       // factual-answer assertions now carry explicit audit categories.
       expect(r.packVersion).toBe("1.4.0");
-      expect(r.colosseumVersion).toBe("0.1.0");
+      expect(r.howaVersion).toBe("0.1.0");
       // Mock declares its identity — never "unknown".
       expect(r.modelInfo.model).not.toBe("unknown");
       expect(r.modelInfo.provider).not.toBe("unknown");
@@ -356,7 +356,7 @@ describe("version stamping + no fake cost/model values", () => {
     // but tells us less about the CLI-wrapping path.
     const { writeFakeAedis } = await import("./_helpers/fake-aedis.js");
     const fake = await writeFakeAedis();
-    const { getAdapter } = await import("@colosseum/adapters/registry.js");
+    const { getAdapter } = await import("@howa/adapters/registry.js");
     const oldEnv = process.env.AEDIS_BIN;
     process.env.AEDIS_BIN = fake.aedisBin;
     try {

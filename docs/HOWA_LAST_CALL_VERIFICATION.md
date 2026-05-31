@@ -5,7 +5,7 @@ Date: 2026-05-23
 ## Git State
 
 - Branch: `master`
-- Baseline commit: `e35a046 colosseum: add CONTINUE_WITHOUT_CLAUDE.md`
+- Baseline commit: `e35a046 howa: add CONTINUE_WITHOUT_CLAUDE.md`
 - Dirty state found: untracked `.git-recovered/`
 - Classification: generated/recovery Git metadata, not source, docs, state, or release artifact.
 - Action: ignored with `.gitignore`; left on disk for operator recovery authority.
@@ -27,11 +27,11 @@ Date: 2026-05-23
 
 ## Service
 
-- Installed unit: `/etc/systemd/system/colosseum.service`
+- Installed unit: `/etc/systemd/system/howa.service`
 - User unit: none.
 - Start command: `npm run start` -> `node dist/api/server.js`
 - Bind: `127.0.0.1:18799`
-- State root: `/mnt/ai/colosseum/colosseum-state`
+- State root: `/mnt/ai/howa/howa-state`
 - Restart result: active/running.
 
 ## Endpoint Checks

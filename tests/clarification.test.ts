@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { detectClarification } from "@colosseum/packs/clarification.js";
+import { detectClarification } from "@howa/packs/clarification.js";
 
 describe("detectClarification — pattern coverage", () => {
   it("matches Aedis-style decline (the canonical case)", () => {

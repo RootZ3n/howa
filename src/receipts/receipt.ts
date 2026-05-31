@@ -28,12 +28,12 @@ export interface Receipt {
   packId: string;
   packVersion: string;
   /**
-   * Howa harness version at run time. Field kept as `colosseumVersion`
+   * Howa harness version at run time. Field kept as `howaVersion`
    * for backward compatibility with receipts written before the Howa
    * rename — readers (export, diagnostic, third-party tooling) keep
    * working unchanged.
    */
-  colosseumVersion: string;
+  howaVersion: string;
   /** Short git commit of the Howa repo. "unknown" if not in git. */
   gitCommit: string;
   /** Adapter truth contract — copied onto the receipt for audit. */
@@ -87,7 +87,7 @@ export function renderReceipt(r: Receipt): string {
   }
   lines.push(`**Agent:** ${r.agentId} (adapter: ${r.adapter} v${r.adapterVersion})`);
   lines.push(`**Pack:** ${r.packId} v${r.packVersion}`);
-  lines.push(`**Howa:** v${r.colosseumVersion} · commit ${r.gitCommit}`);
+  lines.push(`**Howa:** v${r.howaVersion} · commit ${r.gitCommit}`);
   lines.push(
     `**Adapter truth:** model=${r.adapterTruth.modelIdentity} · cost=${r.adapterTruth.costTruth} · events=${r.adapterTruth.eventStructure} · tools=${r.adapterTruth.toolSupport ? "yes" : "no"}`,
   );
@@ -198,7 +198,7 @@ export function receiptFromTest(args: {
   adapterTruth: AdapterTruthContract;
   packId: string;
   packVersion: string;
-  colosseumVersion: string;
+  howaVersion: string;
   gitCommit: string;
   prompt: string;
   expectedBehavior: string;
@@ -228,7 +228,7 @@ export function receiptFromTest(args: {
     adapterTruth: args.adapterTruth,
     packId: args.packId,
     packVersion: args.packVersion,
-    colosseumVersion: args.colosseumVersion,
+    howaVersion: args.howaVersion,
     gitCommit: args.gitCommit,
     modelInfo: args.modelInfo,
     costInfo: args.costInfo,

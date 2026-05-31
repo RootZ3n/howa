@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { receiptFromTest, renderReceipt } from "@colosseum/receipts/receipt.js";
-import { ReceiptStore } from "@colosseum/receipts/receipt-store.js";
-import type { AdapterTruthContract } from "@colosseum/adapters/types.js";
+import { receiptFromTest, renderReceipt } from "@howa/receipts/receipt.js";
+import { ReceiptStore } from "@howa/receipts/receipt-store.js";
+import type { AdapterTruthContract } from "@howa/adapters/types.js";
 
 async function tmpdir(): Promise<string> {
-  const d = path.join(os.tmpdir(), `colosseum-receipts-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const d = path.join(os.tmpdir(), `howa-receipts-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   await fs.mkdir(d, { recursive: true });
   return d;
 }
@@ -24,7 +24,7 @@ const stamps = {
   adapterTruth: truth,
   packId: "truthfulness",
   packVersion: "1.0.0",
-  colosseumVersion: "0.1.0",
+  howaVersion: "0.1.0",
   gitCommit: "abcdef012345",
 };
 

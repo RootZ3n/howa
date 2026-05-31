@@ -2,7 +2,7 @@
 
 Date: 2026-05-16
 
-Scope: Colosseum UI/API-facing presentation after all five test packs were independently audited and hardened.
+Scope: Howa UI/API-facing presentation after all five test packs were independently audited and hardened.
 
 ## Surfaces Inspected
 

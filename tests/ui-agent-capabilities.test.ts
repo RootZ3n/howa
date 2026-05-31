@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { CANONICAL_CAPABILITIES } from "@colosseum/capabilities.js";
+import { CANONICAL_CAPABILITIES } from "@howa/capabilities.js";
 
 describe("Agents UI capability matrix", () => {
   it("renders every card from the canonical capability list", async () => {

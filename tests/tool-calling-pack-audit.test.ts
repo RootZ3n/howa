@@ -2,20 +2,20 @@ import { describe, expect, it } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { getPack } from "@colosseum/packs/registry.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { getPack } from "@howa/packs/registry.js";
 import {
   detectRepeatLoops,
   hasValidToolCall,
   hasVerificationStep,
-} from "@colosseum/packs/tool-calling/index.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
-import type { AgentArtifact, AgentRunResult, ModelInfo } from "@colosseum/types.js";
+} from "@howa/packs/tool-calling/index.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
+import type { AgentArtifact, AgentRunResult, ModelInfo } from "@howa/types.js";
 
 async function tmpdir(prefix: string): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-tool-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-tool-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;

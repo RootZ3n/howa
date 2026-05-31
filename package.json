@@ -1,17 +1,17 @@
 {
-  "name": "colosseum",
+  "name": "howa",
   "version": "0.1.0",
-  "description": "Howa — Agent Proving Ground. Stop guessing if your agent works. Put it in the arena. (npm package name `colosseum` is preserved for v0.1 install compatibility.)",
+  "description": "Howa — Agent Proving Ground. Stop guessing if your agent works. Put it in the arena.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/RootZ3n/colosseum.git"
+    "url": "git+https://github.com/RootZ3n/howa.git"
   },
   "bugs": {
-    "url": "https://github.com/RootZ3n/colosseum/issues"
+    "url": "https://github.com/RootZ3n/howa/issues"
   },
-  "homepage": "https://github.com/RootZ3n/colosseum#readme",
+  "homepage": "https://github.com/RootZ3n/howa#readme",
   "files": [
     "dist",
     "docs",
@@ -22,7 +22,7 @@
     "SECURITY.md"
   ],
   "bin": {
-    "colosseum": "./dist/cli/index.js",
+    "howa": "./dist/cli/index.js",
     "howa": "./dist/cli/index.js"
   },
   "scripts": {

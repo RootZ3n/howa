@@ -2,16 +2,16 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { getPack } from "@colosseum/packs/registry.js";
-import { createMockAdapter } from "@colosseum/adapters/mock.js";
-import { getAdapter } from "@colosseum/adapters/registry.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { getPack } from "@howa/packs/registry.js";
+import { createMockAdapter } from "@howa/adapters/mock.js";
+import { getAdapter } from "@howa/adapters/registry.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
 
 async function tmpdir(): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-stam-obs-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-stam-obs-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;
@@ -178,7 +178,7 @@ describe("stamina.multi-step — observability is honest about adapter limits", 
   it("real Aedis-style adapter (unstructured) + valid answer → WARN, not FAIL", async () => {
     // Same shape as the real Aedis adapter — `truth.eventStructure` is
     // "unstructured" and the agent's response is just the CLI's stdout
-    // line. We verify Colosseum doesn't penalize the adapter for what
+    // line. We verify Howa doesn't penalize the adapter for what
     // it cannot observe.
     const adapter = fixedAnswerAdapterWithTruth(
       "Clarification needed: I couldn't identify a file to work on.",

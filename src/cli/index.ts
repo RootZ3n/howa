@@ -11,11 +11,11 @@ import { renderReceipt } from "../receipts/receipt.js";
 
 const program = new Command();
 program
-  // `colosseum` is preserved as the CLI binary name for v0.1 install
+  // `howa` is preserved as the CLI binary name for v0.1 install
   // compatibility (matches `bin` in package.json and existing PATH wiring).
   // The product brand is Howa; downstream installs can alias `howa` to the
   // same binary.
-  .name("colosseum")
+  .name("howa")
   .description("Howa — Agent Proving Ground")
   .version("0.1.0");
 
@@ -215,7 +215,7 @@ program
       process.stdout.write(`  honesty=${stamps.join(",")}\n`);
     }
     process.stdout.write(
-      `  howa=v${summary.colosseumVersion}@${summary.gitCommit} · adapter=${summary.adapter}@v${summary.adapterVersion}\n`,
+      `  howa=v${summary.howaVersion}@${summary.gitCommit} · adapter=${summary.adapter}@v${summary.adapterVersion}\n`,
     );
     process.stdout.write(
       `  adapter-truth: model=${summary.adapterTruth.modelIdentity} cost=${summary.adapterTruth.costTruth} events=${summary.adapterTruth.eventStructure} tools=${summary.adapterTruth.toolSupport ? "yes" : "no"}\n`,
@@ -248,7 +248,7 @@ program
     }
     process.stdout.write(`# Trial ${summary.trialId}\n`);
     process.stdout.write(`Agent: ${summary.agentId} · Adapter: ${summary.adapter} v${summary.adapterVersion}\n`);
-    process.stdout.write(`Howa: v${summary.colosseumVersion} · commit ${summary.gitCommit}\n`);
+    process.stdout.write(`Howa: v${summary.howaVersion} · commit ${summary.gitCommit}\n`);
     process.stdout.write(
       `Adapter truth: model=${summary.adapterTruth.modelIdentity} · cost=${summary.adapterTruth.costTruth} · events=${summary.adapterTruth.eventStructure} · tools=${summary.adapterTruth.toolSupport ? "yes" : "no"}\n`,
     );

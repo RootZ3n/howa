@@ -2,14 +2,14 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { getAdapter } from "@colosseum/adapters/registry.js";
-import type { TestPack } from "@colosseum/packs/types.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { getAdapter } from "@howa/adapters/registry.js";
+import type { TestPack } from "@howa/packs/types.js";
 
 async function tmpdir(): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-err-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-err-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;

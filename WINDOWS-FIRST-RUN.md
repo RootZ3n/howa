@@ -10,7 +10,7 @@ Build a Windows RC zip from a checkout:
 powershell -ExecutionPolicy Bypass -File scripts\package-windows-zip.ps1
 ```
 
-The zip is written to `release\colosseum-0.1.0-windows-rc.zip`. A tester can also clone the repo directly and run the same commands below.
+The zip is written to `release\howa-0.1.0-windows-rc.zip`. A tester can also clone the repo directly and run the same commands below.
 
 ## Prerequisites
 
@@ -66,7 +66,7 @@ The UI should load agent and pack data from the local API.
 
 ## Cleanup
 
-Stop the server with `Ctrl+C`, then delete `colosseum-state` and the extracted zip or checkout folder.
+Stop the server with `Ctrl+C`, then delete `howa-state` and the extracted zip or checkout folder.
 
 ## Known RC gaps
 

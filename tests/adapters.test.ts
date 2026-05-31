@@ -8,10 +8,10 @@ import {
   getAdapter,
   adapterIds,
   publicAdapterIds,
-} from "@colosseum/adapters/registry.js";
+} from "@howa/adapters/registry.js";
 
 async function tmpdir(): Promise<string> {
-  const d = path.join(os.tmpdir(), `colosseum-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+  const d = path.join(os.tmpdir(), `howa-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   await fs.mkdir(d, { recursive: true });
   return d;
 }
@@ -117,7 +117,7 @@ describe("mock adapter", () => {
     const ws = await tmpdir();
     const handle = await adapter.startSession({ workspace: ws });
     expect(handle.modelInfo.location).toBe("local");
-    expect(handle.modelInfo.provider).toBe("colosseum-mock");
+    expect(handle.modelInfo.provider).toBe("howa-mock");
     const cost = await adapter.getCostInfo(handle);
     expect(cost.reported).toBe(true);
     expect(cost.estimatedCostUsd).toBe(0);

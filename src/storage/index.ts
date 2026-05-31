@@ -7,7 +7,7 @@ import type { AdapterTruthContract } from "../adapters/types.js";
 /**
  * Filesystem layout for Howa state:
  *
- *   colosseum-state/                                 (historical directory
+ *   howa-state/                                 (historical directory
  *                                                   name — preserved so
  *                                                   existing trials,
  *                                                   receipts, and bundles
@@ -47,11 +47,11 @@ export interface TrialSummary {
 
   /**
    * Howa harness version at the time the trial ran. Field is named
-   * `colosseumVersion` for backward compatibility — receipts written
+   * `howaVersion` for backward compatibility — receipts written
    * before the Howa rename use this key and the diagnostic walks them
    * unchanged. New code should still read this field.
    */
-  colosseumVersion: string;
+  howaVersion: string;
   /** Short git commit of the Howa repo. "unknown" if not in git. */
   gitCommit: string;
   /** Adapter version (declared by the adapter itself). */
@@ -200,7 +200,7 @@ export class TrialStore {
 }
 
 /**
- * Default state directory. Stays `colosseum-state` for backward
+ * Default state directory. Stays `howa-state` for backward
  * compatibility — every historical trial, receipt, and bundle written
  * before the Howa rename lives under this name, and silently switching
  * the default would orphan that evidence. Operators on a fresh install
@@ -208,5 +208,5 @@ export class TrialStore {
  * `HOWA_STATE_ROOT`.
  */
 export function defaultStateRoot(): string {
-  return path.resolve(process.cwd(), "colosseum-state");
+  return path.resolve(process.cwd(), "howa-state");
 }

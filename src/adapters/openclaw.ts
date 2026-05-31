@@ -38,7 +38,7 @@ export function createOpenClawAdapter(): AgentAdapter {
     async startSession(opts: RunOptions): Promise<SessionHandle> {
       const launch = resolveOpenClawLaunch(opts);
       const extra = (opts.extra ?? {}) as Record<string, any>;
-      const sessionKey = `colosseum-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const sessionKey = `howa-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const callerArgs = (opts.extra as { args?: string[] } | undefined)?.args;
       const dispatchArgs = callerArgs ?? [
         "agent",
@@ -156,7 +156,7 @@ export function createOpenClawAdapter(): AgentAdapter {
       // ── Phase 3: Deep probe — actually try running a trivial prompt ──
       // This catches auth failures, missing API keys, model unavailability,
       // and other runtime issues that a CLI structure check can't detect.
-      const sessionKey = `colosseum-health-${Date.now()}`;
+      const sessionKey = `howa-health-${Date.now()}`;
       const deepProbe = spawnSync(
         launch.command,
         [...launch.args, "agent", "--session-id", sessionKey, "--message", "ping"],

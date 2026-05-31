@@ -9,7 +9,7 @@ import { defaultStateRoot, TrialStore } from "../storage/index.js";
 
 // HOWA_STATE_ROOT is the canonical env var (matches systemd unit + docs).
 // COLOSSEUM_STATE_ROOT / COLOSSEUM_STATE are accepted for backward compat
-// with v0.1 deployments installed before the Colosseum→Howa rename.
+// with v0.1 deployments installed before the Howa→Howa rename.
 const stateRoot =
   process.env.HOWA_STATE_ROOT ??
   process.env.COLOSSEUM_STATE_ROOT ??

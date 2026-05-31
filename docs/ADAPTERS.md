@@ -283,7 +283,7 @@ score (see `docs/SCORING.md`).
 
 Live delivery is available through the runner's `onEvent` callback and the API
 SSE endpoint `GET /api/trials/:trialId/events`. Completed trials are replayed
-from `colosseum-state/trial-events/<trialId>.json`.
+from `howa-state/trial-events/<trialId>.json`.
 
 ## Ptah wrapper recipe
 

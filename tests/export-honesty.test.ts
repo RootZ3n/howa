@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildAgentFixReport } from "@colosseum/ui/report.js";
-import type { Receipt, TrialSummary } from "@colosseum/ui/api.js";
+import { buildAgentFixReport } from "@howa/ui/report.js";
+import type { Receipt, TrialSummary } from "@howa/ui/api.js";
 
 /**
  * Audit coverage for the markdown export. The pre-release audit found that
@@ -140,7 +140,7 @@ describe("export honesty: stale receipts (Receipt not present)", () => {
 describe("export honesty: champion-eligibility logic", () => {
   it("isChampionEligible excludes mock, errored, and no-evidence trials", async () => {
     const { isChampionEligible } = await import(
-      "@colosseum/ui/components/ChampionBoard.js"
+      "@howa/ui/components/ChampionBoard.js"
     );
     expect(isChampionEligible(summary({ isMockTrial: true }))).toBe(false);
     expect(isChampionEligible(summary({ verdict: "error" }))).toBe(false);

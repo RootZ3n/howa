@@ -2,12 +2,12 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { computeDiff, snapshotWorkspace } from "@colosseum/runner/diff.js";
+import { computeDiff, snapshotWorkspace } from "@howa/runner/diff.js";
 
 async function tmpdir(): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-diff-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-diff-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;

@@ -123,7 +123,7 @@ export function buildAgentFixReport(trial: TrialSummary, receipts: Receipt[]): s
         lines.push(fence(limit(events.join("\n"))));
       }
       lines.push("");
-      lines.push(`Receipt path: colosseum-state/receipts/${trial.trialId}/${safeReceiptName(r.testId)}.json`);
+      lines.push(`Receipt path: howa-state/receipts/${trial.trialId}/${safeReceiptName(r.testId)}.json`);
       lines.push("");
     }
   }

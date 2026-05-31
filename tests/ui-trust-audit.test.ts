@@ -7,9 +7,9 @@ import {
   formatModelStatus,
   receiptBadges,
   trialVerdictCopy,
-} from "@colosseum/ui/trust-display.js";
-import { buildAgentFixReport } from "@colosseum/ui/report.js";
-import type { Receipt, TrialSummary } from "@colosseum/ui/api.js";
+} from "@howa/ui/trust-display.js";
+import { buildAgentFixReport } from "@howa/ui/report.js";
+import type { Receipt, TrialSummary } from "@howa/ui/api.js";
 
 function trial(extra: Partial<TrialSummary> = {}): TrialSummary {
   return {

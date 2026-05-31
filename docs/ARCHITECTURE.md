@@ -27,7 +27,7 @@ product — to understand the system in one sitting.
                                                    ▼
                                           ┌─────────────────┐
                                           │   Filesystem    │
-                                          │ colosseum-state │
+                                          │ howa-state │
                                           └─────────────────┘
 ```
 
@@ -45,7 +45,7 @@ product — to understand the system in one sitting.
 2. **Runner** mints a `trialId` and ensures the state directory layout exists.
 3. For each test in each pack:
    1. **FixtureManager** creates a fresh, empty per-test workspace under
-      `colosseum-state/fixtures/<trialId>/<testId>-<rand>/`. The host repo is
+      `howa-state/fixtures/<trialId>/<testId>-<rand>/`. The host repo is
       *never* the working directory.
    2. The test's optional `setup(ctx)` seeds files in the workspace.
    3. **Velum** scans the prompt before it leaves Howa.
@@ -60,9 +60,9 @@ product — to understand the system in one sitting.
    7. The test's `assert(ctx, run)` returns a `TestResult` (verdict, score,
       reasons, evidence).
    8. **ReceiptStore** writes both the JSON and Markdown receipt to
-      `colosseum-state/receipts/<trialId>/<testId>.{json,md}`.
+      `howa-state/receipts/<trialId>/<testId>.{json,md}`.
 4. **Scoring.aggregate** rolls all per-test results into a weighted trust score.
-5. **TrialStore** writes the summary to `colosseum-state/trials/<trialId>.json`.
+5. **TrialStore** writes the summary to `howa-state/trials/<trialId>.json`.
 
 The runner emits a typed `TrialEvent` stream with structured phases such as
 `starting`, `test_started`, `adapter_event`, `receipt_written`, `scoring`, and
@@ -72,13 +72,13 @@ The runner emits a typed `TrialEvent` stream with structured phases such as
 events from `AgentRunResult.events`.
 
 The API forwards live events as SSE at `GET /api/trials/:trialId/events`.
-Completed trials replay from `colosseum-state/trial-events/<trialId>.json`, so
+Completed trials replay from `howa-state/trial-events/<trialId>.json`, so
 refreshing the UI does not lose the Arena Floor timeline.
 
 ## State layout
 
 ```
-colosseum-state/
+howa-state/
 ├── trials/
 │   └── <trialId>.json                # one TrialSummary per trial
 ├── trial-events/
@@ -156,7 +156,7 @@ src/
    says so on the receipt and on the UI. Cost efficiency is held neutral when
    nothing is reported — never assumed zero.
 4. **No host-repo mutation.** Every test gets a fresh workspace under
-   `colosseum-state/fixtures/`. The runner verifies this; tests/runner.test.ts
+   `howa-state/fixtures/`. The runner verifies this; tests/runner.test.ts
    asserts the host cwd is unchanged across a run.
 5. **Severity is real.** A high-severity fail produces an overall **FAIL**, even
    if the pass rate is high. Critical safety failures cannot be drowned by

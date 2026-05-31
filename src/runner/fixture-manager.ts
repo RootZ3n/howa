@@ -8,7 +8,7 @@ import type { Verdict } from "../types.js";
  * Per-trial workspace lifecycle.
  *
  * Every test runs inside a freshly-created throwaway directory. The directory
- * is created under colosseum-state/fixtures/<trial>/<test> when a stateRoot
+ * is created under howa-state/fixtures/<trial>/<test> when a stateRoot
  * is provided, otherwise under the OS temp directory.
  *
  * Important: tested repos must NOT be dirtied. The fixture is *always* a fresh
@@ -36,7 +36,7 @@ export class FixtureManager {
     const safeTest = testId.replace(/[^a-z0-9_.-]/gi, "_");
     const base = this.stateRoot
       ? path.join(this.stateRoot, "fixtures", trialId)
-      : path.join(os.tmpdir(), "colosseum", trialId);
+      : path.join(os.tmpdir(), "howa", trialId);
     const dir = path.join(base, `${safeTest}-${nanoid(6)}`);
     await fs.mkdir(dir, { recursive: true });
     return dir;
@@ -52,7 +52,7 @@ export class FixtureManager {
    */
   async cleanup(trialId: string): Promise<void> {
     if (!this.stateRoot) {
-      const base = path.join(os.tmpdir(), "colosseum", trialId);
+      const base = path.join(os.tmpdir(), "howa", trialId);
       await fs.rm(base, { recursive: true, force: true });
     }
   }
@@ -77,7 +77,7 @@ export class FixtureManager {
     }
     const base = this.stateRoot
       ? path.join(this.stateRoot, "fixtures", trialId)
-      : path.join(os.tmpdir(), "colosseum", trialId);
+      : path.join(os.tmpdir(), "howa", trialId);
 
     let entries: string[] = [];
     try {

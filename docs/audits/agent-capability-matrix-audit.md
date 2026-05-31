@@ -60,7 +60,7 @@ Current evidence sources:
 - `BLOCKED_BY_CONFIG`: adapter claims support, but the latest relevant trial could
   not run because setup/configuration failed.
 - `NOT_TESTED`: reserved for explicit probe/test scheduling where no result exists.
-- `UNKNOWN`: Colosseum has neither a declaration nor evidence.
+- `UNKNOWN`: Howa has neither a declaration nor evidence.
 
 ## Capability Test Coverage In Packs
 

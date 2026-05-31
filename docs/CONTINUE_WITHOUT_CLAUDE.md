@@ -4,7 +4,7 @@
 
 Howa is the lab's model-evaluation arena. Runs trials (tool-calling,
 verdict-ui, harness scenarios) and produces verdicts you can trust. Tasks
-live in `tasks/`, runs in `colosseum-state/`.
+live in `tasks/`, runs in `howa-state/`.
 
 ## Common commands
 
@@ -36,7 +36,7 @@ npm run audit:release   # npm audit (moderate+)
 git log --oneline -5
 git revert HEAD
 # Or, from a packaged release:
-unzip colosseum-windows-*.zip  # scripts/package-windows-zip.ps1
+unzip howa-windows-*.zip  # scripts/package-windows-zip.ps1
 ```
 
 ## Prompts for smaller models

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { countMultiStepIndicators } from "@colosseum/packs/stamina/index.js";
+import { countMultiStepIndicators } from "@howa/packs/stamina/index.js";
 
 function ev(kind: string, text?: string) {
   return { ts: Date.now(), kind, text };

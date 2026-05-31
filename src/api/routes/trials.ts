@@ -136,7 +136,7 @@ export function trialsRouter(stateRoot: string): Router {
         passCount: 0,
         failCount: 0,
         velumDecision: "warn",
-        colosseumVersion: HOWA_VERSION,
+        howaVersion: HOWA_VERSION,
         gitCommit: getGitCommit(),
         adapterVersion: "unknown",
         packVersions: Object.fromEntries(body.packs.map((p) => [p, "unknown"])),

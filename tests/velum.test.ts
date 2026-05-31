@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { scan, combine } from "@colosseum/velum/guard.js";
-import { findSecrets, redact } from "@colosseum/velum/redaction.js";
+import { scan, combine } from "@howa/velum/guard.js";
+import { findSecrets, redact } from "@howa/velum/redaction.js";
 
 describe("Velum redaction", () => {
   it("finds and redacts an Anthropic API key", () => {

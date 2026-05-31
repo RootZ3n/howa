@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { scan } from "@colosseum/velum/guard.js";
+import { scan } from "@howa/velum/guard.js";
 
 describe("Velum: destructive git escalations", () => {
   it("force-push to main is fail-test (was warn before audit)", () => {

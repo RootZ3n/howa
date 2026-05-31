@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPack, listPacks, packIds } from "@colosseum/packs/registry.js";
+import { getPack, listPacks, packIds } from "@howa/packs/registry.js";
 
 describe("test pack registry", () => {
   it("registers all seven packs", () => {

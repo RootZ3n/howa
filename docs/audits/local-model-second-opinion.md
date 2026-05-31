@@ -76,7 +76,7 @@ are handled correctly. One inherent design limitation noted (adapter self-attest
 - **Why it matters:** A dishonest adapter could set `location: "local"` while routing
   to a cloud endpoint. The pack has no independent way to verify this — it relies on
   the adapter truth contract and cost signals as weak secondary checks.
-- **Risk:** LOW — this is inherent to the adapter trust model. Colosseum is explicit
+- **Risk:** LOW — this is inherent to the adapter trust model. Howa is explicit
   that the adapter's `truth` contract is a promise, and the operator override system
   lets humans vouch for adapters they control. The cost check catches the common case
   (cloud APIs charge money).

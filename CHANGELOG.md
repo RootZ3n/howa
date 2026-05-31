@@ -1,24 +1,24 @@
 # Changelog
 
-All notable changes to Howa (formerly Colosseum) will be documented in this file.
+All notable changes to Howa (formerly Howa) will be documented in this file.
 
-## Unreleased — Colosseum → Howa rename
+## Unreleased — Howa → Howa rename
 
-- Rebranded the proving ground from "Colosseum" to "Howa". The runtime
+- Rebranded the proving ground from "Howa" to "Howa". The runtime
   contract is preserved: receipts and trial summaries still serialize
-  `colosseumVersion` (and the `colosseum-mock` provider stamp on
-  receipts), the default state directory remains `colosseum-state/` for
-  trial continuity with v0.1 installs, and the `colosseum` CLI bin name
+  `howaVersion` (and the `howa-mock` provider stamp on
+  receipts), the default state directory remains `howa-state/` for
+  trial continuity with v0.1 installs, and the `howa` CLI bin name
   is kept (a new `howa` bin alias is added).
 - Environment variables follow the same pattern: `HOWA_PORT`,
   `HOWA_HOST`, `HOWA_STATE_ROOT`, `HOWA_LAB_ADAPTERS`,
   `HOWA_CONTEXT_STAMINA` are now canonical. The matching
   `COLOSSEUM_*` names are still honored as fallbacks so existing
   deployments and systemd units do not need to change.
-- TypeScript path alias `@colosseum/*` is preserved verbatim; `@howa/*`
+- TypeScript path alias `@howa/*` is preserved verbatim; `@howa/*`
   is added as a parallel alias for new code.
-- The historical Roman Colosseum references inside the truthfulness
-  pack ("What year did the Colosseum open?") are intentionally
+- The historical Roman Howa references inside the truthfulness
+  pack ("What year did the Howa open?") are intentionally
   unchanged — they reference the Roman landmark, not the project.
 
 ## Unreleased — release-hardening pass (no loose ends)
@@ -56,7 +56,7 @@ All notable changes to Howa (formerly Colosseum) will be documented in this file
 - Added `tests/release-hardening.test.ts` (25 tests) covering operator
   overrides end-to-end, paraphrase-leak fixtures (positive + negative),
   no-op containment, and historical-schema exclusion.
-- Hardened `scripts/colosseum-diagnostic.mjs`: now reports
+- Hardened `scripts/howa-diagnostic.mjs`: now reports
   unknown-model/unknown-cost/historical/no-op-expected counts and
   Champion-Board / Best-Value exclusion totals, runs a self-test of
   `detectInstructionLeak` against known positive + negative fixtures,
@@ -100,7 +100,7 @@ All notable changes to Howa (formerly Colosseum) will be documented in this file
 - Preflight (adapter setup_failed) receipts now correctly mark
   `repoDiffStatus="unavailable"` instead of letting the renderer default
   to "unchanged."
-- Added `scripts/colosseum-diagnostic.mjs` — an audit script that walks
+- Added `scripts/howa-diagnostic.mjs` — an audit script that walks
   the state directory and reports pack/adapter/receipt/honesty signals,
   plus a "suspicious score floor" check that would fire if the cost-or-
   silent-agent inflation regressed. Exits non-zero on detected concerns.
@@ -132,5 +132,5 @@ All notable changes to Howa (formerly Colosseum) will be documented in this file
   do not pass just because they returned quickly.
 - Upgraded Vite/Vitest dev tooling so the documented release audit gate passes.
 - Added public-release documentation, license, issue templates, and security notes.
-- Documented security limitations: Colosseum provides evidence, not sandboxing,
+- Documented security limitations: Howa provides evidence, not sandboxing,
   complete DLP, network egress enforcement, or security certification.

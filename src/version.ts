@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 export const HOWA_VERSION = "0.1.0";
 
 /**
- * Back-compat alias. Receipts and trial summaries persist a `colosseumVersion`
+ * Back-compat alias. Receipts and trial summaries persist a `howaVersion`
  * field; downstream code that still imports COLOSSEUM_VERSION keeps working.
  */
 export const COLOSSEUM_VERSION = HOWA_VERSION;

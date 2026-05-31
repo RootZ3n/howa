@@ -3,9 +3,9 @@
 > **Stop guessing if your agent works. Put it in the arena.**
 
 > Howa is the proving ground formerly known as Colosseum. The runtime
-> contract is preserved: receipts, trial bundles, the `colosseum-state/`
-> directory, and the `colosseumVersion` schema field are all kept
-> verbatim so v0.1 evidence remains valid and comparable. The `colosseum`
+> contract is preserved: receipts, trial bundles, the `howa-state/`
+> directory, and the `howaVersion` schema field are all kept
+> verbatim so v0.1 evidence remains valid and comparable. The `howa`
 > CLI and npm package name keep working; a `howa` bin alias has been
 > added.
 
@@ -105,7 +105,7 @@ every place where a trust number could be misread. The rules are:
   `modelIdentity=unknown` and `costTruth=unknown`. Operators can attribute a
   trial themselves with:
 
-      colosseum run --agent aedis \
+      howa run --agent aedis \
         --model claude-sonnet-4-6 --provider anthropic \
         --cost-mode estimated --cost-source "client-side tokenizer math"
 
@@ -127,7 +127,7 @@ every place where a trust number could be misread. The rules are:
   prompt" still pass; paraphrased reveals like "I was instructed to act as
   a helpful assistant" fail.
 
-Run `node scripts/colosseum-diagnostic.mjs` after any trial corpus change.
+Run `node scripts/howa-diagnostic.mjs` after any trial corpus change.
 It exits non-zero if any of these guards regress.
 
 ---
@@ -135,7 +135,7 @@ It exits non-zero if any of these guards regress.
 ## What the arena looks like
 
 The Howa UI is intentionally **not** the look of any other product. Inspired
-by the Roman Colosseum, the visual language is:
+by the Roman Howa, the visual language is:
 
 - **Dark stone** background with two warm radial torch glows in the upper corners
 - **Marble cards** for verdict surfaces, with subtle veining
@@ -162,8 +162,8 @@ or `npx` package yet.
 ## Install / Setup — Linux, macOS, WSL2
 
 ```bash
-git clone https://github.com/RootZ3n/colosseum.git
-cd colosseum
+git clone https://github.com/RootZ3n/howa.git
+cd howa
 npm ci
 npm run build
 npm run smoke
@@ -172,8 +172,8 @@ npm run smoke
 ## Install / Setup — Windows PowerShell
 
 ```powershell
-git clone https://github.com/RootZ3n/colosseum.git
-cd colosseum
+git clone https://github.com/RootZ3n/howa.git
+cd howa
 npm ci
 npm run build
 npm run smoke
@@ -278,13 +278,13 @@ AEDIS_BIN=/usr/local/bin/aedis npm run cli -- run --agent aedis --pack truthfuln
 For an arbitrary command-shaped agent that does not have a dedicated adapter yet,
 use `generic-cli` with `extra.command` from the API or add a thin adapter wrapper.
 
-Receipts land under `colosseum-state/receipts/<trialId>/` as paired `.json` +
+Receipts land under `howa-state/receipts/<trialId>/` as paired `.json` +
 `.md` files. Each one carries the prompt, the agent stdout/stderr (redacted),
 the model/cost identity (truthful, including `unknown`), the assertion's
 PASS/FAIL reason, the captured artifacts, and a unified-diff summary of the
 agent-induced workspace changes.
 
-State lives under `./colosseum-state/` (override with `--state` or
+State lives under `./howa-state/` (override with `--state` or
 `COLOSSEUM_STATE`). Do not point `COLOSSEUM_STATE_ROOT` or `--state` at an
 important directory; Howa may remove per-test fixture workspaces according
 to the cleanup policy.
@@ -326,14 +326,14 @@ consistently.
 | PowerShell cannot find `npm` or `node` | Reopen PowerShell after installing Node, then check `node --version` and `npm --version`. |
 | PowerShell blocks scripts | The npm commands above run Node scripts directly. If your environment blocks npm shims, use a normal PowerShell profile or WSL2. |
 | Missing external agent binary | Start with `npm run smoke`; external adapters require their own binaries or services. Missing binaries produce an adapter setup `ERROR` receipt. |
-| Where are receipts? | Trial summaries and receipts are written under `./colosseum-state/` by default. The smoke script uses a safe temporary state directory and prints it. |
+| Where are receipts? | Trial summaries and receipts are written under `./howa-state/` by default. The smoke script uses a safe temporary state directory and prints it. |
 
 ---
 
 ## Repo structure
 
 ```
-colosseum/
+howa/
 ├── src/
 │   ├── adapters/      # AgentAdapter contract and implementations
 │   ├── runner/        # Trial orchestration, fixtures, artifact collection
@@ -341,7 +341,7 @@ colosseum/
 │   ├── scoring/       # Weighted scoring + verdict roll-up
 │   ├── receipts/      # JSON + Markdown receipts and the receipt store
 │   ├── velum/         # Prompt-injection / secret guard
-│   ├── cli/           # `colosseum` command-line entry
+│   ├── cli/           # `howa` command-line entry
 │   ├── ui/            # Vite + React arena UI
 │   └── api/           # Express HTTP API
 ├── tests/             # Vitest suites

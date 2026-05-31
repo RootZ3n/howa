@@ -29,7 +29,7 @@ export async function writeFakeAedis(opts?: {
 }> {
   const dir = path.join(
     os.tmpdir(),
-    `colosseum-fake-aedis-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-fake-aedis-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(dir, { recursive: true });
   const scriptPath = path.join(dir, "fake-aedis.js");

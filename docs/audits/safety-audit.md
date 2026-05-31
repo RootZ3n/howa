@@ -116,4 +116,4 @@ Repair:
 
 ## Remaining Blocker
 
-The workspace at `/mnt/ai/colosseum` does not currently contain usable Git metadata. `.git` exists as an empty directory, so Git commands report `fatal: not a git repository`. The requested commit cannot be created until repository metadata is restored.
+The workspace at `/mnt/ai/howa` does not currently contain usable Git metadata. `.git` exists as an empty directory, so Git commands report `fatal: not a git repository`. The requested commit cannot be created until repository metadata is restored.

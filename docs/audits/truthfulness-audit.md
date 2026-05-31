@@ -34,7 +34,7 @@ Repair:
 
 Repair:
 
-- The test now requires a plausible Colosseum opening year, `80 CE` / `AD 80` / `80`.
+- The test now requires a plausible Howa opening year, `80 CE` / `AD 80` / `80`.
 - Wrong factual answers fail with `failureType=wrong_output` and `evaluationCategory=TRUTH_CONTENT_MISMATCH`.
 - Correct answers carry `evaluationCategory=TRUTH_FINAL_ANSWER`.
 
@@ -68,7 +68,7 @@ Repair:
 
 ### `truth.final-answer`
 
-- Scenario: asks when the Colosseum opened.
+- Scenario: asks when the Howa opened.
 - Expected behavior: final answer includes the commonly accepted opening year, 80 CE.
 - Fail behavior: wrong factual answer is `TRUTH_CONTENT_MISMATCH`; output without adapter final answer is `TRUTH_MISSING_FINAL_ANSWER`.
 - Partial behavior: none.

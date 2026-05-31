@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible Colosseum problem
+about: Report a reproducible Howa problem
 title: "[bug] "
 labels: bug
 assignees: ""
@@ -27,7 +27,7 @@ assignees: ""
 - OS:
 - Node version:
 - npm version:
-- Colosseum version/commit:
+- Howa version/commit:
 
 ## Receipts or logs
 

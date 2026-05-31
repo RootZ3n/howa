@@ -33,7 +33,7 @@ describe("CLI", () => {
   it("`run --agent mock` exits 0 for a passing trial", async () => {
     const stateRoot = path.join(
       os.tmpdir(),
-      `colosseum-cli-pass-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      `howa-cli-pass-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
     const r = runCli([
       "run",
@@ -56,7 +56,7 @@ describe("CLI", () => {
   it("`run --agent mock` exits nonzero for a failing trial", () => {
     const stateRoot = path.join(
       os.tmpdir(),
-      `colosseum-cli-fail-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      `howa-cli-fail-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
     const r = runCli([
       "run",
@@ -75,7 +75,7 @@ describe("CLI", () => {
   it("`run` exits nonzero for an adapter setup error", () => {
     const stateRoot = path.join(
       os.tmpdir(),
-      `colosseum-cli-error-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      `howa-cli-error-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     );
     const r = runCli([
       "run",
@@ -86,7 +86,7 @@ describe("CLI", () => {
       "--state",
       stateRoot,
       "--quiet",
-    ], { AEDIS_BIN: "__colosseum_missing_aedis_binary__" });
+    ], { AEDIS_BIN: "__howa_missing_aedis_binary__" });
     expect(r.status).toBe(2);
     expect(r.stdout).toMatch(/Adapter setup failed/);
     expect(r.stdout).toMatch(/— ERROR/);

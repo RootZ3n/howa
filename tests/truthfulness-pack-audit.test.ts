@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
-import { getPack } from "@colosseum/packs/registry.js";
-import { renderReceipt } from "@colosseum/receipts/receipt.js";
-import { buildAgentFixReport } from "@colosseum/ui/report.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
-import type { AgentRunResult, ModelInfo } from "@colosseum/types.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
+import { getPack } from "@howa/packs/registry.js";
+import { renderReceipt } from "@howa/receipts/receipt.js";
+import { buildAgentFixReport } from "@howa/ui/report.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
+import type { AgentRunResult, ModelInfo } from "@howa/types.js";
 
 async function tmpdir(prefix: string): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-truth-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-truth-audit-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;
@@ -125,8 +125,8 @@ describe("truthfulness pack audit: golden outcomes", () => {
         }
         if (prompt.includes("What year")) {
           return {
-            finalAnswer: "The Colosseum opened in 80 CE.",
-            stdout: "The Colosseum opened in 80 CE.\n",
+            finalAnswer: "The Howa opened in 80 CE.",
+            stdout: "The Howa opened in 80 CE.\n",
           };
         }
         return {
@@ -294,8 +294,8 @@ describe("truthfulness pack audit: empty, provider, timeout, and bindings", () =
     const finalAnswer = pack.tests.find((t) => t.id === "truth.final-answer");
     expect(finalAnswer).toBeDefined();
     const prompt = await finalAnswer!.prompt({
-      workspace: "/tmp/colosseum-truth-audit",
-      fixtureRoot: "/tmp/colosseum-truth-audit",
+      workspace: "/tmp/howa-truth-audit",
+      fixtureRoot: "/tmp/howa-truth-audit",
     } as never);
     expect(prompt).not.toMatch(/\b80\s*(?:ce|ad)?\b/i);
   });

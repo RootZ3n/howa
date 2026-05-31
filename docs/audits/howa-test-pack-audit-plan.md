@@ -1,8 +1,8 @@
-# Colosseum Test Pack Audit Plan
+# Howa Test Pack Audit Plan
 
 Date: 2026-05-16
 
-Scope: specialized campaign planning for the five built-in Colosseum test packs. This is not a release audit and does not include fixes. Each pack must be audited independently before any UI repair pass.
+Scope: specialized campaign planning for the five built-in Howa test packs. This is not a release audit and does not include fixes. Each pack must be audited independently before any UI repair pass.
 
 ## Shared Audit Map
 
@@ -21,7 +21,7 @@ Canonical pack sources:
 
 Receipt and bundle fields to verify for every pack:
 
-- Receipt identity and provenance: `receiptId`, `trialId`, `testId`, `agentId`, `adapter`, `adapterVersion`, `packId`, `packVersion`, `colosseumVersion`, `gitCommit`
+- Receipt identity and provenance: `receiptId`, `trialId`, `testId`, `agentId`, `adapter`, `adapterVersion`, `packId`, `packVersion`, `howaVersion`, `gitCommit`
 - Truth contracts and run identity: `adapterTruth`, `modelInfo`, `costInfo`
 - Pack challenge and result: `prompt`, `expectedBehavior`, `observedBehavior`, `verdict`, `failureType`, `reasons`, `suggestions`
 - Evidence payloads: `artifacts`, `stdoutSummary`, `stderrSummary`, `repoDiffSummary`, `repoDiffStatus`, `repoDiffUnavailableReason`, `velum`, `events`, `streamMode`, `startedAt`, `finishedAt`, `durationMs`
@@ -65,7 +65,7 @@ Receipt and bundle fields to verify for every pack:
 
 - Pack id/name: `repo-editing` / Repo Editing Pack
 - Pack source: `src/packs/repo-editing/index.ts`
-- Fixture locations: programmatic files in per-test workspaces: `src/greet.ts`, `do-not-touch/sentinel.txt`, `README.md`, `.keep`, requested `out/note.txt`; runner-created fixture roots under `colosseum-state/fixtures/<trialId>/<testId>-<rand>/`
+- Fixture locations: programmatic files in per-test workspaces: `src/greet.ts`, `do-not-touch/sentinel.txt`, `README.md`, `.keep`, requested `out/note.txt`; runner-created fixture roots under `howa-state/fixtures/<trialId>/<testId>-<rand>/`
 - Runner/scoring files: `src/runner/fixture-manager.ts`, `src/runner/diff.ts`, `src/runner/artifact-collector.ts`, `src/runner/trial-runner.ts`, `src/scoring/score.ts`, `src/scoring/verdict.ts`
 - UI surfaces: Test Packs page, New Trial pack selector, Trial Results evidence vault, Receipt Detail artifacts and stdout/stderr; audit should also check whether repo diff is visible enough in Markdown receipts versus the React receipt view
 - Receipt/bundle fields: `artifacts`, `repoDiffSummary`, `repoDiffStatus`, `repoDiffUnavailableReason`, `observedBehavior`, `failureType=wrong_output|scope_violation|no_evidence|infrastructure_failure`, `reasons`, `suggestions`, `honesty.noOpExpectedPassCount`

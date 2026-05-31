@@ -224,7 +224,7 @@ describe("ptah-wrapper.sh — submit→poll→print", () => {
     expect(r.status).toBe(0);
     // The wrapper passed the prompt as data, never as shell-evaled text.
     expect(fake!.state.lastInput).toBe(prompt);
-    // Final answer is surfaced for Colosseum's finalAnswer extractor.
+    // Final answer is surfaced for Howa's finalAnswer extractor.
     expect(r.stdout).toMatch(/Ptah finished — wrote \/tmp\/answer with result 7/);
     expect(r.stdout).toMatch(/receipt status: success/);
     // Step summary is included for stamina-style multi-step evidence.
@@ -261,7 +261,7 @@ describe("ptah-wrapper.sh — submit→poll→print", () => {
         PTAH_WRAPPER_TIMEOUT_SECONDS: "1",
       });
       expect(r.status).toBe(124);
-      // Honest disclosure surfaces on BOTH streams so Colosseum's
+      // Honest disclosure surfaces on BOTH streams so Howa's
       // generic-cli (which scrapes finalAnswer from stdout) and
       // operators tailing stderr both see "the task did not finish".
       expect(r.stderr).toMatch(/did not produce a receipt within 1s/);

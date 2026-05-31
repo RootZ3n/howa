@@ -2,21 +2,21 @@ import { describe, it, expect } from "vitest";
 import os from "node:os";
 import path from "node:path";
 import { promises as fs } from "node:fs";
-import { runTrial } from "@colosseum/runner/trial-runner.js";
+import { runTrial } from "@howa/runner/trial-runner.js";
 import {
   mergeModelInfoWithOperator,
   mergeCostInfoWithOperator,
-} from "@colosseum/runner/trial-runner.js";
-import { createMockAdapter } from "@colosseum/adapters/mock.js";
-import { listPacks, getPack } from "@colosseum/packs/registry.js";
+} from "@howa/runner/trial-runner.js";
+import { createMockAdapter } from "@howa/adapters/mock.js";
+import { listPacks, getPack } from "@howa/packs/registry.js";
 import {
   resolveEffectiveTruth,
   operatorOverridesFrom,
   operatorCostSeed,
-} from "@colosseum/adapters/truth-resolver.js";
-import { detectInstructionLeak } from "@colosseum/velum/instruction-leak.js";
-import type { AgentAdapter } from "@colosseum/adapters/types.js";
-import type { TestPack, TestSpec } from "@colosseum/packs/types.js";
+} from "@howa/adapters/truth-resolver.js";
+import { detectInstructionLeak } from "@howa/velum/instruction-leak.js";
+import type { AgentAdapter } from "@howa/adapters/types.js";
+import type { TestPack, TestSpec } from "@howa/packs/types.js";
 
 /**
  * Regression coverage for the release-hardening pass:
@@ -29,7 +29,7 @@ import type { TestPack, TestSpec } from "@colosseum/packs/types.js";
 async function tmpdir(prefix: string): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `colosseum-hard-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-hard-${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;
@@ -217,7 +217,7 @@ describe("operator overrides: end-to-end propagation", () => {
 describe("operator overrides: best-value ranking eligibility", () => {
   it("isBestValueEligible excludes COST_UNKNOWN trials and accepts COST_REPORTED ones", async () => {
     const { isBestValueEligible } = await import(
-      "@colosseum/ui/components/ChampionBoard.js"
+      "@howa/ui/components/ChampionBoard.js"
     );
     const baseFn = (extra: Record<string, unknown> = {}) =>
       ({
@@ -253,7 +253,7 @@ describe("operator overrides: best-value ranking eligibility", () => {
         passCount: 8,
         failCount: 0,
         velumDecision: "allow" as const,
-        colosseumVersion: "0.1.0",
+        howaVersion: "0.1.0",
         gitCommit: "deadbeef",
         adapterVersion: "0.1.0",
         packVersions: { safety: "1.5.0" },
@@ -358,7 +358,7 @@ describe("velum paraphrase leak detection", () => {
   it("does NOT flag a clean answer with no instruction-leak cues", () => {
     expect(
       detectInstructionLeak(
-        "The Roman Colosseum was inaugurated in 80 AD under emperor Titus.",
+        "The Roman Howa was inaugurated in 80 AD under emperor Titus.",
       ).leaked,
     ).toBe(false);
   });
@@ -432,7 +432,7 @@ describe("no-op containment: repo.clean-on-failure is the only no-op-expected te
 describe("schema-v1 historical trial handling", () => {
   it("HISTORICAL_SCHEMA chip fires when schemaVersion is missing or < 2", async () => {
     const { honestyChipsFor, isHistoricalSchema } = await import(
-      "@colosseum/ui/components/HonestyChips.js"
+      "@howa/ui/components/HonestyChips.js"
     );
     const t = {
       trialId: "old",
@@ -448,7 +448,7 @@ describe("schema-v1 historical trial handling", () => {
       passCount: 1,
       failCount: 0,
       velumDecision: "allow" as const,
-      colosseumVersion: "0.1.0",
+      howaVersion: "0.1.0",
       gitCommit: "x",
       adapterVersion: "0.1.0",
       packVersions: {},
@@ -465,7 +465,7 @@ describe("schema-v1 historical trial handling", () => {
 
   it("schema-v1 trial is NOT champion-eligible by default; --include-historical opt-in restores it", async () => {
     const { isChampionEligible } = await import(
-      "@colosseum/ui/components/ChampionBoard.js"
+      "@howa/ui/components/ChampionBoard.js"
     );
     const t = {
       trialId: "old",
@@ -481,7 +481,7 @@ describe("schema-v1 historical trial handling", () => {
       passCount: 1,
       failCount: 0,
       velumDecision: "allow" as const,
-      colosseumVersion: "0.1.0",
+      howaVersion: "0.1.0",
       gitCommit: "x",
       adapterVersion: "0.1.0",
       packVersions: {},

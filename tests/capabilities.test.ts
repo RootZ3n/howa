@@ -3,10 +3,10 @@ import {
   buildCapabilityMatrix,
   CANONICAL_CAPABILITIES,
   type CapabilityKey,
-} from "@colosseum/capabilities.js";
-import { adapterIds, getAdapter } from "@colosseum/adapters/registry.js";
-import type { Receipt } from "@colosseum/receipts/receipt.js";
-import type { TrialSummary } from "@colosseum/storage/index.js";
+} from "@howa/capabilities.js";
+import { adapterIds, getAdapter } from "@howa/adapters/registry.js";
+import type { Receipt } from "@howa/receipts/receipt.js";
+import type { TrialSummary } from "@howa/storage/index.js";
 
 function trial(extra: Partial<TrialSummary> = {}): TrialSummary {
   return {
@@ -38,7 +38,7 @@ function trial(extra: Partial<TrialSummary> = {}): TrialSummary {
     passCount: 1,
     failCount: 0,
     velumDecision: "allow",
-    colosseumVersion: "test",
+    howaVersion: "test",
     gitCommit: "test",
     adapterVersion: "test",
     packVersions: { "repo-editing": "test" },
@@ -68,11 +68,11 @@ function receipt(extra: Partial<Receipt> = {}): Receipt {
     },
     packId: "repo-editing",
     packVersion: "test",
-    colosseumVersion: "test",
+    howaVersion: "test",
     gitCommit: "test",
     modelInfo: {
       model: "mock-deterministic-1",
-      provider: "colosseum-mock",
+      provider: "howa-mock",
       location: "local",
     },
     costInfo: {
