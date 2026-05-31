@@ -44,4 +44,4 @@ Date: 2026-05-23
 ## Remaining Blockers
 
 - None for local Howa operation or Crucible-adjacent trial/evaluation use on the same host.
-- Tailscale/private-lab reachability requires an explicit operator decision to set `COLOSSEUM_HOST=0.0.0.0` or a Tailscale IP in the systemd unit.
+- Tailscale/private-lab reachability requires an explicit operator decision to set `HOWA_HOST=0.0.0.0` or a Tailscale IP in the systemd unit.

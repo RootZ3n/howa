@@ -77,7 +77,7 @@ These are not suggestions:
 | `openclaw`    | `openclaw agent --local --session-id <id> --message <prompt>` | `unknown` | Uses isolated per-test state; override with `$OPENCLAW_BIN` or `extra.command`. |
 | `hermes`      | `hermes chat …` (overridable)                 | `local`          | Local-first by default.                                        |
 | `peh`    | `POST $PEH_URL/api/chat`                 | `local`          | Public Peh HTTP adapter. Defaults to `http://127.0.0.1:3000`. |
-| `ptah`        | `ptah submit <prompt>` (or `$PTAH_BIN` / `extra.command`) | `unknown` | Lab-only adapter. Set `COLOSSEUM_LAB_ADAPTERS=ptah` to show it in CLI/UI lists. Ptah ships as a service today; adapter expects a CLI wrapper. |
+| `ptah`        | `ptah submit <prompt>` (or `$PTAH_BIN` / `extra.command`) | `unknown` | Lab-only adapter. Set `HOWA_LAB_ADAPTERS=ptah` to show it in CLI/UI lists. Ptah ships as a service today; adapter expects a CLI wrapper. |
 | `peh-v2` | `POST $PEH_V2_URL/chat`                  | `local`          | Lab-only Peh-v2 HTTP adapter. Defaults to `http://127.0.0.1:18791`. |
 
 Future targets: Claude Code, Codex, OpenCode. Each fits the same contract; pass
@@ -90,8 +90,8 @@ tests and local development, but lab-only adapters are hidden from public
 `list agents` output and the UI unless explicitly enabled:
 
 ```bash
-COLOSSEUM_LAB_ADAPTERS=ptah,peh-v2 npm run dev
-COLOSSEUM_LAB_ADAPTERS=peh-v2 npm run cli -- list agents
+HOWA_LAB_ADAPTERS=ptah,peh-v2 npm run dev
+HOWA_LAB_ADAPTERS=peh-v2 npm run cli -- list agents
 ```
 
 This keeps unreleased lab agents out of the public product surface without
@@ -386,7 +386,7 @@ AEDIS_BIN=/bin/echo npm run cli -- run --agent aedis --pack truthfulness
 
 Expected outcome with `/bin/echo` as the agent: the pack FAILs honestly. Echo
 produces output, but it cannot edit files, cannot surface the `/etc/passwd`
-tool failure, and does not answer the Howa opening-year prompt with `80
+tool failure, and does not answer the Colosseum opening-year prompt with `80
 CE`. The point of the smoke is that every step of the pipeline (binary
 resolution, subprocess spawn, event capture, diff computation, receipt write,
 scoring) executes end-to-end without the mock.

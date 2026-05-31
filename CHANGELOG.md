@@ -1,25 +1,27 @@
 # Changelog
 
-All notable changes to Howa (formerly Howa) will be documented in this file.
+All notable changes to Howa (formerly Colosseum) will be documented in this file.
 
-## Unreleased — Howa → Howa rename
+## Unreleased — Colosseum → Howa rename
 
-- Rebranded the proving ground from "Howa" to "Howa". The runtime
-  contract is preserved: receipts and trial summaries still serialize
-  `howaVersion` (and the `howa-mock` provider stamp on
-  receipts), the default state directory remains `howa-state/` for
-  trial continuity with v0.1 installs, and the `howa` CLI bin name
-  is kept (a new `howa` bin alias is added).
-- Environment variables follow the same pattern: `HOWA_PORT`,
-  `HOWA_HOST`, `HOWA_STATE_ROOT`, `HOWA_LAB_ADAPTERS`,
-  `HOWA_CONTEXT_STAMINA` are now canonical. The matching
-  `COLOSSEUM_*` names are still honored as fallbacks so existing
-  deployments and systemd units do not need to change.
-- TypeScript path alias `@howa/*` is preserved verbatim; `@howa/*`
-  is added as a parallel alias for new code.
-- The historical Roman Howa references inside the truthfulness
-  pack ("What year did the Howa open?") are intentionally
-  unchanged — they reference the Roman landmark, not the project.
+- Rebranded the proving ground from "Colosseum" to "Howa". `howa` is the
+  Choctaw word for "to call out"; the Roman colosseum remains the product's
+  theme and setting, not its name.
+- Canonical identifiers are now `howa*`: receipts and trial summaries
+  serialize `howaVersion`, the mock provider stamps `howa-mock`, the default
+  state directory is `howa-state/`, the CLI bin is `howa`, and the TypeScript
+  path alias is `@howa/*`.
+- Environment variables are `HOWA_PORT`, `HOWA_HOST`, `HOWA_STATE_ROOT`,
+  `HOWA_LAB_ADAPTERS`, and `HOWA_CONTEXT_STAMINA`. The previous
+  `COLOSSEUM_*` fallback names and the `COLOSSEUM_VERSION` alias have been
+  removed — `HOWA_*` is the only supported form.
+- Renamed operator files to match: `scripts/howa-status.sh`,
+  `scripts/howa-diagnostic.mjs`, and `docs/systemd/howa.service`.
+- Deployments still holding a pre-rename `colosseum-state/` directory are
+  migrated to `howa-state/` on startup (see `start.sh`).
+- The Roman Colosseum references inside the truthfulness pack ("What year
+  did the Colosseum open?") are intentionally unchanged — they reference the
+  Roman landmark, not the project.
 
 ## Unreleased — release-hardening pass (no loose ends)
 
@@ -125,7 +127,7 @@ All notable changes to Howa (formerly Howa) will be documented in this file.
   for completed trials and Arena Floor LIVE/BUFFERED indicators.
 - Added `--watch` / `--live` CLI output for trial lifecycle events.
 - Hid Ptah and Peh-v2 from the public UI/CLI list unless
-  `COLOSSEUM_LAB_ADAPTERS` explicitly enables them.
+  `HOWA_LAB_ADAPTERS` explicitly enables them.
 - Fixed OpenClaw adapter dispatch to use the real `agent --local --message`
   protocol with isolated per-test sessions.
 - Tightened the stamina bounded-retries check so quick command/setup failures

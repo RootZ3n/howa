@@ -8,12 +8,12 @@ service).
 
 | Surface           | Port    | Override env             |
 |-------------------|---------|--------------------------|
-| API + bundled UI  | `18799` | `COLOSSEUM_PORT`         |
-| Vite dev server   | `5180`  | `COLOSSEUM_UI_PORT`      |
-| Bind host         | `127.0.0.1` | `COLOSSEUM_HOST`     |
+| API + bundled UI  | `18799` | `HOWA_PORT`         |
+| Vite dev server   | `5180`  | `HOWA_UI_PORT`      |
+| Bind host         | `127.0.0.1` | `HOWA_HOST`     |
 
 The API server binds **127.0.0.1 by default** — Howa is a local tool. Set
-`COLOSSEUM_HOST=0.0.0.0` if you want it reachable from the LAN, and put a real
+`HOWA_HOST=0.0.0.0` if you want it reachable from the LAN, and put a real
 reverse proxy in front of it for anything beyond that.
 
 ## Quickstart — local production
@@ -86,7 +86,7 @@ npm run dev:ui        # UI only
 ## State directory
 
 Trial summaries, receipts, fixtures, and reports all live under
-**`COLOSSEUM_STATE_ROOT`** (defaults to `./howa-state` relative to where
+**`HOWA_STATE_ROOT`** (defaults to `./howa-state` relative to where
 the server was launched). Layout:
 
 ```
@@ -164,8 +164,8 @@ The example unit uses placeholders:
 - `Group=howa`
 - `WorkingDirectory=/opt/howa`
 - `ExecStart=/usr/bin/npm run start`
-- `Environment=COLOSSEUM_PORT=18799`
-- `Environment=COLOSSEUM_STATE_ROOT=/var/lib/howa`
+- `Environment=HOWA_PORT=18799`
+- `Environment=HOWA_STATE_ROOT=/var/lib/howa`
 - `Restart=on-failure`
 
 Edit these values before installing. If your `npm` isn't at `/usr/bin/npm`, run
@@ -177,5 +177,5 @@ Edit these values before installing. If your `npm` isn't at `/usr/bin/npm`, run
 |---|---|
 | Browser can't reach `:18799` | Server not running, or bound to a different host. Check `curl 127.0.0.1:18799/api/health`. |
 | UI loads but API calls 404 | You opened the dev port `:5180` while only the API is running, or vice versa. In dev, open `:5180`; in production, open `:18799`. |
-| "EADDRINUSE :18799" | Another process holds the port. `ss -ltnp \| grep 18799` to find it, or set `COLOSSEUM_PORT` to something else. |
-| Receipts directory empty after a run | Trial wrote to a different `COLOSSEUM_STATE_ROOT`. The `/api/health` payload tells you the truth — match the CLI's `--state` flag to it. |
+| "EADDRINUSE :18799" | Another process holds the port. `ss -ltnp \| grep 18799` to find it, or set `HOWA_PORT` to something else. |
+| Receipts directory empty after a run | Trial wrote to a different `HOWA_STATE_ROOT`. The `/api/health` payload tells you the truth — match the CLI's `--state` flag to it. |

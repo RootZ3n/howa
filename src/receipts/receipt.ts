@@ -27,12 +27,7 @@ export interface Receipt {
   /** Pack the test belongs to + the pack version that produced this receipt. */
   packId: string;
   packVersion: string;
-  /**
-   * Howa harness version at run time. Field kept as `howaVersion`
-   * for backward compatibility with receipts written before the Howa
-   * rename — readers (export, diagnostic, third-party tooling) keep
-   * working unchanged.
-   */
+  /** Howa harness version at run time. */
   howaVersion: string;
   /** Short git commit of the Howa repo. "unknown" if not in git. */
   gitCommit: string;

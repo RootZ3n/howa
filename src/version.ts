@@ -4,12 +4,6 @@ import { spawnSync } from "node:child_process";
 export const HOWA_VERSION = "0.1.0";
 
 /**
- * Back-compat alias. Receipts and trial summaries persist a `howaVersion`
- * field; downstream code that still imports COLOSSEUM_VERSION keeps working.
- */
-export const COLOSSEUM_VERSION = HOWA_VERSION;
-
-/**
  * Resolve the git commit of the *Howa repo itself* (not the workspace
  * under test). Returns "unknown" if not in a git checkout — never lies.
  */

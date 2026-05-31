@@ -7,13 +7,7 @@ import type { AdapterTruthContract } from "../adapters/types.js";
 /**
  * Filesystem layout for Howa state:
  *
- *   howa-state/                                 (historical directory
- *                                                   name — preserved so
- *                                                   existing trials,
- *                                                   receipts, and bundles
- *                                                   from before the Howa
- *                                                   rename remain readable
- *                                                   without migration)
+ *   howa-state/
  *     trials/<trialId>.json
  *     trial-events/<trialId>.json
  *     receipts/<trialId>/<testId>.json
@@ -45,12 +39,7 @@ export interface TrialSummary {
   /*  Phase 1: truthfulness stamps                                       */
   /* ------------------------------------------------------------------ */
 
-  /**
-   * Howa harness version at the time the trial ran. Field is named
-   * `howaVersion` for backward compatibility — receipts written
-   * before the Howa rename use this key and the diagnostic walks them
-   * unchanged. New code should still read this field.
-   */
+  /** Howa harness version at the time the trial ran. */
   howaVersion: string;
   /** Short git commit of the Howa repo. "unknown" if not in git. */
   gitCommit: string;
@@ -200,12 +189,10 @@ export class TrialStore {
 }
 
 /**
- * Default state directory. Stays `howa-state` for backward
- * compatibility — every historical trial, receipt, and bundle written
- * before the Howa rename lives under this name, and silently switching
- * the default would orphan that evidence. Operators on a fresh install
- * who prefer the new name can pass `--state howa-state` or set
- * `HOWA_STATE_ROOT`.
+ * Default state directory: `howa-state` (relative to cwd). Trials, receipts,
+ * and bundles are written here. Deployments upgraded from the pre-rename
+ * `colosseum-state` layout are migrated to this name on startup (see start.sh).
+ * Override with `--state <dir>` or `HOWA_STATE_ROOT`.
  */
 export function defaultStateRoot(): string {
   return path.resolve(process.cwd(), "howa-state");

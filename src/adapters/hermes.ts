@@ -4,8 +4,7 @@ import type { RunOptions, SessionHandle } from "../types.js";
 
 /**
  * Module-level persistent session tracker for context-stamina mode.
- * When HOWA_CONTEXT_STAMINA=true (or the pre-rename
- * COLOSSEUM_CONTEXT_STAMINA), the adapter keeps a single Hermes session
+ * When HOWA_CONTEXT_STAMINA=true, the adapter keeps a single Hermes session
  * alive across all tests in the trial, using `--continue` for
  * subsequent invocations so context accumulates across turns.
  */
@@ -40,7 +39,6 @@ export function createHermesAdapter(): AgentAdapter {
     async startSession(opts: RunOptions): Promise<SessionHandle> {
       const useContextStamina =
         process.env.HOWA_CONTEXT_STAMINA === "true" ||
-        process.env.COLOSSEUM_CONTEXT_STAMINA === "true" ||
         (opts.extra?.contextStamina as boolean) === true;
 
       const args: string[] = [];

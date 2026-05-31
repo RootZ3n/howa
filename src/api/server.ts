@@ -8,15 +8,9 @@ import { receiptsRouter } from "./routes/receipts.js";
 import { defaultStateRoot, TrialStore } from "../storage/index.js";
 
 // HOWA_STATE_ROOT is the canonical env var (matches systemd unit + docs).
-// COLOSSEUM_STATE_ROOT / COLOSSEUM_STATE are accepted for backward compat
-// with v0.1 deployments installed before the Howa→Howa rename.
-const stateRoot =
-  process.env.HOWA_STATE_ROOT ??
-  process.env.COLOSSEUM_STATE_ROOT ??
-  process.env.COLOSSEUM_STATE ??
-  defaultStateRoot();
-const port = Number(process.env.HOWA_PORT ?? process.env.COLOSSEUM_PORT ?? 18799);
-const host = process.env.HOWA_HOST ?? process.env.COLOSSEUM_HOST ?? "127.0.0.1";
+const stateRoot = process.env.HOWA_STATE_ROOT ?? defaultStateRoot();
+const port = Number(process.env.HOWA_PORT ?? 18799);
+const host = process.env.HOWA_HOST ?? "127.0.0.1";
 
 export async function buildApp(): Promise<express.Express> {
   await new TrialStore(stateRoot).ensureLayout();

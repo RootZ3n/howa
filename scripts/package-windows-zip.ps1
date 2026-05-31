@@ -1,4 +1,4 @@
-# Create a Colosseum Windows RC portable zip from a source checkout.
+# Create a Howa Windows RC portable zip from a source checkout.
 # Usage: powershell -ExecutionPolicy Bypass -File scripts\package-windows-zip.ps1
 
 param(
@@ -14,7 +14,7 @@ $StagingRoot = Join-Path ([System.IO.Path]::GetTempPath()) $Name
 $OutRoot = Join-Path $ProjectRoot $OutputDir
 $ZipPath = Join-Path $OutRoot "$Name.zip"
 
-function Write-Info { param([string]$Message) Write-Host "[colosseum-package] $Message" -ForegroundColor Cyan }
+function Write-Info { param([string]$Message) Write-Host "[howa-package] $Message" -ForegroundColor Cyan }
 
 if (-not $SkipBuild) {
     Push-Location $ProjectRoot
@@ -33,7 +33,7 @@ if (-not $SkipBuild) {
 Remove-Item -Recurse -Force $StagingRoot -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $StagingRoot | Out-Null
 
-$Exclude = @(".git", "node_modules", "release", "colosseum-state", ".env")
+$Exclude = @(".git", "node_modules", "release", "howa-state", ".env")
 Get-ChildItem $ProjectRoot -Force | Where-Object { $Exclude -notcontains $_.Name } | ForEach-Object {
     Copy-Item -Recurse -Force $_.FullName -Destination $StagingRoot
 }

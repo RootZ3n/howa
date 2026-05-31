@@ -16,7 +16,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const srcCli = path.join(repoRoot, "src", "cli", "index.ts");
 const stateRoot = path.join(
   os.tmpdir(),
-  `colosseum-smoke-${mode}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+  `howa-smoke-${mode}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
 );
 
 // This is a source-install smoke test. Use the TypeScript CLI via tsx so the
@@ -34,8 +34,8 @@ const expectedVerdict = mode === "pass" ? "PASS" : "FAIL";
 
 console.log(
   mode === "pass"
-    ? "Running Colosseum passing smoke test (mock agent + stamina pack)..."
-    : "Running Colosseum intentional failing demo (mock agent + truthfulness pack)...",
+    ? "Running Howa passing smoke test (mock agent + stamina pack)..."
+    : "Running Howa intentional failing demo (mock agent + truthfulness pack)...",
 );
 console.log(`State directory: ${stateRoot}`);
 console.log("");
@@ -70,7 +70,7 @@ if (status !== expectedStatus || verdict !== expectedVerdict) {
 
 if (mode === "fail") {
   console.log("");
-  console.log("Intentional failing demo behaved as expected: Colosseum exited 2 and wrote failure receipts.");
+  console.log("Intentional failing demo behaved as expected: Howa exited 2 and wrote failure receipts.");
 } else {
   console.log("");
   console.log("Passing smoke test succeeded.");

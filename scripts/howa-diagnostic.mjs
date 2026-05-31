@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Colosseum trust diagnostic.
+ * Howa trust diagnostic.
  *
- * Walks an existing colosseum-state directory and reports the signals the
+ * Walks an existing howa-state directory and reports the signals the
  * pre-release audit + release-hardening pass care about:
  *
  *   - per-pack test counts and validity (unique IDs, prompts present,
@@ -20,7 +20,7 @@
  *     behavioral results would justify
  *
  * Usage:
- *   node scripts/colosseum-diagnostic.mjs [--state <dir>] [--json]
+ *   node scripts/howa-diagnostic.mjs [--state <dir>] [--json]
  *
  * Exit codes:
  *   0 — clean
@@ -47,7 +47,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const args = process.argv.slice(2);
-let stateRoot = path.join(repoRoot, "colosseum-state");
+let stateRoot = path.join(repoRoot, "howa-state");
 let jsonMode = false;
 for (let i = 0; i < args.length; i++) {
   const a = args[i];
@@ -57,7 +57,7 @@ for (let i = 0; i < args.length; i++) {
     jsonMode = true;
   } else if (a === "--help" || a === "-h") {
     process.stdout.write(
-      "Usage: node scripts/colosseum-diagnostic.mjs [--state <dir>] [--json]\n",
+      "Usage: node scripts/howa-diagnostic.mjs [--state <dir>] [--json]\n",
     );
     process.exit(0);
   }
@@ -397,7 +397,7 @@ if (jsonMode) {
   process.stdout.write(JSON.stringify(summary, null, 2) + "\n");
 } else {
   const w = (s) => process.stdout.write(s + "\n");
-  w("Colosseum trust diagnostic");
+  w("Howa trust diagnostic");
   w("=".repeat(60));
   w(`State root:                   ${stateRoot}`);
   w(`Trials on disk:               ${trials.length}`);

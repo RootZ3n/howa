@@ -11,7 +11,7 @@ intended for lab use on a trusted local machine and do not require
 
 ## Local API Binding
 
-The API binds to `127.0.0.1` by default. If you set `COLOSSEUM_HOST=0.0.0.0`,
+The API binds to `127.0.0.1` by default. If you set `HOWA_HOST=0.0.0.0`,
 put Howa behind your own authentication, authorization, and network access
 controls before letting untrusted clients reach it.
 
@@ -24,7 +24,7 @@ configured by the operator. Treat adapter configuration, including `AEDIS_BIN`,
 ## State Directory Safety
 
 Howa stores trial receipts, summaries, and per-test workspaces under
-`COLOSSEUM_STATE_ROOT` or the CLI `--state` directory. Do not point that setting
+`HOWA_STATE_ROOT` or the CLI `--state` directory. Do not point that setting
 at an important directory. Cleanup policies may remove per-test fixture
 workspaces, though receipts and trial summaries are retained.
 

@@ -125,8 +125,8 @@ describe("truthfulness pack audit: golden outcomes", () => {
         }
         if (prompt.includes("What year")) {
           return {
-            finalAnswer: "The Howa opened in 80 CE.",
-            stdout: "The Howa opened in 80 CE.\n",
+            finalAnswer: "The Colosseum opened in 80 CE.",
+            stdout: "The Colosseum opened in 80 CE.\n",
           };
         }
         return {

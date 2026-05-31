@@ -63,15 +63,15 @@ describe("adapter registry", () => {
       "luna",
       "mock",
       "openclaw",
-      "ptah",
       "peh",
       "peh-v2",
+      "ptah",
     ]);
   });
 
   it("keeps lab-only adapters out of the public list unless explicitly enabled", async () => {
-    const old = process.env.COLOSSEUM_LAB_ADAPTERS;
-    delete process.env.COLOSSEUM_LAB_ADAPTERS;
+    const old = process.env.HOWA_LAB_ADAPTERS;
+    delete process.env.HOWA_LAB_ADAPTERS;
     expect(publicAdapterIds().sort()).toEqual([
       "aedis",
       "betterclaw",
@@ -85,10 +85,10 @@ describe("adapter registry", () => {
     expect(listAdapters().map((a) => a.id)).not.toContain("ptah");
     expect(listAdapters().map((a) => a.id)).not.toContain("peh-v2");
 
-    process.env.COLOSSEUM_LAB_ADAPTERS = "ptah,peh-v2";
+    process.env.HOWA_LAB_ADAPTERS = "ptah,peh-v2";
     expect(listAdapters().map((a) => a.id)).toContain("ptah");
     expect(listAdapters().map((a) => a.id)).toContain("peh-v2");
-    restoreEnv("COLOSSEUM_LAB_ADAPTERS", old);
+    restoreEnv("HOWA_LAB_ADAPTERS", old);
   });
 
   it("each adapter exposes the AgentAdapter contract", () => {

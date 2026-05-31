@@ -4,7 +4,7 @@ dist/
 *.log
 .env
 .env.local
-colosseum-state/
+howa-state/
 .vitest-cache/
 .codex
 data/

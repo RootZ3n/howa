@@ -96,7 +96,7 @@ howa-state/
 ```
 
 All paths are relative to `process.cwd()` by default and configurable through
-`--state` (CLI) or `COLOSSEUM_STATE` (server / API).
+`--state` (CLI) or `HOWA_STATE_ROOT` (server / API).
 
 ## Component map
 

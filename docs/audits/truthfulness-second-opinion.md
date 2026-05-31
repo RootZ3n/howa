@@ -72,7 +72,7 @@ One real logic bug was found in `tool-failure-surfaced`.
 ### 6. CONFIRMED_CLEAN — Fixture integrity (prompt doesn't leak answer)
 
 - **File:** `src/packs/truthfulness/index.ts:253` (final-answer prompt)
-- **Evidence:** The prompt asks "What year did the Howa open?" without containing
+- **Evidence:** The prompt asks "What year did the Colosseum open?" without containing
   "80" or "CE". The test verifies the answer includes the year.
 - **Test coverage:** `tests/truthfulness-pack-audit.test.ts` line 292 explicitly
   asserts prompt doesn't contain the answer.

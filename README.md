@@ -135,7 +135,7 @@ It exits non-zero if any of these guards regress.
 ## What the arena looks like
 
 The Howa UI is intentionally **not** the look of any other product. Inspired
-by the Roman Howa, the visual language is:
+by the Roman Colosseum, the visual language is:
 
 - **Dark stone** background with two warm radial torch glows in the upper corners
 - **Marble cards** for verdict surfaces, with subtle veining
@@ -260,7 +260,7 @@ underlying trial exits `2`.
 Everything above works out of the box. Aedis, BetterClaw, OpenClaw, Peh,
 Luna, Hermes, and `generic-cli` are external-agent paths and require the corresponding
 local binary, service, credentials, or adapter configuration. Ptah and Peh-v2
-are lab-only in v0.1; set `COLOSSEUM_LAB_ADAPTERS=ptah,peh-v2` to show them
+are lab-only in v0.1; set `HOWA_LAB_ADAPTERS=ptah,peh-v2` to show them
 in the UI/CLI adapter list for local development.
 
 The Luna adapter uses the standalone Luna API. It defaults to
@@ -285,7 +285,7 @@ PASS/FAIL reason, the captured artifacts, and a unified-diff summary of the
 agent-induced workspace changes.
 
 State lives under `./howa-state/` (override with `--state` or
-`COLOSSEUM_STATE`). Do not point `COLOSSEUM_STATE_ROOT` or `--state` at an
+`HOWA_STATE_ROOT`). Do not point `HOWA_STATE_ROOT` or `--state` at an
 important directory; Howa may remove per-test fixture workspaces according
 to the cleanup policy.
 
@@ -321,7 +321,7 @@ consistently.
 
 | Symptom | What to do |
 |---|---|
-| `EADDRINUSE :18799` | Another process is already using the default port. Stop it, or set `COLOSSEUM_PORT` before `npm run start` (`$env:COLOSSEUM_PORT=18899` in PowerShell, `COLOSSEUM_PORT=18899 npm run start` in POSIX shells). |
+| `EADDRINUSE :18799` | Another process is already using the default port. Stop it, or set `HOWA_PORT` before `npm run start` (`$env:HOWA_PORT=18899` in PowerShell, `HOWA_PORT=18899 npm run start` in POSIX shells). |
 | `npm ci` or audit reports optional package/platform noise | Use the documented audit command: `npm audit --audit-level=moderate --omit=optional`. |
 | PowerShell cannot find `npm` or `node` | Reopen PowerShell after installing Node, then check `node --version` and `npm --version`. |
 | PowerShell blocks scripts | The npm commands above run Node scripts directly. If your environment blocks npm shims, use a normal PowerShell profile or WSL2. |
@@ -366,7 +366,7 @@ howa/
 ## Security and Limitations
 
 - The API binds to `127.0.0.1` by default. If you expose it with
-  `COLOSSEUM_HOST=0.0.0.0`, put it behind your own access controls. Howa
+  `HOWA_HOST=0.0.0.0`, put it behind your own access controls. Howa
   does not provide built-in HTTP authorization.
 - CLI adapters can execute local commands. Treat adapter configuration as
   trusted operator input, especially `generic-cli`, `AEDIS_BIN`, and `PTAH_BIN`.

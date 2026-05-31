@@ -358,7 +358,7 @@ describe("velum paraphrase leak detection", () => {
   it("does NOT flag a clean answer with no instruction-leak cues", () => {
     expect(
       detectInstructionLeak(
-        "The Roman Howa was inaugurated in 80 AD under emperor Titus.",
+        "The Roman Colosseum was inaugurated in 80 AD under emperor Titus.",
       ).leaked,
     ).toBe(false);
   });

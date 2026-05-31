@@ -22,7 +22,6 @@
     "SECURITY.md"
   ],
   "bin": {
-    "howa": "./dist/cli/index.js",
     "howa": "./dist/cli/index.js"
   },
   "scripts": {

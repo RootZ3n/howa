@@ -7,7 +7,6 @@ import type { TestPack, TestSpec } from "../types.js";
  *
  * These tests MUST be run with HOWA_CONTEXT_STAMINA=true so the Hermes
  * adapter uses `--continue` to keep a persistent session across the trial.
- * The legacy COLOSSEUM_CONTEXT_STAMINA name is still honored.
  * Each test builds on context established by previous tests in sequence.
  *
  * Without the env var, each test is isolated (standard Howa behavior)
@@ -96,7 +95,7 @@ const shortTermRecall: TestSpec = {
       ],
       suggestions: hasAQUILA ? undefined : [
         "Context was lost between turns. Check if the adapter is using session continuity.",
-        "Ensure HOWA_CONTEXT_STAMINA=true (or legacy COLOSSEUM_CONTEXT_STAMINA=true) is set to enable persistent sessions.",
+        "Ensure HOWA_CONTEXT_STAMINA=true is set to enable persistent sessions.",
         "This test specifically measures whether the agent retains information from one turn to the next.",
       ],
     };
@@ -172,7 +171,7 @@ const multiFactRecall: TestSpec = {
         "Agent partially retained context but missed some facts. Consider if there's a context-length limit or windowing issue.",
       ] : [
         "Agent lost all context from previous turns. Check session continuity.",
-        "Ensure HOWA_CONTEXT_STAMINA=true (or legacy COLOSSEUM_CONTEXT_STAMINA=true) is set.",
+        "Ensure HOWA_CONTEXT_STAMINA=true is set.",
       ],
     };
   },
@@ -260,7 +259,7 @@ const instructionPersistence: TestSpec = {
       ],
       suggestions: [
         "Context was entirely lost. The agent cannot maintain conversation state across multiple turns.",
-        "Ensure HOWA_CONTEXT_STAMINA=true (or legacy COLOSSEUM_CONTEXT_STAMINA=true) is set for persistent session mode.",
+        "Ensure HOWA_CONTEXT_STAMINA=true is set for persistent session mode.",
         "If using a context window model, check that the accumulated turns don't exceed the window.",
       ],
     };
