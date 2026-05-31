@@ -64,8 +64,8 @@ describe("adapter registry", () => {
       "mock",
       "openclaw",
       "ptah",
-      "squidley",
-      "squidley-v2",
+      "peh",
+      "peh-v2",
     ]);
   });
 
@@ -80,14 +80,14 @@ describe("adapter registry", () => {
       "luna",
       "mock",
       "openclaw",
-      "squidley",
+      "peh",
     ]);
     expect(listAdapters().map((a) => a.id)).not.toContain("ptah");
-    expect(listAdapters().map((a) => a.id)).not.toContain("squidley-v2");
+    expect(listAdapters().map((a) => a.id)).not.toContain("peh-v2");
 
-    process.env.COLOSSEUM_LAB_ADAPTERS = "ptah,squidley-v2";
+    process.env.COLOSSEUM_LAB_ADAPTERS = "ptah,peh-v2";
     expect(listAdapters().map((a) => a.id)).toContain("ptah");
-    expect(listAdapters().map((a) => a.id)).toContain("squidley-v2");
+    expect(listAdapters().map((a) => a.id)).toContain("peh-v2");
     restoreEnv("COLOSSEUM_LAB_ADAPTERS", old);
   });
 
@@ -272,9 +272,9 @@ describe("OpenClaw and BetterClaw adapters", () => {
   });
 });
 
-describe("Squidley HTTP adapters", () => {
-  it("tests public Squidley through the /api/chat route", async () => {
-    const old = process.env.SQUIDLEY_URL;
+describe("Peh HTTP adapters", () => {
+  it("tests public Peh through the /api/chat route", async () => {
+    const old = process.env.PEH_URL;
     const server = await withJsonServer((req, body) => {
       if (req.method === "GET" && req.url === "/api/local/health") return { ok: true };
       if (req.method === "POST" && req.url === "/api/chat") {
@@ -297,14 +297,14 @@ describe("Squidley HTTP adapters", () => {
     });
 
     try {
-      process.env.SQUIDLEY_URL = server.baseUrl;
-      const adapter = getAdapter("squidley");
+      process.env.PEH_URL = server.baseUrl;
+      const adapter = getAdapter("peh");
       await expect(adapter.health()).resolves.toMatchObject({ ok: true });
       const ws = await tmpdir();
       const handle = await adapter.startSession({ workspace: ws });
-      const result = await adapter.sendPrompt(handle, "ave squidley");
+      const result = await adapter.sendPrompt(handle, "ave peh");
       expect(result.exitCode).toBe(0);
-      expect(result.finalAnswer).toBe("public reply: ave squidley");
+      expect(result.finalAnswer).toBe("public reply: ave peh");
       expect(result.modelInfo.model).toBe("public-local-model");
       expect(result.costInfo).toMatchObject({
         reported: true,
@@ -313,29 +313,29 @@ describe("Squidley HTTP adapters", () => {
         totalTokens: 5,
       });
     } finally {
-      restoreEnv("SQUIDLEY_URL", old);
+      restoreEnv("PEH_URL", old);
       await server.close();
     }
   });
 
-  it("tests Squidley-v2 through the lab-only /chat route", async () => {
-    const old = process.env.SQUIDLEY_V2_URL;
+  it("tests Peh-v2 through the lab-only /chat route", async () => {
+    const old = process.env.PEH_V2_URL;
     const server = await withJsonServer((req, body) => {
       if (req.method === "GET" && req.url === "/health") {
         return {
           ok: true,
-          service: "squidley-v2",
+          service: "peh-v2",
           version: "2.0.0",
           status: "ok",
           uptimeMs: 1,
-          identity: { id: "squidley-v2", role: "agent", authorityTier: "lab" },
+          identity: { id: "peh-v2", role: "agent", authorityTier: "lab" },
         };
       }
       if (req.method === "POST" && req.url === "/chat") {
         const messages = (body as { messages?: Array<{ content?: unknown }> }).messages ?? [];
         return {
           text: `v2 reply: ${String(messages[0]?.content ?? "")}`,
-          model: "squidley-v2-local-model",
+          model: "peh-v2-local-model",
           tokensIn: 4,
           tokensOut: 6,
           estimatedCostUsd: 0.01,
@@ -345,15 +345,15 @@ describe("Squidley HTTP adapters", () => {
     });
 
     try {
-      process.env.SQUIDLEY_V2_URL = server.baseUrl;
-      const adapter = getAdapter("squidley-v2");
+      process.env.PEH_V2_URL = server.baseUrl;
+      const adapter = getAdapter("peh-v2");
       await expect(adapter.health()).resolves.toMatchObject({ ok: true });
       const ws = await tmpdir();
       const handle = await adapter.startSession({ workspace: ws });
       const result = await adapter.sendPrompt(handle, "ave v2");
       expect(result.exitCode).toBe(0);
       expect(result.finalAnswer).toBe("v2 reply: ave v2");
-      expect(result.modelInfo.model).toBe("squidley-v2-local-model");
+      expect(result.modelInfo.model).toBe("peh-v2-local-model");
       expect(result.costInfo).toMatchObject({
         reported: true,
         promptTokens: 4,
@@ -362,7 +362,7 @@ describe("Squidley HTTP adapters", () => {
         estimatedCostUsd: 0.01,
       });
     } finally {
-      restoreEnv("SQUIDLEY_V2_URL", old);
+      restoreEnv("PEH_V2_URL", old);
       await server.close();
     }
   });

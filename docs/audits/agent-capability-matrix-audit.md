@@ -27,7 +27,7 @@ untested capability categories harder to audit.
   - `src/adapters/betterclaw.ts`
   - `src/adapters/hermes.ts`
   - `src/adapters/luna-http.ts`
-  - `src/adapters/squidley-http.ts`
+  - `src/adapters/peh-http.ts`
   - `src/adapters/ptah.ts`
 
 ## Where `/agents` Gets Data

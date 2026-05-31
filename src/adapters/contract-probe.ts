@@ -1,6 +1,6 @@
 /**
  * Lab Agent Contract probe — shared helper used by the HTTP-speaking
- * adapters (luna-http, squidley-http, ptah, and the optional Aedis HTTP
+ * adapters (luna-http, peh-http, ptah, and the optional Aedis HTTP
  * variant) to introspect a peer's canonical surface.
  *
  * Returns the contract-shaped /health, /agent, /capabilities responses

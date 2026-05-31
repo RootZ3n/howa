@@ -8,11 +8,11 @@ import { createLunaAdapter } from "./luna-http.js";
 import { createMockAdapter } from "./mock.js";
 import { createPtahAdapter } from "./ptah.js";
 import {
-  createSquidleyAdapter,
-  createSquidleyV2Adapter,
-} from "./squidley-http.js";
+  createPehAdapter,
+  createPehV2Adapter,
+} from "./peh-http.js";
 
-const LAB_ADAPTERS = new Set(["ptah", "squidley-v2"]);
+const LAB_ADAPTERS = new Set(["ptah", "peh-v2"]);
 
 const factories: Record<string, () => AgentAdapter> = {
   mock: createMockAdapter,
@@ -22,8 +22,8 @@ const factories: Record<string, () => AgentAdapter> = {
   hermes: createHermesAdapter,
   luna: createLunaAdapter,
   ptah: createPtahAdapter,
-  squidley: createSquidleyAdapter,
-  "squidley-v2": createSquidleyV2Adapter,
+  peh: createPehAdapter,
+  "peh-v2": createPehV2Adapter,
   "generic-cli": createGenericCliAdapter,
 };
 

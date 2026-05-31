@@ -119,12 +119,12 @@ All notable changes to Howa (formerly Colosseum) will be documented in this file
 - Added JSON and Markdown receipts with redacted stdout/stderr and workspace diffs.
 - Added adapter preflight receipts for missing or misconfigured agents.
 - Added BetterClaw as a testable CLI adapter.
-- Added Squidley as a public HTTP adapter for the local `/api/chat` route.
-- Added Squidley-v2 as a lab-only HTTP adapter for the local `/chat` route.
+- Added Peh as a public HTTP adapter for the local `/api/chat` route.
+- Added Peh-v2 as a lab-only HTTP adapter for the local `/chat` route.
 - Added live TrialEvent streaming from runner to API/UI, including SSE replay
   for completed trials and Arena Floor LIVE/BUFFERED indicators.
 - Added `--watch` / `--live` CLI output for trial lifecycle events.
-- Hid Ptah and Squidley-v2 from the public UI/CLI list unless
+- Hid Ptah and Peh-v2 from the public UI/CLI list unless
   `COLOSSEUM_LAB_ADAPTERS` explicitly enables them.
 - Fixed OpenClaw adapter dispatch to use the real `agent --local --message`
   protocol with isolated per-test sessions.

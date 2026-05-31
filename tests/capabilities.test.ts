@@ -116,10 +116,10 @@ describe("canonical capability matrix", () => {
     }
   });
 
-  it("covers Luna, Squidley, OpenClaw, Aedis, Hermes, Generic CLI, and Mock", () => {
+  it("covers Luna, Peh, OpenClaw, Aedis, Hermes, Generic CLI, and Mock", () => {
     for (const id of [
       "luna",
-      "squidley",
+      "peh",
       "openclaw",
       "aedis",
       "hermes",

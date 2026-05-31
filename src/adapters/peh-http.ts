@@ -10,10 +10,10 @@ import type {
 import type { AgentAdapter } from "./types.js";
 import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
 
-type SquidleyVariant = "public" | "v2";
+type PehVariant = "public" | "v2";
 
-interface SquidleySession {
-  variant: SquidleyVariant;
+interface PehSession {
+  variant: PehVariant;
   endpoint: string;
   workspace: string;
   modelInfo: ModelInfo;
@@ -22,40 +22,40 @@ interface SquidleySession {
   events: AgentEvent[];
 }
 
-const sessions = new Map<string, SquidleySession>();
+const sessions = new Map<string, PehSession>();
 
-export function createSquidleyAdapter(): AgentAdapter {
-  return createSquidleyHttpAdapter({
-    id: "squidley",
-    name: "Squidley",
+export function createPehAdapter(): AgentAdapter {
+  return createPehHttpAdapter({
+    id: "peh",
+    name: "Peh",
     version: "0.1.0",
     description:
-      "Squidley public adapter. Sends prompts to the local public Squidley `/api/chat` route.",
+      "Peh public adapter. Sends prompts to the local public Peh `/api/chat` route.",
     variant: "public",
-    envVar: "SQUIDLEY_URL",
+    envVar: "PEH_URL",
     defaultEndpoint: "http://127.0.0.1:3000",
   });
 }
 
-export function createSquidleyV2Adapter(): AgentAdapter {
-  return createSquidleyHttpAdapter({
-    id: "squidley-v2",
-    name: "Squidley v2",
+export function createPehV2Adapter(): AgentAdapter {
+  return createPehHttpAdapter({
+    id: "peh-v2",
+    name: "Peh v2",
     version: "2.0.0",
     description:
-      "Squidley-v2 lab adapter. Sends prompts to the local Squidley-v2 Fastify `/chat` route.",
+      "Peh-v2 lab adapter. Sends prompts to the local Peh-v2 Fastify `/chat` route.",
     variant: "v2",
-    envVar: "SQUIDLEY_V2_URL",
+    envVar: "PEH_V2_URL",
     defaultEndpoint: "http://127.0.0.1:18791",
   });
 }
 
-function createSquidleyHttpAdapter(config: {
+function createPehHttpAdapter(config: {
   id: string;
   name: string;
   version: string;
   description: string;
-  variant: SquidleyVariant;
+  variant: PehVariant;
   envVar: string;
   defaultEndpoint: string;
 }): AgentAdapter {
@@ -80,7 +80,7 @@ function createSquidleyHttpAdapter(config: {
       toolSupport: config.variant === "v2",
     },
     protocol: {
-      name: config.variant === "v2" ? "squidley-v2-http" : "squidley-http",
+      name: config.variant === "v2" ? "peh-v2-http" : "peh-http",
       submitCommand:
         config.variant === "v2"
           ? `POST $${config.envVar}/chat`
@@ -121,7 +121,7 @@ function createSquidleyHttpAdapter(config: {
             ok: false,
             reason:
               `${config.name} adapter reached ${url}, but it returned HTTP ${res.status}. ` +
-              `${text.slice(0, 240) || "Start/configure the local Squidley service before testing."}`,
+              `${text.slice(0, 240) || "Start/configure the local Peh service before testing."}`,
           };
         }
         return { ok: true, reason: `${config.name} HTTP service reachable at ${url}` };
@@ -197,7 +197,7 @@ function createSquidleyHttpAdapter(config: {
           events.push({ ts: Date.now(), kind: "error", text: stderr.slice(0, 500) });
         } else {
           const data = JSON.parse(text) as Record<string, unknown>;
-          const parsed = parseSquidleyResponse(session.variant, data);
+          const parsed = parsePehResponse(session.variant, data);
           finalAnswer = parsed.finalAnswer;
           stdout = parsed.stdout;
           session.modelInfo = {
@@ -212,12 +212,12 @@ function createSquidleyHttpAdapter(config: {
           });
           if (!finalAnswer) {
             exitCode = 1;
-            stderr = "Squidley response did not include a final answer.";
+            stderr = "Peh response did not include a final answer.";
           }
         }
       } catch (err) {
         exitCode = 1;
-        stderr = `Squidley request failed: ${(err as Error).message}`;
+        stderr = `Peh request failed: ${(err as Error).message}`;
         events.push({ ts: Date.now(), kind: "error", text: stderr });
       }
 
@@ -261,11 +261,11 @@ function normalizeEndpoint(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-function chatPath(variant: SquidleyVariant): string {
+function chatPath(variant: PehVariant): string {
   return variant === "v2" ? "/chat" : "/api/chat";
 }
 
-function requestBody(variant: SquidleyVariant, prompt: string, model: string): Record<string, unknown> {
+function requestBody(variant: PehVariant, prompt: string, model: string): Record<string, unknown> {
   if (variant === "v2") {
     return {
       messages: [{ role: "user", content: prompt }],
@@ -281,8 +281,8 @@ function requestBody(variant: SquidleyVariant, prompt: string, model: string): R
   };
 }
 
-function parseSquidleyResponse(
-  variant: SquidleyVariant,
+function parsePehResponse(
+  variant: PehVariant,
   data: Record<string, unknown>,
 ): { finalAnswer?: string; stdout: string; model?: string; cost: CostInfo } {
   if (variant === "v2") {
@@ -310,8 +310,8 @@ function parseSquidleyResponse(
           typeof tokensIn === "number" ||
           typeof tokensOut === "number" ||
           typeof data.estimatedCostUsd === "number"
-            ? "Squidley-v2 reported token/cost fields"
-            : "Squidley-v2 did not report token/cost fields",
+            ? "Peh-v2 reported token/cost fields"
+            : "Peh-v2 did not report token/cost fields",
       },
     };
   }
@@ -322,7 +322,7 @@ function parseSquidleyResponse(
       finalAnswer: undefined,
       stdout: JSON.stringify(data, null, 2),
       model: undefined,
-      cost: { reported: false, note: err?.message ?? "Squidley returned an error" },
+      cost: { reported: false, note: err?.message ?? "Peh returned an error" },
     };
   }
 
@@ -343,8 +343,8 @@ function parseSquidleyResponse(
       reported: typeof promptTokens === "number" || typeof outputTokens === "number",
       note:
         typeof promptTokens === "number" || typeof outputTokens === "number"
-          ? "Squidley public reported local token counts"
-          : "Squidley public does not report cost",
+          ? "Peh public reported local token counts"
+          : "Peh public does not report cost",
     },
   };
 }

@@ -76,22 +76,22 @@ These are not suggestions:
 | `betterclaw`  | `betterclaw agent --local --session-id <id> --message <prompt>` | `unknown` | Uses isolated per-test state; override with `$BETTERCLAW_BIN` or `extra.command`. |
 | `openclaw`    | `openclaw agent --local --session-id <id> --message <prompt>` | `unknown` | Uses isolated per-test state; override with `$OPENCLAW_BIN` or `extra.command`. |
 | `hermes`      | `hermes chat …` (overridable)                 | `local`          | Local-first by default.                                        |
-| `squidley`    | `POST $SQUIDLEY_URL/api/chat`                 | `local`          | Public Squidley HTTP adapter. Defaults to `http://127.0.0.1:3000`. |
+| `peh`    | `POST $PEH_URL/api/chat`                 | `local`          | Public Peh HTTP adapter. Defaults to `http://127.0.0.1:3000`. |
 | `ptah`        | `ptah submit <prompt>` (or `$PTAH_BIN` / `extra.command`) | `unknown` | Lab-only adapter. Set `COLOSSEUM_LAB_ADAPTERS=ptah` to show it in CLI/UI lists. Ptah ships as a service today; adapter expects a CLI wrapper. |
-| `squidley-v2` | `POST $SQUIDLEY_V2_URL/chat`                  | `local`          | Lab-only Squidley-v2 HTTP adapter. Defaults to `http://127.0.0.1:18791`. |
+| `peh-v2` | `POST $PEH_V2_URL/chat`                  | `local`          | Lab-only Peh-v2 HTTP adapter. Defaults to `http://127.0.0.1:18791`. |
 
 Future targets: Claude Code, Codex, OpenCode. Each fits the same contract; pass
 `extra.command` and `extra.args` if you only need to drive a CLI.
 
 ### Lab-only adapters
 
-`getAdapter("ptah")` and `getAdapter("squidley-v2")` still work for internal
+`getAdapter("ptah")` and `getAdapter("peh-v2")` still work for internal
 tests and local development, but lab-only adapters are hidden from public
 `list agents` output and the UI unless explicitly enabled:
 
 ```bash
-COLOSSEUM_LAB_ADAPTERS=ptah,squidley-v2 npm run dev
-COLOSSEUM_LAB_ADAPTERS=squidley-v2 npm run cli -- list agents
+COLOSSEUM_LAB_ADAPTERS=ptah,peh-v2 npm run dev
+COLOSSEUM_LAB_ADAPTERS=peh-v2 npm run cli -- list agents
 ```
 
 This keeps unreleased lab agents out of the public product surface without

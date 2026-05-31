@@ -63,7 +63,7 @@ two runs. You can hand it to your security team.
 - **Velum-style safety** — a pattern-based guard layer scans prompts and outputs
   for injection probes, destructive commands, and secret leakage. Velum *records
   evidence*; it never hides results.
-- **Adapter-based** — every agent (Aedis, BetterClaw, OpenClaw, Squidley,
+- **Adapter-based** — every agent (Aedis, BetterClaw, OpenClaw, Peh,
   Luna, Hermes, Claude Code, Codex, a generic CLI, your own) is reachable through one
   small `AgentAdapter` contract. Adapters cannot reach into scoring; they only
   translate.
@@ -257,10 +257,10 @@ underlying trial exits `2`.
 
 ### Smoke against a real local agent
 
-Everything above works out of the box. Aedis, BetterClaw, OpenClaw, Squidley,
+Everything above works out of the box. Aedis, BetterClaw, OpenClaw, Peh,
 Luna, Hermes, and `generic-cli` are external-agent paths and require the corresponding
-local binary, service, credentials, or adapter configuration. Ptah and Squidley-v2
-are lab-only in v0.1; set `COLOSSEUM_LAB_ADAPTERS=ptah,squidley-v2` to show them
+local binary, service, credentials, or adapter configuration. Ptah and Peh-v2
+are lab-only in v0.1; set `COLOSSEUM_LAB_ADAPTERS=ptah,peh-v2` to show them
 in the UI/CLI adapter list for local development.
 
 The Luna adapter uses the standalone Luna API. It defaults to
@@ -381,7 +381,7 @@ colosseum/
 
 Howa v0.1 is an MVP. The core runner, adapters, packs, Velum, scoring,
 receipts, CLI, API, and UI are present and tested. Adapter implementations for
-Aedis, BetterClaw, OpenClaw, and Hermes wrap a default CLI. Squidley uses its
+Aedis, BetterClaw, OpenClaw, and Hermes wrap a default CLI. Peh uses its
 local HTTP API. Replace with richer SDK integrations as those stabilize.
 
 > Stop guessing if your agent works. Put it in the arena.
