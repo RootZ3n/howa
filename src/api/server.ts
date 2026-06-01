@@ -5,10 +5,12 @@ import { agentsRouter } from "./routes/agents.js";
 import { packsRouter } from "./routes/packs.js";
 import { trialsRouter } from "./routes/trials.js";
 import { receiptsRouter } from "./routes/receipts.js";
-import { defaultStateRoot, TrialStore } from "../storage/index.js";
+import { resolveStateRoot, TrialStore } from "../storage/index.js";
 
 // HOWA_STATE_ROOT is the canonical env var (matches systemd unit + docs).
-const stateRoot = process.env.HOWA_STATE_ROOT ?? defaultStateRoot();
+// Use resolveStateRoot so an empty/blank value (systemd + start.sh export
+// HOWA_STATE_ROOT="") falls back to the absolute default instead of "".
+const stateRoot = resolveStateRoot(process.env.HOWA_STATE_ROOT);
 const port = Number(process.env.HOWA_PORT ?? 18799);
 const host = process.env.HOWA_HOST ?? "127.0.0.1";
 

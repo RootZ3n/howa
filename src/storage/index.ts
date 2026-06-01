@@ -197,3 +197,19 @@ export class TrialStore {
 export function defaultStateRoot(): string {
   return path.resolve(process.cwd(), "howa-state");
 }
+
+/**
+ * Resolve the effective state root from a raw `HOWA_STATE_ROOT` value.
+ *
+ * An empty or whitespace-only value is treated as UNSET and falls back to
+ * {@link defaultStateRoot}. This matters because the systemd unit + `start.sh`
+ * export `HOWA_STATE_ROOT=""` (via `set -o allexport`); a bare `??` would let
+ * the empty string through, yielding `stateRoot=""` → `path.join("", "trials")`
+ * = a relative `"trials"` that scatters trial/receipt data into the repo root
+ * instead of `howa-state/`. Always returns a non-empty path; absolute when the
+ * env is unset/blank.
+ */
+export function resolveStateRoot(rawEnv: string | undefined): string {
+  const trimmed = rawEnv?.trim();
+  return trimmed ? trimmed : defaultStateRoot();
+}
