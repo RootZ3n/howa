@@ -91,6 +91,13 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
 
   const startedAt = Date.now();
   const timeline: TrialEvent[] = [];
+  // Timeline cap. Events are just text (~5,000 ≈ 200KB). When we exceed the
+  // cap we always keep the first PRESERVED_HEAD events — setup, adapter
+  // health check, and pack enumeration are the most diagnostic — and drop
+  // from just past the head, recording how many were lost in `eventsDiscarded`.
+  const MAX_TIMELINE_EVENTS = 5_000;
+  const PRESERVED_HEAD = 50;
+  let eventsDiscarded = 0;
   let sequence = 0;
   let liveMode: "live" | "buffered" = opts.adapter.capabilities.streaming ? "live" : "buffered";
   const emit = (event: Omit<TrialEvent, "sequence" | "trialId" | "timestamp"> & {
@@ -104,7 +111,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
       message: redact(event.message).redacted,
     };
     timeline.push(safe);
-    if (timeline.length > 1_000) timeline.splice(0, timeline.length - 1_000);
+    eventsDiscarded += enforceTimelineCap(timeline, MAX_TIMELINE_EVENTS, PRESERVED_HEAD);
     opts.onEvent?.(safe);
   };
 
@@ -300,6 +307,7 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
       mode: liveMode,
     });
     summary.eventCount = timeline.length;
+    summary.eventsDiscarded = eventsDiscarded;
     await trialStore.saveTrial(summary);
     await trialStore.saveTrialEvents(trialId, timeline);
     return summary;
@@ -820,9 +828,25 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
     mode: liveMode,
   });
   summary.eventCount = timeline.length;
+  summary.eventsDiscarded = eventsDiscarded;
   await trialStore.saveTrial(summary);
   await trialStore.saveTrialEvents(trialId, timeline);
   return summary;
+}
+
+/**
+ * Enforce the in-memory timeline cap in place. When `timeline` exceeds `max`,
+ * the overflow is spliced out starting at index `head` — so the first `head`
+ * events (setup, adapter health check, pack enumeration — the most diagnostic
+ * ones) are always preserved and the oldest events *after* the head are
+ * dropped instead. Returns how many events were discarded this call so the
+ * caller can accumulate a running total for `summary.eventsDiscarded`.
+ */
+export function enforceTimelineCap<T>(timeline: T[], max: number, head: number): number {
+  if (timeline.length <= max) return 0;
+  const overflow = timeline.length - max;
+  timeline.splice(head, overflow);
+  return overflow;
 }
 
 function startAdapterEventPump(args: {

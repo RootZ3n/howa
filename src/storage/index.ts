@@ -52,6 +52,13 @@ export interface TrialSummary {
   adapterTruth: AdapterTruthContract;
   liveMode?: "live" | "buffered" | "replay";
   eventCount?: number;
+  /**
+   * Number of timeline events discarded because the trial exceeded the
+   * in-memory event cap. The first 50 events (setup/health check) are always
+   * preserved; overflow is dropped from just past that head. 0/undefined
+   * means the full timeline was retained.
+   */
+  eventsDiscarded?: number;
 
   /* ------------------------------------------------------------------ */
   /*  Phase 2: trust honesty flags                                      */
