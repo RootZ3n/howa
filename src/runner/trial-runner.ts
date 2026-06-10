@@ -281,7 +281,10 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
       passCount: 0,
       failCount: 0,
       velumDecision: "allow",
-      notes: `setup_failed reason="${reason.replace(/"/g, "'")}"`,
+      // Redact before storing: a health-check reason can carry file paths,
+      // env var names, or secrets that would otherwise leak into the trial
+      // summary JSON served by the API. Redact first, then quote-escape.
+      notes: `setup_failed reason="${redact(reason).redacted.replace(/"/g, "'")}"`,
       howaVersion: HOWA_VERSION,
       gitCommit,
       adapterVersion: opts.adapter.version,
