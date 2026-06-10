@@ -8,6 +8,31 @@ import { receiptsRouter } from "./routes/receipts.js";
 import { adminRouter } from "./routes/admin.js";
 import { resolveStateRoot, TrialStore } from "../storage/index.js";
 import { configureLogger, logger } from "../utils/logger.js";
+import { FixtureManager } from "../runner/fixture-manager.js";
+
+/** Reap preserved fixtures older than this many days. */
+const FIXTURE_MAX_AGE_DAYS = 7;
+/** How often the background reaper runs. */
+const REAPER_INTERVAL_MS = 60 * 60 * 1000; // hourly
+
+/**
+ * Run the stale-fixture reaper once now, then on an unref'd hourly interval
+ * so it never keeps the process alive on its own. Failures are logged and
+ * swallowed — reaping is best-effort housekeeping.
+ */
+function scheduleFixtureReaper(root: string): void {
+  const fixtures = new FixtureManager(root);
+  const runOnce = async () => {
+    try {
+      await fixtures.reapStaleFixtures(FIXTURE_MAX_AGE_DAYS, { dryRun: false });
+    } catch (err) {
+      logger.error("reaper", `Fixture reaper pass failed: ${(err as Error).message}`);
+    }
+  };
+  void runOnce();
+  const timer = setInterval(() => void runOnce(), REAPER_INTERVAL_MS);
+  timer.unref();
+}
 
 // HOWA_STATE_ROOT is the canonical env var (matches systemd unit + docs).
 // Use resolveStateRoot so an empty/blank value (systemd + start.sh export
@@ -56,6 +81,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.log(`UI:        http://${host}:${port}/`);
         console.log(`Health:    http://${host}:${port}/api/health`);
         console.log(`State:     ${stateRoot}`);
+        scheduleFixtureReaper(stateRoot);
       });
     })
     .catch((err) => {

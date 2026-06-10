@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { nanoid } from "nanoid";
 import type { Verdict } from "../types.js";
+import { logger } from "../utils/logger.js";
 
 /**
  * Per-trial workspace lifecycle.
@@ -28,6 +29,47 @@ export type CleanupPolicy = "always" | "success" | "never";
 export const DEFAULT_CLEANUP_POLICY: CleanupPolicy = "success";
 
 const PRESERVE_VERDICTS: ReadonlySet<Verdict> = new Set<Verdict>(["fail", "error"]);
+
+/** One stale workspace identified by the reaper. */
+export interface ReapCandidate {
+  /** Absolute path to the per-test workspace directory. */
+  path: string;
+  /** Owning trial id (the fixtures/<trialId> directory name). */
+  trialId: string;
+  /** How long ago the workspace was last modified, in milliseconds. */
+  ageMs: number;
+  /** Recursive byte size of the workspace. */
+  bytes: number;
+}
+
+/**
+ * Result of a reaper pass. In dry-run mode `wouldDelete`/`wouldFreeBytes`
+ * describe what *would* be removed; with `dryRun: false` they describe what
+ * *was* removed.
+ */
+export interface ReapResult {
+  /** Number of workspace directories examined. */
+  scanned: number;
+  wouldDelete: ReapCandidate[];
+  wouldFreeBytes: number;
+  errors: Array<{ path: string; message: string }>;
+}
+
+/** Sum the byte size of every regular file under `dir` (recursive). */
+async function dirSize(dir: string): Promise<number> {
+  let total = 0;
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+  for (const e of entries) {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) {
+      total += await dirSize(full);
+    } else {
+      const st = await fs.stat(full).catch(() => null);
+      if (st) total += st.size;
+    }
+  }
+  return total;
+}
 
 export class FixtureManager {
   constructor(private readonly stateRoot: string | null) {}
@@ -122,6 +164,103 @@ export class FixtureManager {
       }
     }
     return out;
+  }
+
+  /**
+   * Reap preserved per-test workspaces older than `maxAgeDays`.
+   *
+   * Preserved FAIL/ERROR fixtures (kept as evidence by the "success" cleanup
+   * policy) otherwise live forever, growing disk without bound. This reaper
+   * gives them a TTL. By default it is a DRY RUN — it computes which
+   * workspaces would be removed and how many bytes would be freed without
+   * touching disk. Pass `{ dryRun: false }` to actually delete.
+   *
+   * Age is measured from each workspace directory's mtime. Trial directories
+   * left empty after their workspaces are reaped are removed too.
+   */
+  async reapStaleFixtures(
+    maxAgeDays = 7,
+    opts: { dryRun?: boolean; now?: number } = {},
+  ): Promise<ReapResult> {
+    const dryRun = opts.dryRun ?? true;
+    const now = opts.now ?? Date.now();
+    const cutoff = now - maxAgeDays * 24 * 60 * 60 * 1000;
+    const base = this.stateRoot
+      ? path.join(this.stateRoot, "fixtures")
+      : path.join(os.tmpdir(), "howa");
+
+    const result: ReapResult = { scanned: 0, wouldDelete: [], wouldFreeBytes: 0, errors: [] };
+
+    let trialDirs: string[] = [];
+    try {
+      trialDirs = await fs.readdir(base);
+    } catch {
+      return result; // fixtures dir does not exist yet
+    }
+
+    for (const trialId of trialDirs) {
+      const trialPath = path.join(base, trialId);
+      let workspaces: string[] = [];
+      try {
+        const st = await fs.stat(trialPath);
+        if (!st.isDirectory()) continue;
+        workspaces = await fs.readdir(trialPath);
+      } catch {
+        continue;
+      }
+
+      let remaining = workspaces.length;
+      for (const ws of workspaces) {
+        const wsPath = path.join(trialPath, ws);
+        result.scanned++;
+        let mtimeMs: number;
+        let bytes: number;
+        try {
+          const st = await fs.stat(wsPath);
+          if (!st.isDirectory()) continue;
+          mtimeMs = st.mtimeMs;
+          bytes = await dirSize(wsPath);
+        } catch (err) {
+          result.errors.push({ path: wsPath, message: (err as Error).message });
+          continue;
+        }
+        if (mtimeMs >= cutoff) continue; // still fresh
+
+        result.wouldDelete.push({
+          path: wsPath,
+          trialId,
+          ageMs: now - mtimeMs,
+          bytes,
+        });
+        result.wouldFreeBytes += bytes;
+
+        if (!dryRun) {
+          try {
+            await fs.rm(wsPath, { recursive: true, force: true });
+            remaining--;
+            logger.info(
+              "reaper",
+              `Removed stale fixture ${wsPath} (age ${Math.round((now - mtimeMs) / 86_400_000)}d, ${bytes} bytes)`,
+            );
+          } catch (err) {
+            result.errors.push({ path: wsPath, message: (err as Error).message });
+          }
+        }
+      }
+
+      // Remove the trial directory if we emptied it.
+      if (!dryRun && remaining === 0) {
+        await fs.rm(trialPath, { recursive: true, force: true }).catch(() => {});
+      }
+    }
+
+    if (!dryRun && result.wouldDelete.length > 0) {
+      logger.info(
+        "reaper",
+        `Reaped ${result.wouldDelete.length} stale fixture(s), freed ${result.wouldFreeBytes} bytes (maxAgeDays=${maxAgeDays})`,
+      );
+    }
+    return result;
   }
 
   private async recursiveCopy(src: string, dst: string) {
