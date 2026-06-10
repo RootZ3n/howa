@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { writeFileAtomic } from "../utils/atomic-write.js";
 import type { TrialEvent, Verdict } from "../types.js";
 import type { TrialScore } from "../scoring/score.js";
 import type { AdapterTruthContract } from "../adapters/types.js";
@@ -136,7 +137,7 @@ export class TrialStore {
   async saveTrial(t: TrialSummary): Promise<string> {
     await this.ensureLayout();
     const file = path.join(this.stateRoot, "trials", `${t.trialId}.json`);
-    await fs.writeFile(file, JSON.stringify(t, null, 2));
+    await writeFileAtomic(file, JSON.stringify(t, null, 2));
     return file;
   }
 
@@ -171,7 +172,7 @@ export class TrialStore {
   async saveTrialEvents(trialId: string, events: TrialEvent[]): Promise<string> {
     await this.ensureLayout();
     const file = path.join(this.stateRoot, "trial-events", `${trialId}.json`);
-    await fs.writeFile(file, JSON.stringify(events, null, 2));
+    await writeFileAtomic(file, JSON.stringify(events, null, 2));
     return file;
   }
 

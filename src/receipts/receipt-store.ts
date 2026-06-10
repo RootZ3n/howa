@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { Receipt } from "./receipt.js";
 import { renderReceipt } from "./receipt.js";
+import { writeFileAtomic } from "../utils/atomic-write.js";
 
 /**
  * Filesystem-backed receipt store.
@@ -19,8 +20,8 @@ export class ReceiptStore {
     const safe = r.testId.replace(/[^a-z0-9_.-]/gi, "_");
     const jsonPath = path.join(dir, `${safe}.json`);
     const mdPath = path.join(dir, `${safe}.md`);
-    await fs.writeFile(jsonPath, JSON.stringify(r, null, 2));
-    await fs.writeFile(mdPath, renderReceipt(r));
+    await writeFileAtomic(jsonPath, JSON.stringify(r, null, 2));
+    await writeFileAtomic(mdPath, renderReceipt(r));
     return { jsonPath, mdPath };
   }
 
