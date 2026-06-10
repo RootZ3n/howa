@@ -4,6 +4,7 @@ import { getPack } from "../../packs/registry.js";
 import { runTrial } from "../../runner/trial-runner.js";
 import { TrialStore, TRIAL_SCHEMA_VERSION } from "../../storage/index.js";
 import { HOWA_VERSION, getGitCommit } from "../../version.js";
+import { logger } from "../../utils/logger.js";
 import type { TrialEvent } from "../../types.js";
 
 interface LiveTrial {
@@ -85,6 +86,7 @@ export function trialsRouter(stateRoot: string): Router {
       },
     }).catch((err) => {
       const now = Date.now();
+      logger.error("trials", `Trial ${trialId} crashed: ${(err as Error).message}`);
       pushLive({
         sequence: slot.events.length + 1,
         trialId,

@@ -37,6 +37,7 @@ import {
   resolveEffectiveTruth,
 } from "../adapters/truth-resolver.js";
 import { redact } from "../velum/redaction.js";
+import { logger } from "../utils/logger.js";
 import { HOWA_VERSION, getGitCommit } from "../version.js";
 
 /**
@@ -165,6 +166,10 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
     const reason =
       health.reason ??
       "Adapter health check failed without a reason (treat as setup failure).";
+    logger.error(
+      "runner",
+      `Adapter ${opts.adapter.id} health check failed (trial ${trialId}): ${reason}`,
+    );
     emit({
       phase: "warning",
       severity: "critical",
@@ -601,6 +606,10 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
         allResults.push(errResult);
         byCategory[test.category].push(errResult);
         finishedTestVerdicts.set(test.id, "error");
+        logger.error(
+          "runner",
+          `Test ${test.id} errored (trial ${trialId}): ${(err as Error).message}`,
+        );
 
         // Receipts-first invariant: every test that the runner touches must
         // produce a receipt, INCLUDING error cases. Without this, the receipts
@@ -657,6 +666,10 @@ export async function runTrial(opts: TrialOptions): Promise<TrialSummary> {
           // the receipts-first promise. We surface it as an event so it shows
           // up in the timeline; we do NOT throw, because the test outcome
           // above is already the source of truth.
+          logger.error(
+            "runner",
+            `Failed to save error-path receipt for ${test.id} (trial ${trialId}): ${(receiptErr as Error).message}`,
+          );
           emit({
             phase: "warning",
             severity: "critical",
