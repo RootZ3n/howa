@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { agentsRouter } from "./routes/agents.js";
@@ -57,10 +58,18 @@ export async function buildApp(): Promise<express.Express> {
   app.use("/api/receipts", receiptsRouter(stateRoot));
   app.use("/api/admin", adminRouter(stateRoot));
 
-  // Serve built UI when present.
+  // Serve the world-engine UI. The hand-authored Arena UI lives at the repo
+  // root `ui/` (index.html + howa.css + api/scenes/peh-guide/app .js) and is
+  // the canonical surface on this port. Resolve it relative to the running
+  // module so it works both under tsx (src/api) and compiled (dist/api):
+  // both sit two levels below the repo root. Fall back to the colocated
+  // `../ui` (legacy built bundle) if the root UI is absent.
   try {
     const here = path.dirname(fileURLToPath(import.meta.url));
-    const uiDir = path.resolve(here, "../ui");
+    const rootUi = path.resolve(here, "../../ui");
+    const uiDir = fs.existsSync(path.join(rootUi, "index.html"))
+      ? rootUi
+      : path.resolve(here, "../ui");
     app.use(express.static(uiDir));
     app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(uiDir, "index.html")));
   } catch {

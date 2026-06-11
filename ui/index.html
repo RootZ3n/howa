@@ -673,5 +673,10 @@ function boot(){
 window.boot=boot;
 boot();
 </script>
+<!-- ── Live backend wiring (loads after the engine; reads its globals) ── -->
+<script src="api.js"></script>
+<script src="scenes.js"></script>
+<script src="peh-guide.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
