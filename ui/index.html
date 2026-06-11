@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Arena · Howa</title>
+<title>Howa · The Arena</title>
 <link rel="stylesheet" href="howa.css">
 </head>
 <body>
@@ -15,11 +15,13 @@
 // function names) mirrors Pehlichi's / Luak's world shell so the engine
 // can be synced across repos later. This is a STRESS-TESTING UI — no
 // benchmark/scoring logic. Workspace panels show placeholder content.
+// World map: Entrance Gate (hub), The Arena, Training Grounds, The Temple,
+// The Armory, The Market.
 // ══════════════════════════════════════════════════════════════════════
 
 // ── TAB_CONFIG — Howa-specific. Stress-test lanes. ────────────────────
 const TAB_CONFIG={
-  overview:   {key:'overview',   label:'Arena Overview', laneTitle:'Overview'},
+  overview:   {key:'overview',   label:'Howa Overview',  laneTitle:'Overview'},
   stress:     {key:'stress',     label:'Stress Tests',   laneTitle:'Stress'},
   adversarial:{key:'adversarial',label:'Adversarial',    laneTitle:'Adversarial'},
   regression: {key:'regression', label:'Regressions',    laneTitle:'Regression'},
@@ -51,7 +53,7 @@ const state={
 const PRODUCT_REGISTRY=[
   {id:'howa', displayName:'The Arena', tagline:'Put it in the arena',
    status:'public', order:3, accent:'#dc2626', accent2:'#b45309',
-   peh:'shield', defaultScene:'arena-gate',
+   peh:'shield', defaultScene:'entrance-gate',
    mascotArt:'assets/peh-howa.png',
    blurb:'Howa stress-tests agents — every model faces the arena.'}
 ];
@@ -61,51 +63,57 @@ const PEH_DEFAULT_PRODUCT='howa';
 // ── SceneRegistry ──────────────────────────────────────────────────────
 const SCENE_REGISTRY={
   howa:[
-    {id:'arena-gate', title:'Arena Gate', purpose:'Hub / overview', route:'/arena-gate',
+    {id:'entrance-gate', title:'Entrance Gate', purpose:'Hub / overview', route:'/entrance-gate',
      desc:'Past this gate, every model is tested until it breaks.', peh:'shield',
-     pehSlot:{x:50, y:52, anchor:'center', variant:'sentinel'}, hotspots:[
-      {id:'ag-overview',    label:'Overview',                    x:50, y:44, workspace:'console',              greeting:"Welcome to the Arena. Past this gate, there are no shortcuts — only trials."},
-      {id:'ag-stress',      label:'Stress Tests',               x:22, y:40, workspace:'stress-tests',          greeting:"The stress racks are over here — let's see what this model is really made of."},
-      {id:'ag-adversarial', label:'Adversarial Trials',         x:78, y:34, workspace:'adversarial-trials',     greeting:"Adversarial trials — the inputs no one wants to face."},
-      {id:'ag-trial',       label:'Trial Floor',                x:36, y:76, scene:'trial-floor',                greeting:"Down to the Trial Floor — follow me!"},
-      {id:'ag-veterans',    label:"Veteran's Bench",            x:66, y:76, scene:'veterans-bench',              greeting:"The Veteran's Bench — where survivors rest and failures get read."},
-      {id:'ag-lion',        label:'Lion Pit',                   x:18, y:66, scene:'lion-pit',                    greeting:"The Lion Pit — the worst inputs we have. Let's see if your model can handle them."},
-      {id:'ag-ledger',      label:'Scar Ledger',                x:82, y:62, scene:'scar-ledger',                  greeting:"The Scar Ledger — every wound, dated and signed. Endurance, proven."}
+     pehSlot:{x:50, y:42, anchor:'center', variant:'sentinel'}, hotspots:[
+      {id:'eg-overview',    label:'Overview',                    x:50, y:34, workspace:'console',              greeting:"Welcome to Howa. Past this gate, there are no shortcuts — only trials."},
+      {id:'eg-arena',       label:'The Arena',                  x:50, y:58, scene:'arena',                     greeting:"To the Arena — the heart of every trial. Follow me!"},
+      {id:'eg-training',    label:'Training Grounds',           x:24, y:50, scene:'training-grounds',          greeting:"The Training Grounds — stress racks and warm-up drills this way."},
+      {id:'eg-temple',      label:'The Temple',                 x:76, y:50, scene:'temple',                     greeting:"The Temple — where regressions are studied and wisdom preserved."},
+      {id:'eg-armory',      label:'The Armory',                 x:28, y:68, scene:'armory',                     greeting:"The Armory — failure analysis, root causes, every weapon sharpened."},
+      {id:'eg-market',      label:'The Market',                 x:72, y:68, scene:'market',                     greeting:"The Market — endurance logs and resilience records, all traded here."}
     ]},
-    {id:'trial-floor', title:'Trial Floor', purpose:'Wave-based stress testing', route:'/trial-floor',
-     desc:'Wave after wave. The floor does not stop.', peh:'sword',
-     pehSlot:{x:50, y:58, anchor:'center', variant:'champion'}, hotspots:[
-      {id:'tf-adversarial', label:'Adversarial Trials',         x:40, y:50, workspace:'adversarial-trials',     greeting:"The Trial Floor — wave after wave. Let's see how long this one lasts."},
-      {id:'tf-regression',  label:'Regression Trials',          x:64, y:50, workspace:'regression-trials',      greeting:"Regression trials — making sure old wounds don't reopen."},
-      {id:'tf-gate',        label:'Back to the Arena Gate',     x:50, y:82, scene:'arena-gate',                  greeting:"Back to the gate — follow me!"}
+    {id:'arena', title:'The Arena', purpose:'Adversarial testing', route:'/arena',
+     desc:'The colosseum. Wave after wave, the model faces its challengers.', peh:'sword',
+     pehSlot:{x:50, y:50, anchor:'center', variant:'champion'}, hotspots:[
+      {id:'ar-adversarial', label:'Adversarial Trials',         x:40, y:44, workspace:'adversarial-trials',     greeting:"The Arena floor — adversarial trials. Let's see how long this one lasts."},
+      {id:'ar-stress',      label:'Stress Tests',               x:64, y:44, workspace:'stress-tests',          greeting:"Stress racks on the far side — ramp it up."},
+      {id:'ar-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'veterans-bench', title:"Veteran's Bench", purpose:'Failure analysis & review', route:'/veterans-bench',
-     desc:'Where survivors rest and the failures get read.', peh:'book',
-     pehSlot:{x:48, y:58, anchor:'center', variant:'elder'}, hotspots:[
-      {id:'vb-failure',    label:'Failure Analysis',            x:40, y:50, workspace:'failure-analysis',       greeting:"The Veteran's Bench. Sit here long enough and you learn what separates the survivors from the fallen."},
-      {id:'vb-regression', label:'Regression Trials',           x:64, y:50, workspace:'regression-trials',      greeting:"Cross-reference with regression data — patterns emerge."},
-      {id:'vb-gate',       label:'Back to the Arena Gate',      x:50, y:82, scene:'arena-gate',                  greeting:"Back to the gate — follow me!"}
+    {id:'training-grounds', title:'Training Grounds', purpose:'Stress testing', route:'/training-grounds',
+     desc:'Fenced practice area. Warm up, ramp up, break things early.', peh:'spark',
+     pehSlot:{x:48, y:52, anchor:'center', variant:'trainer'}, hotspots:[
+      {id:'tg-stress',      label:'Stress Tests',               x:44, y:46, workspace:'stress-tests',          greeting:"The Training Grounds — stress testing starts here. Load generators ready."},
+      {id:'tg-regression',  label:'Regression Trials',          x:64, y:46, workspace:'regression-trials',     greeting:"Regression checks — making sure old wounds don't reopen."},
+      {id:'tg-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'lion-pit', title:'Lion Pit', purpose:'Adversarial extremes', route:'/lion-pit',
-     desc:'The worst inputs we have. Throw the model in.', peh:'flame',
-     pehSlot:{x:50, y:60, anchor:'center', variant:'beastmaster'}, hotspots:[
-      {id:'lp-adversarial', label:'Adversarial Trials',         x:40, y:50, workspace:'adversarial-trials',     greeting:"The Lion Pit. These are the worst inputs we have — let's see if your model can handle them."},
-      {id:'lp-failure',     label:'Failure Analysis',           x:64, y:50, workspace:'failure-analysis',       greeting:"When something breaks in the pit, we study it here."},
-      {id:'lp-gate',        label:'Back to the Arena Gate',     x:50, y:82, scene:'arena-gate',                  greeting:"Back to the gate — follow me!"}
+    {id:'temple', title:'The Temple', purpose:'Regression & wisdom', route:'/temple',
+     desc:'Classical columns. Every regression is recorded, every drift noticed.', peh:'orbit',
+     pehSlot:{x:50, y:54, anchor:'center', variant:'elder'}, hotspots:[
+      {id:'tp-regression',  label:'Regression Trials',          x:42, y:46, workspace:'regression-trials',     greeting:"The Temple — regression trials. Historical baselines and drift detection."},
+      {id:'tp-failure',     label:'Failure Analysis',           x:62, y:46, workspace:'failure-analysis',      greeting:"Cross-reference with failure data — patterns emerge."},
+      {id:'tp-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'scar-ledger', title:'Scar Ledger', purpose:'Endurance records', route:'/scar-ledger',
-     desc:'Every wound, dated and signed. Endurance, proven.', peh:'scroll',
-     pehSlot:{x:50, y:58, anchor:'center', variant:'historian'}, hotspots:[
-      {id:'sl-endurance', label:'Endurance Receipts',            x:40, y:50, workspace:'endurance-receipts',     greeting:"Every wound, dated and signed. The Ledger doesn't forget."},
-      {id:'sl-failure',   label:'Failure Analysis',              x:64, y:50, workspace:'failure-analysis',       greeting:"Every failure has a story. The Ledger keeps them all."},
-      {id:'sl-gate',      label:'Back to the Arena Gate',        x:50, y:82, scene:'arena-gate',                  greeting:"Back to the gate — follow me!"}
+    {id:'armory', title:'The Armory', purpose:'Failure analysis', route:'/armory',
+     desc:'Weapons workshop. Every failure is disassembled and understood.', peh:'flame',
+     pehSlot:{x:50, y:56, anchor:'center', variant:'blacksmith'}, hotspots:[
+      {id:'am-failure',     label:'Failure Analysis',           x:42, y:48, workspace:'failure-analysis',      greeting:"The Armory — failure analysis. Crash logs, error patterns, root causes."},
+      {id:'am-adversarial', label:'Adversarial Trials',         x:62, y:48, workspace:'adversarial-trials',    greeting:"When something breaks in the pit, we study it here."},
+      {id:'am-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
+    ]},
+    {id:'market', title:'The Market', purpose:'Endurance records', route:'/market',
+     desc:'Red tents, trading stalls. Every endurance receipt is bought and sold here.', peh:'scroll',
+     pehSlot:{x:50, y:52, anchor:'center', variant:'merchant'}, hotspots:[
+      {id:'mk-endurance',   label:'Endurance Receipts',          x:42, y:46, workspace:'endurance-receipts',    greeting:"The Market — endurance receipts. Sustained runs, fatigue curves, resilience scores."},
+      {id:'mk-stress',      label:'Stress Tests',               x:62, y:46, workspace:'stress-tests',          greeting:"Stress data feeds into endurance metrics — check the connections."},
+      {id:'mk-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
     ]}
   ]
 };
 
 // ── WorkspaceManager: definitions ──────────────────────────────────────
 const WORKSPACE_REGISTRY={
-  'console':              {product:'howa', title:'Arena Overview',   kind:'deck',        route:'/arena-gate',   dock:'fullscreen', peh:'shield'},
+  'console':              {product:'howa', title:'Howa Overview',   kind:'deck',        route:'/entrance-gate',   dock:'fullscreen', peh:'shield'},
   'stress-tests':         {product:'howa', title:'Stress Tests',     kind:'placeholder', route:'/stress',       dock:'right',      peh:'spark',       relatedTab:'stress',      blurb:'Stress testing panel coming soon — load generators, ramp-up curves, and failure thresholds will live here.'},
   'adversarial-trials':   {product:'howa', title:'Adversarial Trials',kind:'placeholder', route:'/adversarial',  dock:'right',      peh:'flame',       relatedTab:'adversarial', blurb:'Adversarial trials panel coming soon — edge-case inputs, attack vectors, and red-team results.'},
   'regression-trials':    {product:'howa', title:'Regression Trials', kind:'placeholder', route:'/regression',   dock:'right',      peh:'orbit',       relatedTab:'regression',  blurb:'Regression trials panel coming soon — historical baselines, drift detection, and pass/fail trends.'},
@@ -385,7 +393,7 @@ function renderPehGuide(product){
   if(!product||!product.mascotArt)return'';
   return `<figure class="peh-guide" aria-hidden="true">
     <span class="peh-guide-frame"><img class="peh-guide-img" src="${esc(product.mascotArt)}" alt="" loading="lazy"></span>
-    <figcaption class="peh-guide-cap"><b>Peh</b><i>arena master</i></figcaption>
+    <figcaption class="peh-guide-cap"><b>Peh</b><i>world guide</i></figcaption>
   </figure>`;
 }
 
@@ -588,21 +596,21 @@ function renderPehDevSwitcher(active){
 // ── Arena Overview console (the kind:'deck' workspace body) ────────────
 function renderArenaConsole(){
   const cards=[
-    {ws:'stress-tests',      scene:'arena-gate',     glyph:'spark',    title:'Stress Tests',       desc:'Load generators, ramp-up curves, and failure thresholds.'},
-    {ws:'adversarial-trials', scene:'trial-floor',    glyph:'flame',    title:'Adversarial Trials',  desc:'Edge-case inputs, attack vectors, and red-team results.'},
-    {ws:'regression-trials',  scene:'veterans-bench', glyph:'orbit',    title:'Regression Trials',   desc:'Historical baselines, drift detection, and pass/fail trends.'},
-    {ws:'failure-analysis',   scene:'lion-pit',       glyph:'book',     title:'Failure Analysis',    desc:'Crash logs, error patterns, and root-cause traces.'},
-    {ws:'endurance-receipts',  scene:'scar-ledger',    glyph:'scroll',   title:'Endurance Receipts',  desc:'Sustained-run logs, fatigue curves, and resilience scores.'}
+    {ws:'stress-tests',      scene:'training-grounds', glyph:'spark',    title:'Stress Tests',       desc:'Load generators, ramp-up curves, and failure thresholds.'},
+    {ws:'adversarial-trials', scene:'arena',            glyph:'flame',    title:'Adversarial Trials',  desc:'Edge-case inputs, attack vectors, and red-team results.'},
+    {ws:'regression-trials',  scene:'temple',           glyph:'orbit',    title:'Regression Trials',   desc:'Historical baselines, drift detection, and pass/fail trends.'},
+    {ws:'failure-analysis',   scene:'armory',           glyph:'book',     title:'Failure Analysis',    desc:'Crash logs, error patterns, and root-cause traces.'},
+    {ws:'endurance-receipts',  scene:'market',           glyph:'scroll',   title:'Endurance Receipts',  desc:'Sustained-run logs, fatigue curves, and resilience scores.'}
   ];
   return `<div class="howa-console">
     <div class="howa-hero">
       <span class="howa-hero-mark" aria-hidden="true">⚔️</span>
       <div>
-        <h2>Welcome to the Arena</h2>
-        <p>No shortcuts in this arena — every model faces the trials. Pick a station below, or tap a place on the map. I'll be right there with you.</p>
+        <h2>Welcome to Howa</h2>
+        <p>No shortcuts in this world — every model faces the trials. Pick a station below, or tap a place on the map. I'll be right there with you.</p>
       </div>
     </div>
-    <h3 class="howa-section-title">Arena stations</h3>
+    <h3 class="howa-section-title">World stations</h3>
     <div class="howa-cards">${cards.map((c)=>`
       <button class="howa-card" type="button" onclick="pehHotspot('${c.ws}','${c.scene}')">
         <span class="howa-card-glyph">${pehGlyph(c.glyph)}</span>
@@ -610,7 +618,7 @@ function renderArenaConsole(){
         <span class="howa-card-desc">${esc(c.desc)}</span>
       </button>`).join('')}</div>
     <div class="howa-virtues">
-      <p>"Every model that enters this arena leaves changed — stronger, or broken."</p>
+      <p>"Every model that enters this world leaves changed — stronger, or broken."</p>
       <div class="howa-virtues-row">Endurance · Resilience · Precision · Adaptability · Honesty</div>
     </div>
     <div class="howa-foot">THE ARENA · Howa · agent proving ground</div>
