@@ -169,6 +169,17 @@ export function trialsRouter(stateRoot: string): Router {
     res.json(summary);
   });
 
+  r.delete("/:id", async (req, res) => {
+    const deleted = await store.deleteTrial(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: "no such trial" });
+      return;
+    }
+    // Also remove from live map if present.
+    live.delete(req.params.id);
+    res.status(204).end();
+  });
+
   r.get("/:id/events", async (req, res) => {
     res.set({
       "Content-Type": "text/event-stream",

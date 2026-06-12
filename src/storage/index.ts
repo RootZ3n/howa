@@ -194,6 +194,25 @@ export class TrialStore {
       return [];
     }
   }
+
+  /** Delete a trial summary and its events. Returns true if deleted, false if not found. */
+  async deleteTrial(trialId: string): Promise<boolean> {
+    const summaryFile = path.join(this.stateRoot, "trials", `${trialId}.json`);
+    const eventsFile = path.join(this.stateRoot, "trial-events", `${trialId}.json`);
+    let found = false;
+    try {
+      await fs.unlink(summaryFile);
+      found = true;
+    } catch {
+      // file may not exist
+    }
+    try {
+      await fs.unlink(eventsFile);
+    } catch {
+      // events file may not exist
+    }
+    return found;
+  }
 }
 
 /**
