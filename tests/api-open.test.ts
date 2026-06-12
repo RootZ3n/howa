@@ -35,7 +35,9 @@ describe("open local API", () => {
   it("serves health without any authorization header", async () => {
     const res = await request("/api/health");
     expect(res.status).toBe(200);
-    expect(JSON.parse(res.body)).toMatchObject({ ok: true, version: "0.1.0" });
+    const data = JSON.parse(res.body);
+    expect(data).toMatchObject({ status: "ok" });
+    expect(typeof data.uptime).toBe("number");
   });
 
   it("serves /api/version with version, gitCommit, and nodeVersion", async () => {

@@ -50,7 +50,7 @@ export async function buildApp(): Promise<express.Express> {
   app.use(express.json({ limit: "1mb" }));
 
   app.get("/api/health", (_req, res) =>
-    res.json({ ok: true, stateRoot, version: "0.1.0" }),
+    res.json({ status: "ok", uptime: process.uptime() }),
   );
 
   app.use("/api/agents", agentsRouter(stateRoot));
