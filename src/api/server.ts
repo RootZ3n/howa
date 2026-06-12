@@ -78,6 +78,14 @@ export async function buildApp(): Promise<express.Express> {
     // dev mode — Vite serves the UI.
   }
 
+  // Global error handler — logs the error and returns 500.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    // eslint-disable-next-line no-console
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  });
+
   return app;
 }
 
