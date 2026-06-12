@@ -317,6 +317,14 @@ current release gates. The audit command omits platform-specific optional
 packages so npm's audit endpoint evaluates the installed cross-platform tree
 consistently.
 
+## Contributing
+
+1. Fork the repo and clone your fork locally.
+2. Create a feature branch (`git checkout -b my-feature`).
+3. Make your changes and run `pnpm test` to verify nothing breaks.
+4. Push your branch and open a pull request against `main`.
+5. Keep changes focused — one logical change per PR.
+
 ## Troubleshooting
 
 | Symptom | What to do |
