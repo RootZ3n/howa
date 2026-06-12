@@ -38,6 +38,19 @@ describe("open local API", () => {
     expect(JSON.parse(res.body)).toMatchObject({ ok: true, version: "0.1.0" });
   });
 
+  it("serves /api/version with version, gitCommit, and nodeVersion", async () => {
+    const res = await request("/api/version");
+    expect(res.status).toBe(200);
+    const data = JSON.parse(res.body);
+    expect(data).toHaveProperty("version");
+    expect(data).toHaveProperty("gitCommit");
+    expect(data).toHaveProperty("nodeVersion");
+    expect(typeof data.version).toBe("string");
+    expect(typeof data.gitCommit).toBe("string");
+    expect(typeof data.nodeVersion).toBe("string");
+    expect(data.version).toBe("0.1.0");
+  });
+
   it("serves API routes without any authorization header", async () => {
     const res = await request("/api/agents");
     expect(res.status).toBe(200);
