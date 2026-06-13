@@ -9,6 +9,7 @@ import { receiptsRouter } from "./routes/receipts.js";
 import { adminRouter } from "./routes/admin.js";
 import { versionRouter } from "./routes/version.js";
 import { statusRouter } from "./routes/status.js";
+import { statsRouter } from "./routes/stats.js";
 import { resolveStateRoot, TrialStore } from "../storage/index.js";
 import { configureLogger, logger } from "../utils/logger.js";
 import { FixtureManager } from "../runner/fixture-manager.js";
@@ -65,6 +66,7 @@ export async function buildApp(): Promise<express.Express> {
   app.use("/api/admin", adminRouter(stateRoot));
   app.use("/api/version", versionRouter());
   app.use("/api/status", statusRouter(app));
+  app.use("/api/stats", statsRouter(stateRoot));
 
   // Serve the world-engine UI. The hand-authored Arena UI lives at the repo
   // root `ui/` (index.html + howa.css + api/scenes/peh-guide/app .js) and is
