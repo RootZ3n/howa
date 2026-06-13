@@ -124,6 +124,13 @@ export interface TrialSummary {
  */
 export const TRIAL_SCHEMA_VERSION = 2;
 
+export interface TrialNote {
+  id: string;
+  trialId: string;
+  text: string;
+  createdAt: number;
+}
+
 export class TrialStore {
   constructor(public readonly stateRoot: string) {}
 
@@ -136,6 +143,7 @@ export class TrialStore {
       "agents",
       "reports",
       "trial-events",
+      "notes",
     ]) {
       await fs.mkdir(path.join(this.stateRoot, sub), { recursive: true });
     }
@@ -193,6 +201,26 @@ export class TrialStore {
     } catch {
       return [];
     }
+  }
+
+  async getTrialNotes(trialId: string): Promise<TrialNote[]> {
+    const file = path.join(this.stateRoot, "notes", `${trialId}.json`);
+    const txt = await fs.readFile(file, "utf8").catch(() => "");
+    if (!txt) return [];
+    try {
+      const parsed = JSON.parse(txt);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async appendTrialNote(trialId: string, note: TrialNote): Promise<void> {
+    await this.ensureLayout();
+    const existing = await this.getTrialNotes(trialId);
+    existing.push(note);
+    const file = path.join(this.stateRoot, "notes", `${trialId}.json`);
+    await writeFileAtomic(file, JSON.stringify(existing, null, 2));
   }
 
   /** Delete a trial summary and its events. Returns true if deleted, false if not found. */

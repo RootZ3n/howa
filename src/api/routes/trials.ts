@@ -2,7 +2,7 @@ import { Router } from "express";
 import { getAdapter } from "../../adapters/registry.js";
 import { getPack } from "../../packs/registry.js";
 import { runTrial } from "../../runner/trial-runner.js";
-import { TrialStore, TRIAL_SCHEMA_VERSION } from "../../storage/index.js";
+import { TrialStore, TRIAL_SCHEMA_VERSION, type TrialNote } from "../../storage/index.js";
 import { HOWA_VERSION, getGitCommit } from "../../version.js";
 import { logger } from "../../utils/logger.js";
 import type { TrialEvent } from "../../types.js";
@@ -222,6 +222,37 @@ export function trialsRouter(stateRoot: string): Router {
     };
     slot.clients.add(onEvent);
     req.on("close", () => slot.clients.delete(onEvent));
+  });
+
+  r.post("/:id/notes", async (req, res) => {
+    const trial = await store.getTrial(req.params.id);
+    if (!trial) {
+      res.status(404).json({ error: "no such trial" });
+      return;
+    }
+    const body = req.body as { text?: unknown };
+    if (typeof body?.text !== "string" || !body.text.trim()) {
+      res.status(400).json({ error: "text is required" });
+      return;
+    }
+    const note: TrialNote = {
+      id: `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      trialId: req.params.id,
+      text: body.text,
+      createdAt: Date.now(),
+    };
+    await store.appendTrialNote(req.params.id, note);
+    res.status(201).json(note);
+  });
+
+  r.get("/:id/notes", async (req, res) => {
+    const trial = await store.getTrial(req.params.id);
+    if (!trial) {
+      res.status(404).json({ error: "no such trial" });
+      return;
+    }
+    const notes = await store.getTrialNotes(req.params.id);
+    res.json({ notes });
   });
 
   return r;
