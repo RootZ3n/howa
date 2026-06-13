@@ -317,11 +317,81 @@ current release gates. The audit command omits platform-specific optional
 packages so npm's audit endpoint evaluates the installed cross-platform tree
 consistently.
 
+## Development
+
+### Prerequisites
+
+- Git
+- Node.js **18.17 or newer**
+- npm (the version bundled with your Node install is fine)
+
+### Setup
+
+Clone the repo and install dependencies:
+
+```bash
+git clone https://github.com/RootZ3n/howa.git
+cd howa
+npm ci
+npm run build
+npm run smoke          # verify the build works with the mock agent
+```
+
+### Dev server (hot reload)
+
+```bash
+npm run dev
+# api: http://127.0.0.1:18799
+# ui:  http://127.0.0.1:5180   ← open this one in dev
+```
+
+### Running tests
+
+```bash
+npm test                  # unit tests (no server required)
+npm run test:integration  # open local API smoke test
+npm run test:all          # unit + integration together
+npm run test:watch        # watch mode for active development
+npm run typecheck         # type-check only
+npm run smoke             # build + mock-agent trial (no external deps)
+npm run verify:release    # full release gate (typecheck + build + test + smoke)
+```
+
+See the [Testing](#testing) section above for more detail on each command.
+
+### Type-checking
+
+```bash
+npm run typecheck
+```
+
+Runs the TypeScript compiler in `--noEmit` mode to catch type errors without producing output files.
+
+### Project structure
+
+```
+howa/
+├── src/
+│   ├── adapters/      # AgentAdapter contract and implementations
+│   ├── runner/        # Trial orchestration, fixtures, artifact collection
+│   ├── packs/         # Truthfulness, repo-editing, safety, stamina, local-model
+│   ├── scoring/       # Weighted scoring + verdict roll-up
+│   ├── receipts/      # JSON + Markdown receipts and the receipt store
+│   ├── velum/         # Prompt-injection / secret guard
+│   ├── cli/           # `howa` command-line entry
+│   ├── ui/            # Vite + React arena UI
+│   └── api/           # Express HTTP API
+├── tests/             # Vitest suites
+└── docs/              # Architecture, adapter, pack, and scoring docs
+```
+
+For design documentation see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/ADAPTERS.md`](docs/ADAPTERS.md), [`docs/TEST-PACKS.md`](docs/TEST-PACKS.md), and [`docs/SCORING.md`](docs/SCORING.md).
+
 ## Contributing
 
 1. Fork the repo and clone your fork locally.
 2. Create a feature branch (`git checkout -b my-feature`).
-3. Make your changes and run `pnpm test` to verify nothing breaks.
+3. Make your changes and run `npm test` to verify nothing breaks.
 4. Push your branch and open a pull request against `main`.
 5. Keep changes focused — one logical change per PR.
 
