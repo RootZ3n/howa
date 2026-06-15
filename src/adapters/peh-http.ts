@@ -188,7 +188,7 @@ function createPehHttpAdapter(config: {
         const res = await fetch(`${session.endpoint}${chatPath(session.variant)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody(session.variant, prompt, session.modelInfo.model)),
+          body: JSON.stringify(requestBody(session.variant, prompt, session.modelInfo.model, session.workspace)),
           signal: AbortSignal.timeout(session.timeoutMs),
         });
         const text = await res.text();
@@ -271,18 +271,17 @@ function chatPath(variant: PehVariant): string {
   return variant === "v2" ? "/chat" : "/api/chat";
 }
 
-function requestBody(variant: PehVariant, prompt: string, model: string): Record<string, unknown> {
-  if (variant === "v2") {
-    // Pehlichi /chat expects flat {"message": "..."} format, not OpenAI-style messages array.
-    return {
-      message: prompt,
-      ...(model !== "unknown" ? { model } : {}),
-    };
-  }
-  return {
+function requestBody(variant: PehVariant, prompt: string, model: string, workspace?: string): Record<string, unknown> {
+  const base: Record<string, unknown> = {
     message: prompt,
     ...(model !== "unknown" ? { model } : {}),
   };
+  // N-WORKSPACE: when the trial creates a per-test workspace, tell Pehlichi
+  // so its file tools write into the trial's directory, not Pehlichi's own root.
+  if (workspace) {
+    base.workspace = workspace;
+  }
+  return base;
 }
 
 function parsePehResponse(
