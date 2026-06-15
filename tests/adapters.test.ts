@@ -332,9 +332,11 @@ describe("Peh HTTP adapters", () => {
         };
       }
       if (req.method === "POST" && req.url === "/chat") {
-        const messages = (body as { messages?: Array<{ content?: unknown }> }).messages ?? [];
+        const promptMsg = (body as { message?: string }).message ?? "";
         return {
-          text: `v2 reply: ${String(messages[0]?.content ?? "")}`,
+          content: `v2 reply: ${promptMsg}`,
+          ok: true,
+          partial: false,
           model: "peh-v2-local-model",
           tokensIn: 4,
           tokensOut: 6,

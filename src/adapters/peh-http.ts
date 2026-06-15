@@ -20,6 +20,7 @@ interface PehSession {
   cost: CostInfo;
   timeoutMs: number;
   events: AgentEvent[];
+  partial?: boolean;
 }
 
 const sessions = new Map<string, PehSession>();
@@ -191,7 +192,8 @@ function createPehHttpAdapter(config: {
           signal: AbortSignal.timeout(session.timeoutMs),
         });
         const text = await res.text();
-        if (!res.ok) {
+        if (!res.ok && res.status !== 422) {
+          // 422 = partial (budget-exhausted) — still parse the body for useful content
           exitCode = res.status;
           stderr = `HTTP ${res.status}: ${text.slice(-4000)}`;
           events.push({ ts: Date.now(), kind: "error", text: stderr.slice(0, 500) });
@@ -200,6 +202,10 @@ function createPehHttpAdapter(config: {
           const parsed = parsePehResponse(session.variant, data);
           finalAnswer = parsed.finalAnswer;
           stdout = parsed.stdout;
+          // Mark partial (budget-exhausted) runs so Howa can account for incomplete output
+          if (data.partial === true || data.ok === false) {
+            session.partial = true;
+          }
           session.modelInfo = {
             ...session.modelInfo,
             model: parsed.model ?? session.modelInfo.model,
@@ -284,7 +290,10 @@ function parsePehResponse(
   data: Record<string, unknown>,
 ): { finalAnswer?: string; stdout: string; model?: string; cost: CostInfo } {
   if (variant === "v2") {
-    const finalAnswer = typeof data.text === "string" ? data.text : undefined;
+    // Pehlichi's /chat returns { content: "..." } — check content first, then text (legacy)
+    const finalAnswer = typeof data.content === "string" && data.content.length > 0
+      ? data.content
+      : typeof data.text === "string" ? data.text : undefined;
     const tokensIn = typeof data.tokensIn === "number" ? data.tokensIn : undefined;
     const tokensOut = typeof data.tokensOut === "number" ? data.tokensOut : undefined;
     return {
@@ -324,7 +333,10 @@ function parsePehResponse(
     };
   }
 
-  const finalAnswer = typeof data.reply === "string" ? data.reply : undefined;
+  // Pehlichi's /chat returns { content: "..." } — check content first, then reply (llama.cpp legacy)
+  const finalAnswer = typeof data.content === "string" && data.content.length > 0
+    ? data.content
+    : typeof data.reply === "string" ? data.reply : undefined;
   const promptTokens = typeof data.promptEvalCount === "number" ? data.promptEvalCount : undefined;
   const outputTokens = typeof data.evalCount === "number" ? data.evalCount : undefined;
   return {
