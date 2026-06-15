@@ -1,13 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════════
    HOWA · THE ARENA
    Themed stylesheet for the Pehverse world engine. The structural engine
-   rules (.peh-*) are SHARED, theme-neutral, and identical in architecture
-   to Pehlichi's pehlichi.css / Luak's crucibulum.css — all colour flows
-   from the active product's --peh-accent / --peh-accent2 set inline on
-   .peh-shell. The Arena skin (.peh-product-howa) layers a deep crimson/
-   bronze gladiator-colosseum look over that engine: crimson blood/sand
-   accents, bronze Roman metalwork, stone-charcoal backgrounds, red/amber
-   neon highlights. Think Roman colosseum meets stress-testing lab.
+   rules (.peh-*) are SHARED, theme-neutral. All colour flows from the
+   active product's --peh-accent / --peh-accent2 set inline on .peh-shell.
+   The Arena skin (.peh-product-howa) layers a deep crimson/violet
+   gladiator-colosseum look: crimson blood/sand accents, violet shadows,
+   stone-charcoal backgrounds. Background map is always visible through
+   glassmorphic panels in both modes.
    ══════════════════════════════════════════════════════════════════════ */
 :root{
   color-scheme:dark;
@@ -27,13 +26,12 @@
   /* ─── Signals ──────────────────────────────────────────────────────── */
   --crimson:#dc2626;
   --crimson-hot:#f87171;
-  --bronze:#b45309;
-  --bronze-hot:#f59e0b;
+  --violet:#8b5cf6;
+  --violet-hot:#a78bfa;
   --amber:#f59e0b;
   --amber-hot:#fbbf24;
   --gold:#c8962e;
   --red:#ef4444;
-  --red-hot:#fca5a5;
   --magenta:#ec4899;
   --success:#34d399;
 
@@ -45,7 +43,6 @@
 
   --body:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   --mono:"SF Mono","SFMono-Regular",Consolas,"Liberation Mono","Courier New",monospace;
-  /* Bold arena display face — inscriptional feel. */
   --arena-display:"Trajan Pro","Cinzel","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
 
   --shadow-panel:0 8px 40px rgba(0,0,0,.5),0 0 0 1px var(--border-subtle);
@@ -61,8 +58,8 @@ html,body{
   background:var(--bg-0);
   background-image:
     radial-gradient(ellipse 80% 60% at 50% 18%,rgba(220,38,38,.08),transparent 60%),
-    radial-gradient(circle at 82% 82%,rgba(180,83,9,.06),transparent 50%),
-    radial-gradient(circle at 18% 72%,rgba(245,158,11,.04),transparent 45%);
+    radial-gradient(circle at 82% 82%,rgba(139,92,246,.06),transparent 50%),
+    radial-gradient(circle at 18% 72%,rgba(248,113,113,.04),transparent 45%);
   color:var(--ink);
   font-family:var(--body);font-size:var(--text-base);line-height:1.5;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;position:relative;
@@ -71,15 +68,12 @@ html,body{
 button{font-family:inherit}
 
 /* ══════════════════════════════════════════════════════════════════════
-   PEHVERSE WORLD ENGINE  (theme-neutral; mirrors Pehlichi's engine rules)
-   Mobile-first: the scene is a world-map hub with tappable hotspot pins
-   and full-screen bottom-sheet workspaces. Desktop (≥880px) gains docked
-   panels and a multi-tile dashboard grid.
+   PEHVERSE WORLD ENGINE  (theme-neutral)
    ══════════════════════════════════════════════════════════════════════ */
 #app:has(.peh-shell){padding:0}
 
 .peh-shell{
-  --peh-accent:#dc2626;--peh-accent2:#b45309;
+  --peh-accent:#dc2626;--peh-accent2:#8b5cf6;
   position:relative;display:flex;flex-direction:column;
   min-height:100vh;min-height:100dvh;width:100%;
   color:var(--ink);background:var(--bg-0);overflow:hidden;
@@ -133,7 +127,7 @@ button{font-family:inherit}
 }
 .peh-scene-atmos::after{
   content:"";position:absolute;inset:0;
-  background-image:radial-gradient(rgba(245,158,11,.04) 1px,transparent 1px);
+  background-image:radial-gradient(rgba(248,113,113,.04) 1px,transparent 1px);
   background-size:34px 34px;opacity:.5;mix-blend-mode:screen;
 }
 .peh-scene-caption{position:relative;z-index:2;padding:18px 16px 4px;max-width:560px}
@@ -166,7 +160,7 @@ button{font-family:inherit}
 .peh-hotspot:focus-visible{outline:none}
 .peh-hotspot:focus-visible .peh-hotspot-label{outline:2px solid var(--peh-accent);outline-offset:2px}
 
-/* ── Waypoints (intra-product scene hops) ──────────────────────────── */
+/* ── Waypoints ─────────────────────────────────────────────────────── */
 .peh-waypoints{
   position:absolute;left:0;right:0;bottom:10px;z-index:4;
   display:flex;gap:8px;padding:0 12px;overflow-x:auto;scrollbar-width:none;
@@ -221,7 +215,7 @@ button{font-family:inherit}
 }
 .button.secondary:hover{border-color:var(--peh-accent)}
 
-/* ── Peh placeholder slot (data-driven squirrel guide medallion) ───── */
+/* ── Peh slot (gladiator portrait medallion) ───────────────────────── */
 .peh-slot{position:absolute;z-index:5;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;transition:left .4s ease,top .4s ease}
 .peh-slot-center{transform:translate(-50%,-50%)}
 .peh-slot-top{transform:translate(-50%,0)}
@@ -230,19 +224,19 @@ button{font-family:inherit}
 .peh-slot-left{transform:translate(-100%,-50%)}
 .peh-slot-medallion{
   width:clamp(46px,8vw,72px);height:clamp(46px,8vw,72px);border-radius:50%;
-  display:flex;align-items:center;justify-content:center;padding:9px;color:#3a2a18;
+  display:flex;align-items:center;justify-content:center;
   background:radial-gradient(circle at 50% 32%,#f6ecd2 0%,#e8d6ab 60%,#cdb37e 100%);
-  border:2px solid #b8965b;
+  border:2px solid #b8965b;overflow:hidden;padding:0;
   box-shadow:0 0 0 4px color-mix(in srgb,var(--peh-accent) 26%,transparent),0 8px 22px rgba(0,0,0,.5);
 }
-.peh-squirrel{display:block;opacity:.92}
+.peh-slot-medallion img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .peh-slot-tag{
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;
   color:var(--ink);background:rgba(10,10,12,.82);border:1px solid var(--border-subtle);
   padding:2px 8px;border-radius:999px;backdrop-filter:blur(4px);
 }
 .peh-slot-inline{position:static;transform:none;float:right;margin:0 0 6px 12px}
-.peh-slot-inline .peh-slot-medallion{width:48px;height:48px;padding:7px}
+.peh-slot-inline .peh-slot-medallion{width:48px;height:48px}
 
 /* ── Peh-as-guide: speaking glow + contextual speech bubble ────────── */
 .peh-slot.glow .peh-slot-medallion{animation:pehSlotGlow 1.8s ease-in-out infinite}
@@ -260,7 +254,7 @@ button{font-family:inherit}
   position:relative;border-radius:14px;padding:10px 13px 11px;
   background:linear-gradient(160deg,color-mix(in srgb,var(--peh-accent) 24%,rgba(14,12,22,.92)),rgba(10,10,12,.94));
   border:1px solid color-mix(in srgb,var(--crimson-hot) 30%,var(--border-subtle));
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(245,158,11,.06);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(139,92,246,.06);
   backdrop-filter:blur(8px);
 }
 .peh-bubble-name{
@@ -289,7 +283,7 @@ button{font-family:inherit}
   .peh-bubble-enter,.peh-bubble-exit,.peh-bubble-anchor-down.peh-bubble-enter{animation-duration:.01ms}
 }
 
-/* ── Peh guide portrait (real mascot art) ──────────────────────────── */
+/* ── Peh guide portrait ────────────────────────────────────────────── */
 .peh-guide{
   position:absolute;z-index:6;left:12px;bottom:48px;margin:0;pointer-events:none;
   display:flex;flex-direction:column;align-items:center;gap:5px;
@@ -324,7 +318,7 @@ button{font-family:inherit}
 .peh-backmap:hover{color:var(--ink);border-color:var(--peh-accent)}
 .peh-backmap span{font-size:16px;line-height:1}
 
-/* ── Mobile (base): focused workspace = full-screen sheet over the map ─ */
+/* ── Mobile (base): focused workspace = full-screen sheet ──────────── */
 .peh-panel{
   position:absolute;left:0;right:0;bottom:0;top:6%;
   border-radius:18px 18px 0 0;animation:pehSheet .22s ease-out;
@@ -343,7 +337,7 @@ button{font-family:inherit}
 .peh-tile{min-height:60vh}
 .peh-tile .peh-panel-body{max-height:none}
 
-/* Dashboard chooser (no workspace open) */
+/* Dashboard chooser */
 .peh-chooser{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .peh-choice{
   display:flex;flex-direction:column;align-items:flex-start;gap:8px;
@@ -356,7 +350,7 @@ button{font-family:inherit}
 .peh-choice-title{font-weight:700;font-size:14px}
 .peh-choice-kind{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim)}
 
-/* ── Taskbar (workspace switcher) ──────────────────────────────────── */
+/* ── Taskbar ───────────────────────────────────────────────────────── */
 .peh-taskbar{
   position:sticky;bottom:0;z-index:45;flex:0 0 auto;
   display:flex;align-items:center;gap:8px;padding:7px 10px;
@@ -423,7 +417,7 @@ button{font-family:inherit}
 .peh-ft-dev-soon{font-size:11px;padding:5px 10px;border-radius:999px;border:1px dashed var(--border-subtle);color:var(--ink-dim);opacity:.8}
 
 /* ══════════════════════════════════════════════════════════════════════
-   DESKTOP (≥880px) — docked panels, multi-tile dashboard, expanded chrome
+   DESKTOP (≥880px)
    ══════════════════════════════════════════════════════════════════════ */
 @media (min-width:880px){
   .peh-brand-word{display:inline}
@@ -458,172 +452,461 @@ button{font-family:inherit}
 
 /* ══════════════════════════════════════════════════════════════════════
    THE ARENA SKIN — .peh-product-howa
-   A deep crimson/bronze gladiator-colosseum theme layered over the engine.
-   Roman colosseum meets stress-testing lab: stone walls, blood-sand arena
-   floor, bronze metalwork, amber torchlight. Recolours only — never
-   touches the structural rules (mobile sheet, ≥880px dock gating,
-   data-driven slots).
+   Deep crimson/violet gladiator-colosseum theme. World map is the base;
+   glassmorphic panels float over it. Background always shows through.
    ══════════════════════════════════════════════════════════════════════ */
 .peh-product-howa{
   --arena-crimson:#dc2626;
   --arena-crimson-hi:#f87171;
   --arena-crimson-dk:#991b1b;
-  --arena-bronze:#b45309;
-  --arena-bronze-hi:#f59e0b;
-  --arena-bronze-dk:#78350f;
+  --arena-violet:#8b5cf6;
+  --arena-violet-hi:#a78bfa;
   --arena-sand:#d4a056;
-  --arena-stone:#1a1818;
   --arena-night:#0a0a0c;
-  background:radial-gradient(140% 110% at 50% 0%,#1a1418 0%,#120e10 40%,#0a0a0c 80%);
+  --border-subtle:rgba(220,38,38,.16);
+  --border-medium:rgba(220,38,38,.28);
+  --border-bright:rgba(220,38,38,.42);
+  background:
+    linear-gradient(135deg,rgba(10,10,12,.55),rgba(26,16,16,.50)),
+    url("assets/howa-desktop-map.png") center/cover no-repeat;
+}
+@media (max-width:879px){
+  .peh-product-howa{
+    background:
+      linear-gradient(135deg,rgba(10,10,12,.55),rgba(26,16,16,.50)),
+      url("assets/howa-mobile-map.png") center top/cover no-repeat;
+  }
 }
 
-/* Top bar / taskbar: dark arena band with crimson edge. */
+/* Top bar / taskbar: dark arena band with crimson edge, semi-transparent */
 .peh-product-howa .peh-topbar{
-  background:linear-gradient(180deg,rgba(26,20,24,.96),rgba(10,10,12,.82));
-  border-bottom:1px solid var(--arena-crimson-dk);
-  box-shadow:0 1px 0 rgba(248,113,113,.12) inset,0 6px 18px rgba(0,0,0,.45);
+  background:linear-gradient(90deg,rgba(26,16,20,.82),rgba(16,12,20,.78));
+  border-bottom:1px solid rgba(153,27,27,.5);
+  box-shadow:0 1px 0 rgba(248,113,113,.10) inset,0 4px 14px rgba(0,0,0,.45);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
 .peh-product-howa .peh-taskbar{
-  background:linear-gradient(0deg,rgba(10,10,12,.97),rgba(26,20,24,.9));
-  border-top:1px solid var(--arena-crimson-dk);
-  box-shadow:0 -1px 0 rgba(248,113,113,.10) inset;
+  background:linear-gradient(0deg,rgba(16,12,20,.95),rgba(26,16,20,.88));
+  border-top:1px solid rgba(153,27,27,.4);
+  box-shadow:0 -1px 0 rgba(248,113,113,.08) inset;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
+.peh-product-howa .peh-brand-mark{background:linear-gradient(135deg,var(--arena-crimson),var(--arena-violet));color:var(--arena-night)}
 .peh-product-howa .peh-brand-word{font-family:var(--arena-display);font-weight:700;letter-spacing:.06em;color:var(--arena-sand)}
 .peh-product-howa .peh-here b{font-family:var(--arena-display);letter-spacing:.02em;color:var(--arena-sand)}
 .peh-product-howa .peh-travel-cta{color:var(--arena-crimson-hi)}
 
-/* The Arena scene: painted world map over dark stone/arena floor. */
+/* Scene atmosphere: the map is on the parent element; atmos is a tint layer */
 .peh-product-howa .peh-scene-atmos{
   background:
-    url("assets/howa-desktop-map.png") center/cover no-repeat,
-    radial-gradient(120% 90% at 18% 12%,rgba(220,38,38,.18),transparent 60%),
-    radial-gradient(120% 90% at 85% 85%,rgba(180,83,9,.22),transparent 60%),
-    radial-gradient(130% 110% at 50% 4%,#1a1418 0%,#120e10 38%,#0a0a0c 82%);
+    linear-gradient(rgba(10,10,12,.18),rgba(10,10,12,.42)),
+    url("assets/howa-desktop-map.png") center/cover no-repeat;
 }
 @media (max-width:879px){
   .peh-product-howa .peh-scene-atmos{
     background:
-      url("assets/howa-mobile-map.png") center top/cover no-repeat,
-      radial-gradient(130% 110% at 50% 4%,#1a1418 0%,#120e10 38%,#0a0a0c 82%);
+      linear-gradient(rgba(10,10,12,.18),rgba(10,10,12,.42)),
+      url("assets/howa-mobile-map.png") center top/cover no-repeat;
   }
 }
 .peh-product-howa .peh-scene-atmos::after{
-  /* faint arena-floor grit so the painted art stays legible */
   background-image:radial-gradient(rgba(212,160,86,.06) 1px,transparent 1.4px);
-  background-size:38px 38px;opacity:.5;mix-blend-mode:screen;
+  background-size:38px 38px;opacity:.4;mix-blend-mode:screen;
 }
-.peh-product-howa .peh-scene-tag{color:var(--arena-crimson);font-family:var(--arena-display);letter-spacing:.2em}
+.peh-product-howa .peh-scene-tag{color:var(--arena-crimson);font-family:var(--arena-display);letter-spacing:.2em;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .peh-product-howa .peh-scene-title{
   font-family:var(--arena-display);font-weight:700;letter-spacing:.01em;
-  color:var(--arena-sand);text-shadow:0 2px 18px rgba(220,38,38,.30),0 1px 0 rgba(0,0,0,.4);
+  color:var(--arena-sand);text-shadow:0 2px 18px rgba(220,38,38,.35),0 1px 6px rgba(0,0,0,.85);
   display:inline-block;padding-bottom:4px;border-bottom:3px solid var(--arena-crimson);
 }
-.peh-product-howa .peh-scene-desc{color:var(--ink-soft)}
+.peh-product-howa .peh-scene-desc{color:var(--ink-soft);text-shadow:0 1px 4px rgba(0,0,0,.7)}
 
-/* Hotspots → crimson/bronze arena markers. */
+/* Hotspots → crimson arena markers, readable against the map */
 .peh-product-howa .peh-pin{
   background:radial-gradient(circle at 50% 30%,var(--arena-crimson-hi),var(--arena-crimson) 52%,var(--arena-crimson-dk) 100%);
-  box-shadow:0 0 0 3px rgba(10,10,12,.85),0 0 0 5px rgba(220,38,38,.35),0 6px 16px rgba(0,0,0,.55);
+  box-shadow:0 0 0 3px rgba(10,10,12,.9),0 0 0 5px rgba(220,38,38,.4),0 6px 16px rgba(0,0,0,.6);
 }
 .peh-product-howa .peh-pin::after{border-color:rgba(248,113,113,.7)}
 .peh-product-howa .peh-hotspot-label{
   font-family:var(--arena-display);font-weight:700;letter-spacing:.02em;font-size:12px;
   color:var(--arena-sand);
-  background:linear-gradient(180deg,rgba(26,20,24,.92),rgba(10,10,12,.92));
+  background:linear-gradient(180deg,rgba(26,16,20,.92),rgba(10,10,12,.92));
   border:1px solid var(--arena-crimson-dk);
-  box-shadow:0 2px 8px rgba(0,0,0,.45),0 0 0 1px rgba(248,113,113,.10) inset;
+  box-shadow:0 2px 8px rgba(0,0,0,.55),0 0 0 1px rgba(248,113,113,.08) inset;
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
 }
 
-/* Peh's medallion + guide portrait framed in crimson/bronze. */
+/* Peh's medallion — actual gladiator portrait */
 .peh-product-howa .peh-slot-medallion{
   background:radial-gradient(circle at 50% 30%,#f6ecd2,#e8d6ab 55%,#cdb37e 100%);
   border:2px solid var(--arena-crimson-dk);
-  box-shadow:0 0 0 3px rgba(10,10,12,.85),0 0 0 6px rgba(220,38,38,.30),0 8px 20px rgba(0,0,0,.55);
+  box-shadow:0 0 0 3px rgba(10,10,12,.9),0 0 0 6px rgba(220,38,38,.32),0 8px 20px rgba(0,0,0,.6);
+  overflow:hidden;padding:0;
+}
+.peh-product-howa .peh-slot-medallion img{
+  width:100%;height:100%;object-fit:cover;border-radius:50%;
+  box-shadow:0 0 20px rgba(220,38,38,.25);display:block;
 }
 .peh-product-howa .peh-guide-frame{border-color:var(--arena-crimson)}
 .peh-product-howa .peh-guide-cap b{font-family:var(--arena-display);color:var(--arena-crimson-hi)}
+.peh-product-howa .peh-guide-img{object-position:50% 10%}
 
-/* Scene-hop waypoints → arena stone tabs. */
+/* Waypoints → stone arena tabs */
 .peh-product-howa .peh-waypoint{
   font-family:var(--arena-display);letter-spacing:.02em;
-  background:linear-gradient(180deg,rgba(26,20,24,.85),rgba(10,10,12,.85));
-  color:var(--arena-sand);border:1px solid var(--arena-crimson-dk);
+  background:linear-gradient(180deg,rgba(26,16,20,.88),rgba(10,10,12,.88));
+  color:var(--arena-sand);border:1px solid rgba(153,27,27,.5);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
 .peh-product-howa .peh-waypoint:hover{border-color:var(--arena-crimson);color:#fff}
-.peh-product-howa .peh-waypoint.active{background:linear-gradient(120deg,var(--arena-crimson-hi),var(--arena-crimson) 45%,var(--arena-bronze));color:var(--arena-night);border-color:transparent}
+.peh-product-howa .peh-waypoint.active{background:linear-gradient(120deg,var(--arena-crimson-hi),var(--arena-crimson) 45%,var(--arena-violet));color:var(--arena-night);border-color:transparent}
 
-/* Workspace panels → dark iron-and-stone cases. */
+/* Workspace panels → glassmorphic, background visible through */
 .peh-product-howa .peh-panel,.peh-product-howa .peh-tile{
-  background:linear-gradient(180deg,#16121a,#0e0c10);
-  border:1px solid var(--arena-crimson-dk);
+  background:linear-gradient(180deg,rgba(26,16,20,.72),rgba(14,10,16,.68));
+  border:1px solid rgba(153,27,27,.4);
   box-shadow:0 18px 60px rgba(0,0,0,.6),0 0 0 1px rgba(248,113,113,.06) inset;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
 }
 .peh-product-howa .peh-panel.focused,.peh-product-howa .peh-tile.focused{border-color:var(--arena-crimson)}
 .peh-product-howa .peh-panel-head{
-  background:linear-gradient(180deg,rgba(26,20,24,.9),rgba(18,16,22,.9));
-  border-bottom:1px solid var(--arena-crimson-dk);
+  background:rgba(220,38,38,.09);
+  border-bottom:1px solid rgba(153,27,27,.35);
 }
 .peh-product-howa .peh-panel-title{font-family:var(--arena-display);letter-spacing:.02em;color:var(--arena-sand)}
 
-/* Placeholder workspace → a scorched arena notice. */
+/* Placeholder panel */
 .peh-product-howa .peh-ph{
-  margin:10px;border-radius:12px;color:#4a3520;
-  background:linear-gradient(180deg,#e8dcc4,#d0be96);
-  border:1px solid var(--arena-bronze-dk);box-shadow:0 6px 18px rgba(0,0,0,.45);
+  margin:10px;border-radius:12px;color:var(--ink-soft);
+  background:linear-gradient(180deg,rgba(26,16,20,.75),rgba(14,10,16,.70));
+  border:1px solid rgba(153,27,27,.3);box-shadow:0 6px 18px rgba(0,0,0,.45);
 }
-.peh-product-howa .peh-ph-glyph{color:var(--arena-crimson-dk)}
-.peh-product-howa .peh-ph-blurb{color:#3a2810}
-.peh-product-howa .peh-ph-tag{color:var(--arena-bronze-dk);border-color:var(--arena-bronze-dk)}
-.peh-product-howa .peh-ph .button.secondary{background:rgba(20,16,10,.08);border-color:var(--arena-bronze-dk);color:#3a2810}
+.peh-product-howa .peh-ph-glyph{color:var(--arena-crimson-hi)}
+.peh-product-howa .peh-ph-tag{color:var(--arena-crimson-dk);border-color:rgba(153,27,27,.4)}
+.peh-product-howa .peh-ph .button.secondary{background:rgba(220,38,38,.10);border-color:rgba(153,27,27,.4)}
 
-/* Dashboard chooser + headings. */
-.peh-product-howa .peh-dash-head{border-bottom:1px solid var(--arena-crimson-dk)}
-.peh-product-howa .peh-dash-here h1{font-family:var(--arena-display);letter-spacing:.01em}
+/* Dashboard — background visible through the grid gutter */
+.peh-product-howa .peh-dash{background:linear-gradient(135deg,rgba(26,16,20,.45),rgba(14,10,16,.40));backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.peh-product-howa .peh-dash-head{border-bottom:1px solid rgba(153,27,27,.35);background:linear-gradient(180deg,rgba(26,16,20,.65),rgba(14,10,16,.55));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.peh-product-howa .peh-dash-here h1{font-family:var(--arena-display);letter-spacing:.01em;color:var(--arena-sand)}
 .peh-product-howa .peh-choice{
-  background:linear-gradient(160deg,rgba(26,20,24,.75),rgba(10,10,12,.5));
-  border:1px solid var(--arena-crimson-dk);color:var(--arena-sand);
+  background:linear-gradient(160deg,rgba(26,16,20,.78),rgba(14,10,16,.60));
+  border:1px solid rgba(153,27,27,.4);color:var(--arena-sand);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
 }
 .peh-product-howa .peh-choice:hover{border-color:var(--arena-crimson)}
 .peh-product-howa .peh-choice-title{font-family:var(--arena-display);letter-spacing:.01em}
-.peh-product-howa .peh-choice-kind{color:var(--arena-crimson-dk)}
+.peh-product-howa .peh-choice-kind{color:rgba(220,38,38,.55)}
 
-/* Fast-travel sheet → an arena command tent. */
+/* Fast-travel sheet */
 .peh-product-howa .peh-ft{
-  background:linear-gradient(180deg,rgba(26,20,24,.99),rgba(10,10,12,.99));
-  border:1px solid var(--arena-crimson-dk);
+  background:linear-gradient(180deg,rgba(26,16,20,.97),rgba(14,10,16,.97));
+  border:1px solid rgba(153,27,27,.4);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
 }
-.peh-product-howa .peh-ft-head{border-bottom:1px solid var(--arena-crimson-dk)}
+.peh-product-howa .peh-ft-head{border-bottom:1px solid rgba(153,27,27,.35)}
 .peh-product-howa .peh-ft-head h2{color:var(--arena-crimson-hi)}
 
-/* ── Arena Overview console (the kind:'deck' workspace body) ──────── */
-.howa-console{padding:18px 16px 26px;display:flex;flex-direction:column;gap:18px;color:var(--ink)}
-.howa-hero{
-  display:flex;gap:14px;align-items:center;padding:16px 18px;border-radius:16px;
-  background:linear-gradient(135deg,rgba(220,38,38,.14),rgba(180,83,9,.12),rgba(10,10,12,.4));
-  border:1px solid var(--border-subtle);
+/* ══════════════════════════════════════════════════════════════════════
+   ARENA OVERVIEW CONSOLE — .wks-* (the kind:'deck' workspace body)
+   ══════════════════════════════════════════════════════════════════════ */
+.wks-console{padding:18px 16px 26px;display:flex;flex-direction:column;gap:18px;color:var(--ink)}
+.wks-hero{
+  display:flex;gap:16px;align-items:center;padding:16px 18px;border-radius:16px;
+  background:linear-gradient(135deg,rgba(220,38,38,.16),rgba(139,92,246,.12),rgba(14,10,16,.35));
+  border:1px solid rgba(153,27,27,.3);
 }
-.howa-hero-mark{font-size:34px;line-height:1;filter:drop-shadow(0 4px 12px rgba(220,38,38,.5))}
-.howa-hero h2{margin:0 0 4px;font-family:var(--arena-display);font-size:22px;letter-spacing:.01em;color:var(--crimson-hot)}
-.howa-hero p{margin:0;font-size:13px;color:var(--ink-soft);max-width:62ch}
-.howa-section-title{font-family:var(--arena-display);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--peh-accent);margin:2px 0 -4px}
-.howa-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.howa-card{
+.wks-hero-mark{
+  color:var(--peh-accent);display:inline-flex;flex:0 0 auto;
+  transform:scale(2.2);transform-origin:left;
+  filter:drop-shadow(0 4px 12px rgba(220,38,38,.55));
+}
+.wks-hero h2{margin:0 0 4px;font-family:var(--arena-display);font-size:22px;font-weight:700;letter-spacing:.01em;color:var(--arena-crimson-hi)}
+.wks-hero p{margin:0;font-size:13px;color:var(--ink-soft);max-width:62ch}
+.wks-section-title{font-family:var(--arena-display);font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--peh-accent);margin:2px 0 -4px}
+.wks-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.wks-card{
   display:flex;flex-direction:column;align-items:flex-start;gap:7px;
   padding:15px 14px;border-radius:14px;cursor:pointer;text-align:left;font:inherit;
-  background:linear-gradient(160deg,rgba(26,20,24,.6),rgba(10,10,12,.4));
-  border:1px solid var(--border-subtle);color:var(--ink);transition:.15s;
+  background:linear-gradient(160deg,rgba(26,16,20,.65),rgba(14,10,16,.50));
+  border:1px solid rgba(153,27,27,.3);color:var(--ink);transition:.15s;
 }
-.howa-card:hover{border-color:var(--peh-accent);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.4)}
-.howa-card-glyph{color:var(--peh-accent);display:inline-flex}
-.howa-card-glyph .peh-glyph{width:26px;height:26px}
-.howa-card-title{font-family:var(--arena-display);font-weight:700;font-size:15px}
-.howa-card-desc{font-size:12px;color:var(--ink-dim);line-height:1.4}
-.howa-virtues{
-  padding:14px 16px;border-radius:14px;
-  background:linear-gradient(160deg,rgba(180,83,9,.10),rgba(10,10,12,.35));
-  border:1px solid var(--border-subtle);
+.wks-card:hover{border-color:var(--peh-accent);transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.wks-card-glyph{color:var(--peh-accent);display:inline-flex}
+.wks-card-glyph .peh-glyph{width:26px;height:26px}
+.wks-card-title{font-family:var(--arena-display);font-weight:700;font-size:15px;color:var(--arena-sand)}
+.wks-card-desc{font-size:12px;color:var(--ink-dim);line-height:1.4}
+.wks-foot{font-size:11px;color:var(--ink-dim);text-align:center;letter-spacing:.08em;padding-top:4px}
+.wks-live{margin-top:18px}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LIVE WORKSPACE PANELS — howa-ws, peh-stats, peh-live etc.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Dashboard tile height tuning */
+.peh-grid.multi .peh-tile{min-height:min(52vh,520px)}
+@media (min-width:1280px){.peh-grid.multi .peh-tile{min-height:min(46vh,500px)}}
+
+/* Common workspace panel structure */
+.howa-ws{display:flex;flex-direction:column;gap:16px;padding:16px}
+.howa-ws-section{display:flex;flex-direction:column;gap:8px}
+.howa-ws-head{
+  font-family:var(--arena-display);font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--peh-accent);margin:0;
 }
-.howa-virtues p{margin:0 0 10px;font-size:13px;color:var(--ink-soft);font-style:italic}
-.howa-virtues-row{display:flex;flex-wrap:wrap;gap:8px;font-size:12px;padding:5px 0;color:var(--arena-sand)}
-.howa-virtues-row::before,.howa-virtues-row::after{display:none}
-.howa-foot{font-size:11px;color:var(--ink-dim);text-align:center;letter-spacing:.06em;padding-top:4px}
+
+/* Live workspace data */
+.peh-live{display:flex;flex-direction:column;gap:14px}
+.peh-live-body{display:flex;flex-direction:column;gap:14px}
+.peh-live-loading{color:var(--ink-dim);font-size:var(--text-sm);display:flex;align-items:center;gap:8px}
+.peh-live-spin{width:12px;height:12px;border-radius:50%;border:2px solid var(--border-medium);border-top-color:var(--peh-accent);display:inline-block;animation:peh-spin .8s linear infinite}
+@keyframes peh-spin{to{transform:rotate(360deg)}}
+.peh-live-empty{color:var(--ink-dim);font-size:var(--text-sm);font-style:italic;margin:0}
+.peh-live-sub{margin:6px 0 0;font-size:var(--text-xs);letter-spacing:.12em;text-transform:uppercase;color:var(--peh-accent)}
+.peh-live-off{display:flex;flex-direction:column;gap:4px;padding:14px;border-radius:var(--radius-sm);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.28)}
+.peh-live-off b{color:var(--ink)}
+.peh-live-off span{color:var(--ink-dim);font-size:var(--text-sm)}
+.peh-live-off-hint{font-style:italic}
+.peh-live-opts{display:flex;flex-wrap:wrap;gap:8px}
+.peh-live-opt{
+  font:inherit;font-size:var(--text-sm);cursor:pointer;color:var(--ink);
+  padding:7px 13px;border-radius:var(--radius-pill);
+  background:rgba(220,38,38,.10);border:1px solid var(--border-medium);transition:.15s;
+}
+.peh-live-opt:hover{background:rgba(220,38,38,.20);border-color:var(--peh-accent)}
+
+/* Stat tiles */
+.peh-stats{display:flex;flex-wrap:wrap;gap:10px}
+.peh-stat{flex:1 1 auto;min-width:80px;display:flex;flex-direction:column;gap:2px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border-subtle)}
+.peh-stat-v{font-size:var(--text-lg);font-weight:700;color:var(--peh-accent);font-family:var(--arena-display)}
+.peh-stat-l{font-size:var(--text-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+.peh-stat.warn .peh-stat-v{color:var(--crimson-hot)}
+
+/* Rows */
+.peh-rows{display:flex;flex-direction:column;gap:8px}
+.peh-row{display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border-subtle)}
+.peh-row-t{font-weight:600;color:var(--ink);font-size:var(--text-sm)}
+.peh-row-m{font-size:var(--text-xs);color:var(--ink-dim)}
+.peh-row-x{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.peh-live-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:0 0 auto}
+.peh-live-dot.on{background:var(--success);box-shadow:0 0 6px var(--success)}
+.peh-live-dot.off{background:var(--ink-dim)}
+
+/* Chips */
+.peh-chips{display:flex;flex-wrap:wrap;gap:6px}
+.peh-chip{font-size:var(--text-xs);font-family:var(--mono);padding:4px 9px;border-radius:var(--radius-sm);background:rgba(139,92,246,.12);border:1px solid var(--border-subtle);color:var(--ink-soft)}
+
+/* Verdict badges */
+.howa-verdict{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:6px}
+.howa-verdict.pass{background:rgba(52,211,153,.15);color:var(--success);border:1px solid rgba(52,211,153,.25)}
+.howa-verdict.fail{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.25)}
+.howa-verdict.error{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
+.howa-verdict.unknown{background:rgba(255,255,255,.06);color:var(--ink-dim);border:1px solid var(--border-subtle)}
+
+/* Trial list rows */
+.howa-trial-list{display:flex;flex-direction:column;gap:5px;max-height:360px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(220,38,38,.2) transparent}
+.howa-trial-list::-webkit-scrollbar{width:4px}
+.howa-trial-list::-webkit-scrollbar-thumb{background:rgba(220,38,38,.2);border-radius:4px}
+.howa-trial-row{
+  display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;
+  background:var(--bg-card);border:1px solid var(--border-subtle);flex-wrap:wrap;
+}
+.howa-trial-row.mock{opacity:.65}
+.howa-trial-id{font-family:var(--mono);font-size:11px;color:var(--ink-dim);flex:0 0 auto;min-width:80px}
+.howa-trial-label{font-size:12px;color:var(--ink);flex:1 1 auto;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.howa-trial-sub{font-size:11px;color:var(--ink-dim);flex:0 0 auto;white-space:nowrap}
+
+/* Agent list */
+.howa-agent-list{display:flex;flex-direction:column;gap:5px}
+.howa-agent-row{
+  display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;
+  background:var(--bg-card);border:1px solid var(--border-subtle);
+}
+.howa-agent-id{font-family:var(--mono);font-size:12px;color:var(--peh-accent);font-weight:600;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.howa-agent-adapter{font-size:11px;color:var(--ink-dim);flex:0 0 auto}
+
+/* Pack list */
+.howa-pack-list{display:flex;flex-wrap:wrap;gap:6px}
+.howa-pack{font-size:11px;font-family:var(--mono);padding:4px 9px;border-radius:var(--radius-sm);background:rgba(220,38,38,.10);border:1px solid var(--border-subtle);color:var(--ink-soft)}
+
+/* Receipt rows */
+.howa-receipt-list{display:flex;flex-direction:column;gap:5px;max-height:360px;overflow-y:auto}
+.howa-receipt-row{
+  padding:8px 12px;border-radius:8px;
+  background:var(--bg-card);border:1px solid var(--border-subtle);
+  border-left:3px solid var(--border-medium);display:flex;flex-direction:column;gap:2px;
+}
+.howa-receipt-row.k-pass{border-left-color:var(--success)}
+.howa-receipt-row.k-fail{border-left-color:var(--red)}
+.howa-receipt-time{font-size:10px;font-family:var(--mono);color:var(--ink-dim);letter-spacing:.04em}
+.howa-receipt-text{font-size:12px;color:var(--ink-soft);line-height:1.4;word-break:break-word}
+
+/* ── Backend status dot (fixed, top-right) ── */
+.peh-status{
+  position:fixed;top:14px;right:16px;z-index:60;display:flex;align-items:center;gap:8px;
+  font:inherit;font-size:var(--text-xs);cursor:pointer;color:var(--ink-soft);
+  padding:6px 12px;border-radius:var(--radius-pill);
+  background:rgba(10,10,12,.82);border:1px solid var(--border-subtle);backdrop-filter:blur(6px);
+}
+.peh-status:hover{border-color:var(--peh-accent)}
+.peh-status-dot{width:9px;height:9px;border-radius:50%;background:var(--ink-dim);transition:.2s}
+.peh-status-dot.online{background:var(--success);box-shadow:0 0 8px var(--success)}
+.peh-status-dot.offline{background:var(--red);box-shadow:0 0 8px var(--red)}
+.peh-status-txt{letter-spacing:.04em}
+
+/* ── Peh's Journal (button + slide-in drawer) ── */
+.peh-jrnl-btn{
+  position:fixed;top:14px;right:140px;z-index:60;display:flex;align-items:center;gap:7px;
+  font:inherit;font-size:var(--text-xs);cursor:pointer;color:var(--ink);
+  padding:6px 12px;border-radius:var(--radius-pill);
+  background:rgba(220,38,38,.12);border:1px solid var(--border-medium);backdrop-filter:blur(6px);
+}
+.peh-jrnl-btn:hover{background:rgba(220,38,38,.22);border-color:var(--peh-accent)}
+.peh-jrnl-ico{font-size:14px}
+.peh-jrnl-badge{min-width:18px;text-align:center;font-size:10px;font-weight:700;color:#0a0a0c;background:var(--peh-accent);border-radius:var(--radius-pill);padding:1px 5px}
+.peh-jrnl-badge.pulse{animation:peh-pulse .5s ease}
+@keyframes peh-pulse{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+.peh-jrnl-drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(380px,90vw);z-index:70;
+  display:flex;flex-direction:column;transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+  background:linear-gradient(180deg,rgba(20,14,24,.98),rgba(10,10,12,.99));
+  border-left:1px solid var(--border-medium);box-shadow:var(--shadow-panel);
+}
+.peh-jrnl-drawer.open{transform:translateX(0)}
+.peh-jrnl-head{display:flex;flex-direction:column;gap:1px;padding:16px 18px;border-bottom:1px solid var(--border-subtle);position:relative}
+.peh-jrnl-head b{font-family:var(--arena-display);font-size:var(--text-lg);color:var(--ink)}
+.peh-jrnl-head span{font-size:var(--text-xs);color:var(--ink-dim)}
+.peh-jrnl-close{position:absolute;top:12px;right:14px;font:inherit;font-size:18px;cursor:pointer;background:transparent;border:0;color:var(--ink-dim)}
+.peh-jrnl-close:hover{color:var(--ink)}
+.peh-jrnl-list{list-style:none;margin:0;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.peh-jrnl-empty{color:var(--ink-dim);font-style:italic;font-size:var(--text-sm)}
+.peh-jrnl-item{display:flex;flex-direction:column;gap:2px;padding:8px 11px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border-subtle);border-left:3px solid var(--border-medium)}
+.peh-jrnl-item.k-peh{border-left-color:var(--peh-accent)}
+.peh-jrnl-item.k-you{border-left-color:var(--violet)}
+.peh-jrnl-item.k-warn{border-left-color:var(--red)}
+.peh-jrnl-item.k-ok{border-left-color:var(--success)}
+.peh-jrnl-item.k-data{border-left-color:var(--amber)}
+.peh-jrnl-item.k-move{border-left-color:var(--violet-hot)}
+.peh-jrnl-time{font-size:10px;font-family:var(--mono);color:var(--ink-dim);letter-spacing:.04em}
+.peh-jrnl-text{font-size:var(--text-sm);color:var(--ink-soft);line-height:1.45;word-break:break-word}
+
+/* ── Command bar ── */
+.peh-cmd{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:55;
+  display:flex;align-items:center;gap:8px;width:min(620px,92vw);
+  padding:7px 10px 7px 14px;border-radius:var(--radius-pill);
+  background:rgba(10,10,12,.9);border:1px solid var(--border-medium);
+  box-shadow:0 8px 30px rgba(0,0,0,.5);backdrop-filter:blur(8px);
+}
+.peh-cmd:focus-within{border-color:var(--peh-accent)}
+.peh-cmd-mark{color:var(--peh-accent);font-family:var(--mono);font-weight:700}
+.peh-cmd-input{flex:1;font:inherit;font-size:var(--text-sm);background:transparent;border:0;outline:none;color:var(--ink)}
+.peh-cmd-input::placeholder{color:var(--ink-dim)}
+.peh-cmd-go{font:inherit;font-size:var(--text-sm);font-weight:700;cursor:pointer;color:#0a0a0c;padding:6px 16px;border-radius:var(--radius-pill);border:0;background:linear-gradient(120deg,var(--peh-accent),var(--peh-accent2))}
+.peh-cmd-go:hover{filter:brightness(1.1)}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HOWA FLOATING CHAT AGENT — bottom-right interactive panel
+   ══════════════════════════════════════════════════════════════════════ */
+.howa-chat-btn{
+  position:fixed;bottom:80px;right:20px;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#dc2626,#8b5cf6);
+  border:2px solid rgba(220,38,38,.4);
+  color:#f0ece4;font-size:22px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+  z-index:1000;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:transform .2s,box-shadow .2s,background .2s;
+}
+.howa-chat-btn:hover{
+  transform:scale(1.1);
+  box-shadow:0 6px 30px rgba(220,38,38,.35);
+}
+.howa-chat-btn.active{
+  background:linear-gradient(135deg,#8b5cf6,#dc2626);
+  box-shadow:0 4px 24px rgba(139,92,246,.3);
+}
+.howa-chat-drawer{
+  position:fixed;bottom:148px;right:20px;
+  width:380px;max-width:calc(100vw - 32px);
+  max-height:500px;border-radius:16px;
+  background:linear-gradient(180deg,rgba(26,16,20,.97),rgba(14,10,16,.95));
+  border:1px solid rgba(153,27,27,.4);
+  box-shadow:0 12px 48px rgba(0,0,0,.55),0 0 0 1px rgba(248,113,113,.06) inset;
+  z-index:1000;
+  display:none;flex-direction:column;overflow:hidden;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.howa-chat-drawer.open{display:flex;animation:howaChatIn .2s ease-out}
+@keyframes howaChatIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+.howa-chat-header{
+  flex:0 0 auto;padding:12px 16px;
+  border-bottom:1px solid rgba(153,27,27,.3);
+  display:flex;align-items:center;gap:10px;
+}
+.howa-chat-avatar{
+  flex:0 0 auto;width:32px;height:32px;border-radius:50%;overflow:hidden;
+  background:linear-gradient(135deg,#dc2626,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:#f0ece4;
+}
+.howa-chat-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.howa-chat-close{
+  margin-left:auto;width:28px;height:28px;border-radius:8px;
+  border:1px solid rgba(153,27,27,.3);background:transparent;
+  color:var(--ink-dim);font-size:17px;line-height:1;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.howa-chat-close:hover{background:rgba(220,38,38,.2);color:#f0ece4}
+.howa-chat-messages{
+  flex:1 1 auto;overflow-y:auto;
+  padding:12px;display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:thin;scrollbar-color:rgba(220,38,38,.2) transparent;
+}
+.howa-chat-messages::-webkit-scrollbar{width:4px}
+.howa-chat-messages::-webkit-scrollbar-thumb{background:rgba(220,38,38,.2);border-radius:4px}
+.howa-msg{
+  max-width:88%;padding:10px 14px;border-radius:12px;
+  font-size:13px;line-height:1.5;word-break:break-word;
+}
+.howa-msg.assistant{
+  background:rgba(139,92,246,.10);border:1px solid rgba(139,92,246,.18);
+  color:#f0ece4;align-self:flex-start;border-bottom-left-radius:4px;
+}
+.howa-msg.user{
+  background:rgba(220,38,38,.15);border:1px solid rgba(220,38,38,.22);
+  color:#f0ece4;align-self:flex-end;border-bottom-right-radius:4px;
+}
+.howa-msg.error{
+  background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.22);
+  color:#f0ece4;align-self:flex-start;border-bottom-left-radius:4px;
+}
+.howa-chat-input-wrap{
+  flex:0 0 auto;padding:10px 12px;
+  border-top:1px solid rgba(153,27,27,.3);
+  display:flex;gap:8px;
+}
+.howa-chat-input{
+  flex:1;padding:10px 14px;border-radius:10px;
+  border:1px solid rgba(153,27,27,.3);
+  background:rgba(26,16,20,.6);color:#f0ece4;
+  font:inherit;font-size:13px;outline:none;
+}
+.howa-chat-input:focus{border-color:#dc2626;box-shadow:0 0 0 2px rgba(220,38,38,.12)}
+.howa-chat-input::placeholder{color:var(--ink-dim)}
+.howa-chat-send{
+  padding:10px 16px;border-radius:10px;
+  background:linear-gradient(135deg,#dc2626,#8b5cf6);
+  border:none;color:#f0ece4;font:inherit;
+  font-weight:700;font-size:12px;cursor:pointer;
+  white-space:nowrap;transition:filter .15s;
+}
+.howa-chat-send:hover{filter:brightness(1.1)}
+
+@media (max-width:640px){
+  .peh-jrnl-btn{right:auto;left:16px;top:auto;bottom:112px}
+  .peh-status{top:auto;bottom:112px;right:16px}
+  .peh-cmd{bottom:58px}
+  .howa-chat-btn{bottom:160px;right:12px;width:48px;height:48px;font-size:18px}
+  .howa-chat-drawer{right:12px;bottom:220px;width:calc(100vw - 24px);max-height:400px}
+}

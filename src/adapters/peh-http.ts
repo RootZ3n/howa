@@ -267,11 +267,9 @@ function chatPath(variant: PehVariant): string {
 
 function requestBody(variant: PehVariant, prompt: string, model: string): Record<string, unknown> {
   if (variant === "v2") {
+    // Pehlichi /chat expects flat {"message": "..."} format, not OpenAI-style messages array.
     return {
-      messages: [{ role: "user", content: prompt }],
-      stream: false,
-      systemPrompt: "__colloquium__",
-      noMemory: true,
+      message: prompt,
       ...(model !== "unknown" ? { model } : {}),
     };
   }

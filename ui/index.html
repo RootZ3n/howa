@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Howa · The Arena</title>
+<title>The Arena · Howa</title>
 <link rel="stylesheet" href="howa.css">
 </head>
 <body>
@@ -12,34 +12,33 @@
 // ══════════════════════════════════════════════════════════════════════
 // HOWA · THE ARENA — Pehverse world engine
 // Self-contained. The engine architecture (state shape, render pipeline,
-// function names) mirrors Pehlichi's / Luak's world shell so the engine
-// can be synced across repos later. This is a STRESS-TESTING UI — no
-// benchmark/scoring logic. Workspace panels show placeholder content.
-// World map: Entrance Gate (hub), The Arena, Training Grounds, The Temple,
+// function names) mirrors the Pehverse world shell so the engine can be
+// synced across repos. This is a TRIAL/STRESS-TESTING UI.
+// World map: Main Gate (hub), The Arena, Training Grounds, The Temple,
 // The Armory, The Market.
 // ══════════════════════════════════════════════════════════════════════
 
-// ── TAB_CONFIG — Howa-specific. Stress-test lanes. ────────────────────
+// ── TAB_CONFIG — howa-specific. Labels the arena coordination areas
 const TAB_CONFIG={
-  overview:   {key:'overview',   label:'Howa Overview',  laneTitle:'Overview'},
-  stress:     {key:'stress',     label:'Stress Tests',   laneTitle:'Stress'},
-  adversarial:{key:'adversarial',label:'Adversarial',    laneTitle:'Adversarial'},
-  regression: {key:'regression', label:'Regressions',    laneTitle:'Regression'},
-  endurance:  {key:'endurance',  label:'Endurance',      laneTitle:'Endurance'}
+  overview:{key:'overview',label:'Arena Overview',laneTitle:'Overview'},
+  results:{key:'results',label:'Results',laneTitle:'Results'},
+  config:{key:'config',label:'Trial Config',laneTitle:'Config'},
+  receipts:{key:'receipts',label:'Receipts',laneTitle:'Receipts'},
+  agents:{key:'agents',label:'Agents',laneTitle:'Agents'}
 };
 
-// ── Small helpers (mirrors the shared engine utilities) ────────────────
+// ── Small helpers ─────────────────────────────────────────────────────
 const esc=(v)=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 function safeStr(value){const s=String(value??'');return(s==='undefined'||s==='null'||s==='NaN')?'':s}
 function humanizeToken(text){const raw=String(text||'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();if(!raw)return'General';return raw.replace(/\b\w/g,(m)=>m.toUpperCase())}
 
-// ── State — same shape as Pehlichi's, scoped to the single live product ─
+// ── State ─────────────────────────────────────────────────────────────
 const state={
   activeTab:'overview',
   pehverse:{
     product:'howa',
     scene:localStorage.getItem('pehverse-scene')||null,
-    mode:localStorage.getItem('pehverse-mode')||'immersive',
+    mode:localStorage.getItem('pehverse-mode')||'dashboard',
     workspaces:[],
     focus:null,
     fastTravel:false,
@@ -49,79 +48,83 @@ const state={
   }
 };
 
-// ── ProductRegistry ─────────────────────────────────────────────────────
+// ── ProductRegistry ───────────────────────────────────────────────────
 const PRODUCT_REGISTRY=[
-  {id:'howa', displayName:'The Arena', tagline:'Put it in the arena',
-   status:'public', order:3, accent:'#dc2626', accent2:'#b45309',
-   peh:'shield', defaultScene:'entrance-gate',
+  {id:'howa', displayName:'The Arena', tagline:'Past this gate, there are no shortcuts',
+   status:'public', order:1, accent:'#dc2626', accent2:'#8b5cf6',
+   peh:'shield', defaultScene:'main-gate',
    mascotArt:'assets/peh-howa.png',
-   blurb:'Howa stress-tests agents — every model faces the arena.'}
+   blurb:'Howa is the proving ground — every trial leaves a mark. Models enter, survive, or break. No shortcuts past this gate.'}
 ];
 
 const PEH_DEFAULT_PRODUCT='howa';
 
-// ── SceneRegistry ──────────────────────────────────────────────────────
+// ── SceneRegistry ─────────────────────────────────────────────────────
+// Six sacred locations on the Howa world map — exact positions matched
+// to the actual howa-desktop-map.png landscape.
 const SCENE_REGISTRY={
   howa:[
-    {id:'entrance-gate', title:'Entrance Gate', purpose:'Hub / overview', route:'/entrance-gate',
-     desc:'Past this gate, every model is tested until it breaks.', peh:'shield',
-     pehSlot:{x:50, y:42, anchor:'center', variant:'sentinel'}, hotspots:[
-      {id:'eg-overview',    label:'Overview',                    x:50, y:34, workspace:'console',              greeting:"Welcome to Howa. Past this gate, there are no shortcuts — only trials."},
-      {id:'eg-arena',       label:'The Arena',                  x:50, y:58, scene:'arena',                     greeting:"To the Arena — the heart of every trial. Follow me!"},
-      {id:'eg-training',    label:'Training Grounds',           x:24, y:50, scene:'training-grounds',          greeting:"The Training Grounds — stress racks and warm-up drills this way."},
-      {id:'eg-temple',      label:'The Temple',                 x:76, y:50, scene:'temple',                     greeting:"The Temple — where regressions are studied and wisdom preserved."},
-      {id:'eg-armory',      label:'The Armory',                 x:28, y:68, scene:'armory',                     greeting:"The Armory — failure analysis, root causes, every weapon sharpened."},
-      {id:'eg-market',      label:'The Market',                 x:72, y:68, scene:'market',                     greeting:"The Market — endurance logs and resilience records, all traded here."}
+    {id:'main-gate', title:'The Main Gate', purpose:'Hub / overview', route:'/gate',
+     desc:'Stone archway with flaming braziers and a mosaic crest on the ground. Every path through the Arena begins here.',
+     peh:'shield',
+     pehSlot:{x:50, y:65, anchor:'center', variant:'sentinel'}, hotspots:[
+      {id:'mg-status',   label:'Arena Status',     x:50, y:30, workspace:'arena-status',  greeting:"The Arena status — backend health, agents, trials. Everything at a glance."},
+      {id:'mg-arena',    label:'The Arena',        x:72, y:52, scene:'arena',              greeting:"To the Arena — where trial verdicts are decided. Follow me!"},
+      {id:'mg-training', label:'Training Grounds', x:28, y:52, scene:'training-grounds',   greeting:"The Training Grounds — where weakness is burned away and strength is forged."},
+      {id:'mg-temple',   label:'The Temple',       x:72, y:22, scene:'temple',             greeting:"The Temple — where every trial finds its place in history."},
+      {id:'mg-armory',   label:'The Armory',       x:28, y:72, scene:'armory',             greeting:"The Armory — every receipt stored, every execution accounted for."},
+      {id:'mg-market',   label:'The Market',       x:72, y:72, scene:'market',             greeting:"The Market — registered agents and their configurations. Know your fighters."}
     ]},
-    {id:'arena', title:'The Arena', purpose:'Adversarial testing', route:'/arena',
-     desc:'The colosseum. Wave after wave, the model faces its challengers.', peh:'sword',
-     pehSlot:{x:50, y:50, anchor:'center', variant:'champion'}, hotspots:[
-      {id:'ar-adversarial', label:'Adversarial Trials',         x:40, y:44, workspace:'adversarial-trials',     greeting:"The Arena floor — adversarial trials. Let's see how long this one lasts."},
-      {id:'ar-stress',      label:'Stress Tests',               x:64, y:44, workspace:'stress-tests',          greeting:"Stress racks on the far side — ramp it up."},
-      {id:'ar-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
+    {id:'arena', title:'The Arena', purpose:'Trial results', route:'/arena',
+     desc:'Circular amphitheater with tiered stone seating, red awnings, and a sandy floor. Trial verdicts are decided here.',
+     peh:'star',
+     pehSlot:{x:50, y:45, anchor:'center', variant:'champion'}, hotspots:[
+      {id:'ar-results', label:'Trial Results',     x:50, y:35, workspace:'results',     greeting:"The Arena floor — trial results, verdicts, pass rates. Let's see who stood."},
+      {id:'ar-gate',    label:'Back to Main Gate',  x:50, y:82, scene:'main-gate',       greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'training-grounds', title:'Training Grounds', purpose:'Stress testing', route:'/training-grounds',
-     desc:'Fenced practice area. Warm up, ramp up, break things early.', peh:'spark',
-     pehSlot:{x:48, y:52, anchor:'center', variant:'trainer'}, hotspots:[
-      {id:'tg-stress',      label:'Stress Tests',               x:44, y:46, workspace:'stress-tests',          greeting:"The Training Grounds — stress testing starts here. Load generators ready."},
-      {id:'tg-regression',  label:'Regression Trials',          x:64, y:46, workspace:'regression-trials',     greeting:"Regression checks — making sure old wounds don't reopen."},
-      {id:'tg-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
+    {id:'training-grounds', title:'The Training Grounds', purpose:'Trial config', route:'/training',
+     desc:'Fenced circular dirt area with armored figures sparring. Packs and agents are configured here before trials begin.',
+     peh:'tools',
+     pehSlot:{x:25, y:30, anchor:'center', variant:'trainer'}, hotspots:[
+      {id:'tg-config', label:'Trial Config',       x:60, y:50, workspace:'trial-config', greeting:"The Training Grounds — packs, agents, configurations. Know your tools before the trial."},
+      {id:'tg-gate',   label:'Back to Main Gate',  x:50, y:80, scene:'main-gate',         greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'temple', title:'The Temple', purpose:'Regression & wisdom', route:'/temple',
-     desc:'Classical columns. Every regression is recorded, every drift noticed.', peh:'orbit',
-     pehSlot:{x:50, y:54, anchor:'center', variant:'elder'}, hotspots:[
-      {id:'tp-regression',  label:'Regression Trials',          x:42, y:46, workspace:'regression-trials',     greeting:"The Temple — regression trials. Historical baselines and drift detection."},
-      {id:'tp-failure',     label:'Failure Analysis',           x:62, y:46, workspace:'failure-analysis',      greeting:"Cross-reference with failure data — patterns emerge."},
-      {id:'tp-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
+    {id:'temple', title:'The Temple', purpose:'Trial history', route:'/temple',
+     desc:'Grand temple with triangular pediment, columns, red banners, and golden laurel statues. The full trial history is kept here.',
+     peh:'book',
+     pehSlot:{x:78, y:28, anchor:'center', variant:'priest'}, hotspots:[
+      {id:'tp-history', label:'Trial History',     x:40, y:55, workspace:'history-ws', greeting:"The Temple — the complete record. Every trial, every verdict, every drift."},
+      {id:'tp-gate',    label:'Back to Main Gate',  x:50, y:82, scene:'main-gate',     greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'armory', title:'The Armory', purpose:'Failure analysis', route:'/armory',
-     desc:'Weapons workshop. Every failure is disassembled and understood.', peh:'flame',
-     pehSlot:{x:50, y:56, anchor:'center', variant:'blacksmith'}, hotspots:[
-      {id:'am-failure',     label:'Failure Analysis',           x:42, y:48, workspace:'failure-analysis',      greeting:"The Armory — failure analysis. Crash logs, error patterns, root causes."},
-      {id:'am-adversarial', label:'Adversarial Trials',         x:62, y:48, workspace:'adversarial-trials',    greeting:"When something breaks in the pit, we study it here."},
-      {id:'am-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
+    {id:'armory', title:'The Armory', purpose:'Receipts', route:'/armory',
+     desc:'Rectangular building with tiled roof, weapon racks, shields, and a red banner. Execution receipts for every trial are stored here.',
+     peh:'scroll',
+     pehSlot:{x:22, y:65, anchor:'center', variant:'smith'}, hotspots:[
+      {id:'am-receipts', label:'Receipts',          x:60, y:45, workspace:'receipts',   greeting:"The Armory — execution receipts. The proof of every trial, step by step."},
+      {id:'am-gate',     label:'Back to Main Gate',  x:50, y:82, scene:'main-gate',     greeting:"Back to the gate — follow me!"}
     ]},
-    {id:'market', title:'The Market', purpose:'Endurance records', route:'/market',
-     desc:'Red tents, trading stalls. Every endurance receipt is bought and sold here.', peh:'scroll',
-     pehSlot:{x:50, y:52, anchor:'center', variant:'merchant'}, hotspots:[
-      {id:'mk-endurance',   label:'Endurance Receipts',          x:42, y:46, workspace:'endurance-receipts',    greeting:"The Market — endurance receipts. Sustained runs, fatigue curves, resilience scores."},
-      {id:'mk-stress',      label:'Stress Tests',               x:62, y:46, workspace:'stress-tests',          greeting:"Stress data feeds into endurance metrics — check the connections."},
-      {id:'mk-gate',        label:'Back to Entrance Gate',      x:50, y:82, scene:'entrance-gate',              greeting:"Back to the gate — follow me!"}
+    {id:'market', title:'The Market', purpose:'Agents', route:'/market',
+     desc:'Open area with red tents, stalls, crates, barrels, and a soldier statue. Agents registered in the system are found here.',
+     peh:'signal',
+     pehSlot:{x:78, y:65, anchor:'center', variant:'merchant'}, hotspots:[
+      {id:'mk-agents', label:'Agents',              x:40, y:45, workspace:'agents-ws', greeting:"The Market — registered agents. Know your fighters before you send them in."},
+      {id:'mk-gate',   label:'Back to Main Gate',    x:50, y:82, scene:'main-gate',    greeting:"Back to the gate — follow me!"}
     ]}
   ]
 };
 
-// ── WorkspaceManager: definitions ──────────────────────────────────────
+// ── WorkspaceManager: definitions ─────────────────────────────────────
 const WORKSPACE_REGISTRY={
-  'console':              {product:'howa', title:'Howa Overview',   kind:'deck',        route:'/entrance-gate',   dock:'fullscreen', peh:'shield'},
-  'stress-tests':         {product:'howa', title:'Stress Tests',     kind:'placeholder', route:'/stress',       dock:'right',      peh:'spark',       relatedTab:'stress',      blurb:'Stress testing panel coming soon — load generators, ramp-up curves, and failure thresholds will live here.'},
-  'adversarial-trials':   {product:'howa', title:'Adversarial Trials',kind:'placeholder', route:'/adversarial',  dock:'right',      peh:'flame',       relatedTab:'adversarial', blurb:'Adversarial trials panel coming soon — edge-case inputs, attack vectors, and red-team results.'},
-  'regression-trials':    {product:'howa', title:'Regression Trials', kind:'placeholder', route:'/regression',   dock:'right',      peh:'orbit',       relatedTab:'regression',  blurb:'Regression trials panel coming soon — historical baselines, drift detection, and pass/fail trends.'},
-  'failure-analysis':     {product:'howa', title:'Failure Analysis',  kind:'placeholder', route:'/failures',     dock:'right',      peh:'book',        relatedTab:'regression',  blurb:'Failure analysis panel coming soon — crash logs, error patterns, and root-cause traces.'},
-  'endurance-receipts':    {product:'howa', title:'Endurance Receipts',kind:'placeholder', route:'/endurance',    dock:'bottom',     peh:'scroll',      relatedTab:'endurance',   blurb:'Endurance receipts panel coming soon — sustained-run logs, fatigue curves, and resilience scores.'}
+  'console':      {product:'howa', title:'Arena Overview', kind:'deck',  dock:'fullscreen', peh:'shield'},
+  'arena-status': {product:'howa', title:'Arena Status',   kind:'live',  dock:'fullscreen', peh:'shield'},
+  'trial-config': {product:'howa', title:'Trial Config',   kind:'live',  dock:'fullscreen', peh:'tools'},
+  'results':      {product:'howa', title:'Results',        kind:'live',  dock:'fullscreen', peh:'star'},
+  'receipts':     {product:'howa', title:'Receipts',       kind:'live',  dock:'fullscreen', peh:'scroll'},
+  'agents-ws':    {product:'howa', title:'Agents',         kind:'live',  dock:'fullscreen', peh:'signal'},
+  'history-ws':   {product:'howa', title:'History',        kind:'live',  dock:'fullscreen', peh:'book'}
 };
 
-// ── Registry lookups ───────────────────────────────────────────────────
+// ── Registry lookups ──────────────────────────────────────────────────
 function pehProduct(id){return PRODUCT_REGISTRY.find((p)=>p.id===id)||null}
 function pehPublicProducts(){return PRODUCT_REGISTRY.filter((p)=>p.status==='public').sort((a,b)=>a.order-b.order)}
 function pehFutureProducts(){return PRODUCT_REGISTRY.filter((p)=>p.status==='future').sort((a,b)=>a.order-b.order)}
@@ -129,7 +132,7 @@ function pehScenes(productId){return SCENE_REGISTRY[productId]||[]}
 function pehScene(productId,sceneId){return pehScenes(productId).find((s)=>s.id===sceneId)||null}
 function pehWorkspaceDef(defId){return WORKSPACE_REGISTRY[defId]||null}
 
-// ── Product isolation: dev mode + active-product resolution ────────────
+// ── Product isolation: dev mode + active-product resolution ───────────
 function pehDevMode(){
   try{
     if(typeof window!=='undefined'&&window.PEHVERSE_DEV===true)return true;
@@ -170,7 +173,7 @@ function pehWorkspaceBelongsToActive(def){
   return def.product==null||def.product===pehActiveProductId();
 }
 
-// ── Navigation (product-local scene travel + mode) ─────────────────────
+// ── Navigation ────────────────────────────────────────────────────────
 function pehSetScene(sceneId){
   if(!pehScene(pehActiveProductId(),sceneId))return;
   state.pehverse.scene=sceneId;
@@ -200,10 +203,23 @@ function pehDevSwitchProduct(productId){
   try{localStorage.setItem('pehverse-product',p.id);if(state.pehverse.scene)localStorage.setItem('pehverse-scene',state.pehverse.scene)}catch(e){}
   render();
 }
+var _dashAutoOpenDone=false;
+function pehAutoOpenDashboard(){
+  pehProductWorkspaces(pehActiveProductId()).filter(function(id){
+    const d=pehWorkspaceDef(id);return d&&d.product!=null;
+  }).forEach(function(id){
+    const def=pehWorkspaceDef(id);if(!def)return;
+    if(state.pehverse.workspaces.find(function(w){return w.defId===id;}))return;
+    state.pehverse.workspaces.push({uid:'ws'+(++state.pehverse.wsSeq),defId:id,dock:def.dock||'right',min:false});
+  });
+  if(state.pehverse.workspaces.length)
+    state.pehverse.focus=state.pehverse.workspaces[state.pehverse.workspaces.length-1].uid;
+}
 function pehSetMode(mode){
   if(mode!=='immersive'&&mode!=='dashboard')return;
   state.pehverse.mode=mode;
   localStorage.setItem('pehverse-mode',mode);
+  if(mode==='dashboard'){_dashAutoOpenDone=false;}
   render();
 }
 function pehToggleMode(){pehSetMode(state.pehverse.mode==='immersive'?'dashboard':'immersive')}
@@ -212,7 +228,7 @@ function pehToggleFastTravel(force){
   render();
 }
 
-// ── WorkspaceManager: open/close/dock/focus/minimize ───────────────────
+// ── WorkspaceManager: open/close/dock/focus/minimize ──────────────────
 function pehOpenWorkspace(defId,opts){
   const def=pehWorkspaceDef(defId); if(!def)return;
   if(!pehWorkspaceBelongsToActive(def)){
@@ -231,7 +247,7 @@ function pehOpenWorkspace(defId,opts){
   render();
 }
 
-// ── Peh-as-guide: contextual speech bubble ─────────────────────────────
+// ── Peh-as-guide: contextual speech bubble ────────────────────────────
 let pehBubbleFadeTimer=null;
 let pehBubbleClearTimer=null;
 const PEH_BUBBLE_HOLD_MS=6000;
@@ -243,14 +259,14 @@ function pehClearBubbleTimers(){
 function pehBubbleAnchor(hotspot){return (hotspot.y!=null&&hotspot.y<24)?'down':'up';}
 function pehSayGreeting(hotspot,scene){
   if(!hotspot)return;
-  const text=hotspot.greeting||(scene?`Welcome to ${scene.title}.`:'This way!');
+  const text=hotspot.greeting||(scene?`Entering ${scene.title}.`:'This way!');
   const x=Math.max(16,Math.min(84,hotspot.x!=null?hotspot.x:50));
   const y=hotspot.y!=null?hotspot.y:50;
   pehClearBubbleTimers();
   state.pehverse.pehBubble={
     text,x,y,
     anchor:pehBubbleAnchor(hotspot),
-    variant:(scene&&scene.pehSlot&&scene.pehSlot.variant)||'guide',
+    variant:(scene&&scene.pehSlot&&scene.pehSlot.variant)||'sentinel',
     hotspotId:hotspot.id,
     phase:'enter'
   };
@@ -335,35 +351,34 @@ function pehBackToMap(uid){
 }
 function pehOpenRelatedLane(tab){if(tab)state.activeTab=tab;pehOpenWorkspace('console')}
 
-// ── Peh glyphs (atmospheric placeholders, NOT final art) ───────────────
+// ── Peh glyphs ────────────────────────────────────────────────────────
 function pehGlyph(key){
   const P={
     shield:'<path d="M12 2l8 4v6c0 5.5-3.8 10-8 11.5C7.8 22 4 17.5 4 12V6l8-4z"/><path d="M9 12l2 2 4-4"/>',
-    sword:'<path d="M14.5 3.5l6 6-2 2-6-6zM4 20l4.5-4.5M14.5 9.5L12 12M7 17l-3 3"/>',
-    flame:'<path d="M12 2c0 4-4 6-4 10a4 4 0 0 0 8 0c0-4-4-6-4-10zM12 18a2 2 0 0 1-2-2c0-2 2-3 2-5 0 2 2 3 2 5a2 2 0 0 1-2 2z"/>',
-    book:'<path d="M5 4h10a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5zM5 18a1 1 0 0 0-1 1V6a2 2 0 0 1 1-1.7M9 8h5M9 11h5"/>',
+    star:'<path d="M12 3l2.6 5.6L21 9.3l-4.5 4.3 1.1 6.1L12 17l-5.6 2.7 1.1-6.1L3 9.3l6.4-.7z"/>',
+    tools:'<path d="M14.5 5.5a3.5 3.5 0 0 0 4.6 4.6L21 12l-9 9-2-2 6.9-6.9M9 9l-5 5L6 16M3.5 8.5l3-3 3 3-3 3z"/>',
     scroll:'<path d="M8 21h10a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H8"/><path d="M6 3H4a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h2"/><path d="M10 8h6M10 12h6"/>',
+    signal:'<path d="M12 18v3M9 21h6M5 11a9 9 0 0 1 14 0M8 13.5a5 5 0 0 1 8 0"/><circle cx="12" cy="16" r="1.6"/>',
+    book:'<path d="M5 4h10a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5zM5 18a1 1 0 0 0-1 1V6a2 2 0 0 1 1-1.7M9 8h5M9 11h5"/>',
+    gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
     spark:'<path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>',
     orbit:'<circle cx="12" cy="12" r="3"/><path d="M5 5c4-2 10 4 8 8M19 19c-4 2-10-4-8-8"/>',
-    star:'<path d="M12 3l2.6 5.6L21 9.3l-4.5 4.3 1.1 6.1L12 17l-5.6 2.7 1.1-6.1L3 9.3l6.4-.7z"/>',
-    signal:'<path d="M12 18v3M9 21h6M5 11a9 9 0 0 1 14 0M8 13.5a5 5 0 0 1 8 0"/><circle cx="12" cy="16" r="1.6"/>'
+    beaker:'<path d="M9 3h6M10 3v6l-5 8a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 17l-5-8V3M7.5 14h9"/>',
+    leaf:'<path d="M5 19c0-8 5-13 14-13 0 9-5 14-13 14M5 19c2-5 5-8 9-9"/>'
   };
   return `<svg class="peh-glyph" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[key]||'<circle cx="12" cy="12" r="7"/>'}</svg>`;
 }
 
-// ── Peh placeholder slot (data-driven squirrel guide medallion) ────────
-function pehSquirrelSilhouette(){
-  return `<svg class="peh-squirrel" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><path fill="currentColor" d="M40 9c2.2 0 4 2 4 4.6 0 2-1 3.6-2.4 4.4 3 2.4 4.8 6 4.8 10.2 0 3-1 5.7-2.7 7.9 5.7 2.5 9.7 8.1 9.7 14.6 0 1.7-1.3 3-3 3H22c-7.2 0-13-5.8-13-13 0-6.8 5.2-12.4 11.9-13 .3-4 2.3-7.5 5.3-9.8-.7-1-1.1-2.2-1.1-3.5C25 11 28 8 31.8 8c1.9 0 3.6.8 4.8 2 1-1.2 2.4-1 3.4-1z"/><g fill="none" stroke="#3a2a18" stroke-width="1.6" stroke-linecap="round" opacity=".92"><circle cx="29.5" cy="23.5" r="3.7"/><path d="M33 22.4c3-1 5.2-.9 7 .5"/></g><circle cx="29.5" cy="23.5" r="1.4" fill="#0c0a1a"/></svg>`;
-}
+// ── Peh slot (Pehlichi guide medallion — actual gladiator portrait) ────
 function pehSlotMarkup(slot,opts){
   if(!slot)return'';
   const o=opts||{};
-  const variant=slot.variant||'guide';
+  const variant=slot.variant||'sentinel';
   const inline=o.inline;
   const pos=inline?'' : `left:${slot.x}%;top:${slot.y}%;`;
   const anchor=slot.anchor||'center';
-  return `<div class="peh-slot peh-slot-${anchor} ${inline?'peh-slot-inline':''} ${o.glow?'glow':''}" style="${pos}" data-variant="${esc(variant)}" data-anchor="${esc(anchor)}" title="Peh — your guide here (${esc(variant)})" aria-label="Peh placeholder — ${esc(variant)}">
-    <span class="peh-slot-medallion" aria-hidden="true">${pehSquirrelSilhouette()}</span>
+  return `<div class="peh-slot peh-slot-${anchor} ${inline?'peh-slot-inline':''} ${o.glow?'glow':''}" style="${pos}" data-variant="${esc(variant)}" data-anchor="${esc(anchor)}" title="Peh — arena master (${esc(variant)})" aria-label="Peh — ${esc(variant)}">
+    <span class="peh-slot-medallion" aria-hidden="true"><img src="assets/peh-howa.png" alt="" loading="lazy" width="100%" height="100%"></span>
     ${inline?'':'<span class="peh-slot-tag">Peh</span>'}
   </div>`;
 }
@@ -393,11 +408,11 @@ function renderPehGuide(product){
   if(!product||!product.mascotArt)return'';
   return `<figure class="peh-guide" aria-hidden="true">
     <span class="peh-guide-frame"><img class="peh-guide-img" src="${esc(product.mascotArt)}" alt="" loading="lazy"></span>
-    <figcaption class="peh-guide-cap"><b>Peh</b><i>world guide</i></figcaption>
+    <figcaption class="peh-guide-cap"><b>Peh</b><i>arena master</i></figcaption>
   </figure>`;
 }
 
-// ── PehverseShell: top-level renderer (called by render()) ─────────────
+// ── PehverseShell: top-level renderer ─────────────────────────────────
 function renderPehverse(deckMarkup){
   const pv=state.pehverse;
   const product=pehActiveProduct();
@@ -415,7 +430,7 @@ function renderPehTopBar(product,scene){
   const pv=state.pehverse;
   const dev=pehDevMode();
   return `<header class="peh-topbar">
-    <div class="peh-brand"><span class="peh-brand-mark" title="Pehverse ecosystem">PEH</span><span class="peh-brand-word">${esc(product.displayName)}</span>${dev?'<span class="peh-dev-badge" title="Dev mode — product switcher enabled (hidden in release)">DEV</span>':''}</div>
+    <div class="peh-brand"><span class="peh-brand-mark" title="Pehverse ecosystem">PEH</span><span class="peh-brand-word">${esc(product.displayName)}</span>${dev?'<span class="peh-dev-badge" title="Dev mode — product switcher enabled">DEV</span>':''}</div>
     <button class="peh-travel-btn" type="button" onclick="pehToggleFastTravel()" aria-haspopup="dialog" aria-expanded="${pv.fastTravel?'true':'false'}" title="Fast travel — areas in ${esc(product.displayName)} (Alt+T)">
       <span class="peh-travel-glyph" aria-hidden="true">✦</span>
       <span class="peh-here"><b>${esc(product.displayName)}</b><i>${esc(scene?scene.title:product.tagline)}</i></span>
@@ -465,7 +480,7 @@ function renderPehDashboard(product,scene,deckMarkup){
   </div>`;
 }
 
-// ── HotspotLayer ───────────────────────────────────────────────────────
+// ── HotspotLayer ──────────────────────────────────────────────────────
 function renderHotspotLayer(scene){
   if(!scene||!scene.hotspots||!scene.hotspots.length)return'';
   return `<div class="peh-hotspots" aria-label="${esc(scene.title)} hotspots">${scene.hotspots.map((h)=>{
@@ -473,7 +488,7 @@ function renderHotspotLayer(scene){
     const kind=h.workspace?(pehWorkspaceDef(h.workspace)||{}).kind:'travel';
     return `<button class="peh-hotspot" type="button" style="left:${h.x}%;top:${h.y}%" title="${esc(h.label)}" aria-label="${esc(h.label)}" onclick="${action}">
       <span class="peh-pin" aria-hidden="true"></span>
-      <span class="peh-hotspot-label">${esc(h.label)}${kind==='deck'?'<i class="peh-dot-live"></i>':''}</span>
+      <span class="peh-hotspot-label">${esc(h.label)}${kind==='deck'||kind==='live'?'<i class="peh-dot-live"></i>':''}</span>
     </button>`;
   }).join('')}</div>`;
 }
@@ -484,7 +499,7 @@ function renderPehWaypoints(product,scene){
   return `<nav class="peh-waypoints" aria-label="${esc(product.displayName)} areas">${scenes.map((s)=>`<button type="button" class="peh-waypoint ${scene&&s.id===scene.id?'active':''}" aria-current="${scene&&s.id===scene.id?'true':'false'}" onclick="pehSetScene('${s.id}')">${esc(s.title)}</button>`).join('')}</nav>`;
 }
 
-// ── WorkspaceManager: panel + tile + body renderers ────────────────────
+// ── WorkspaceManager: panel + tile + body renderers ───────────────────
 function renderWorkspaceOverlays(deckMarkup){
   const open=state.pehverse.workspaces;
   if(!open.length)return'';
@@ -508,17 +523,17 @@ function renderWorkspaceTile(w,deckMarkup){
   </section>`;
 }
 function renderWorkspaceHeader(w,def,isTile){
-  const kindTag=def.kind==='lane'?'LIVE':def.kind==='deck'?'CONSOLE':'PLACEHOLDER';
-  const dockBtn=(d,glyph,label)=>`<button class="peh-dockbtn ${w.dock===d?'on':''}" type="button" title="Dock ${label}" aria-label="Dock ${label}" onclick="event.stopPropagation();pehDockWorkspace('${w.uid}','${d}')">${glyph}</button>`;
+  const kindTag=(def.kind==='lane'||def.kind==='live')?'LIVE':def.kind==='deck'?'CONSOLE':'PLACEHOLDER';
+  const dockBtn=(d,glyph,label)=>`<button class="peh-dockbtn ${w.dock===d?'on':''}" type="button" title="Dock ${label}" aria-label="Dock ${label}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehDockWorkspace('${w.uid}','${d}')">${glyph}</button>`;
   return `<header class="peh-panel-head">
-    ${isTile?'':`<button class="peh-backmap" type="button" title="Back to the map" aria-label="Back to the world map" onclick="event.stopPropagation();pehBackToMap('${w.uid}')"><span aria-hidden="true">‹</span> Map</button>`}
+    ${isTile?'':`<button class="peh-backmap" type="button" title="Back to the map" aria-label="Back to the map" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehBackToMap('${w.uid}')"><span aria-hidden="true">‹</span> Map</button>`}
     <span class="peh-panel-glyph">${pehGlyph(def.peh)}</span>
     <span class="peh-panel-title">${esc(def.title||w.defId)}</span>
     <span class="peh-panel-kind k-${kindTag.toLowerCase()}">${kindTag}</span>
     <span class="peh-panel-ctrls">
       ${isTile?'':dockBtn('right','⫼','right')+dockBtn('bottom','▭','bottom')+dockBtn('fullscreen','⛶','full')}
-      <button class="peh-dockbtn" type="button" title="Minimize" aria-label="Minimize" onclick="event.stopPropagation();pehMinimizeWorkspace('${w.uid}')">—</button>
-      <button class="peh-dockbtn close" type="button" title="Close" aria-label="Close" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')">×</button>
+      <button class="peh-dockbtn" type="button" title="Minimize" aria-label="Minimize" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehMinimizeWorkspace('${w.uid}')">—</button>
+      <button class="peh-dockbtn close" type="button" title="Close" aria-label="Close" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')">×</button>
     </span>
   </header>`;
 }
@@ -530,9 +545,8 @@ function pehWorkspaceBody(w,deckMarkup){
 function pehPlaceholderBody(def){
   return `<div class="peh-ph">
     <div class="peh-ph-glyph">${pehGlyph(def.peh)}</div>
-    <p class="peh-ph-blurb">${esc(def.blurb||'Workspace placeholder.')}</p>
-    ${def.relatedTab?`<button class="button secondary" type="button" onclick="pehOpenRelatedLane('${def.relatedTab}')">Open ${esc(TAB_CONFIG[def.relatedTab]?TAB_CONFIG[def.relatedTab].label:def.relatedTab)} overview</button>`:''}
-    <div class="peh-ph-tag">PLACEHOLDER · coming soon</div>
+    <p class="peh-ph-blurb">${esc(def.blurb||'Loading arena data…')}</p>
+    <div class="peh-ph-tag">LIVE · fetching from backend</div>
   </div>`;
 }
 
@@ -549,25 +563,25 @@ function pehWorkspaceChooser(product){
     return `<button class="peh-choice" type="button" onclick="pehOpenWorkspace('${id}')">
       <span class="peh-choice-glyph">${pehGlyph(d.peh)}</span>
       <span class="peh-choice-title">${esc(d.title)}</span>
-      <span class="peh-choice-kind">${d.kind==='lane'?'live lane':d.kind==='deck'?'console':'placeholder'}</span>
+      <span class="peh-choice-kind">${d.kind==='live'?'live data':d.kind==='deck'?'console':'workspace'}</span>
     </button>`;
   }).join('')}</div>`;
 }
 
-// ── Taskbar (workspace switcher; always reachable) ─────────────────────
+// ── Taskbar ───────────────────────────────────────────────────────────
 function renderPehTaskbar(){
   const open=state.pehverse.workspaces;
   return `<div class="peh-taskbar" role="toolbar" aria-label="Open workspaces">
     <button class="peh-task-travel" type="button" onclick="pehToggleFastTravel()" title="Fast travel (Alt+T)" aria-label="Fast travel"><span aria-hidden="true">✦</span></button>
     <div class="peh-task-chips">${open.length?open.map((w)=>{
       const def=pehWorkspaceDef(w.defId)||{};
-      return `<button class="peh-task-chip ${state.pehverse.focus===w.uid?'active':''} ${w.min?'min':''}" type="button" onclick="pehFocusWorkspace('${w.uid}')" title="${esc(def.title||w.defId)}"><span class="peh-task-glyph">${pehGlyph(def.peh)}</span><span class="peh-task-name">${esc(def.title||w.defId)}</span><span class="peh-task-x" role="button" tabindex="0" title="Close" aria-label="Close ${esc(def.title||w.defId)}" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();pehCloseWorkspace('${w.uid}')}"">×</span></button>`;
+      return `<button class="peh-task-chip ${state.pehverse.focus===w.uid?'active':''} ${w.min?'min':''}" type="button" onclick="pehFocusWorkspace('${w.uid}')" title="${esc(def.title||w.defId)}"><span class="peh-task-glyph">${pehGlyph(def.peh)}</span><span class="peh-task-name">${esc(def.title||w.defId)}</span><span class="peh-task-x" role="button" tabindex="0" title="Close" aria-label="Close ${esc(def.title||w.defId)}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();pehCloseWorkspace('${w.uid}')}">×</span></button>`;
     }).join(''):`<span class="peh-task-empty">No open workspaces — tap a hotspot, or ✦ Fast travel.</span>`}</div>
     ${open.length?`<button class="peh-task-clear" type="button" onclick="pehCloseAllWorkspaces()">Close all</button>`:''}
   </div>`;
 }
 
-// ── FastTravelMenu (product-local: the active product's scenes) ────────
+// ── FastTravelMenu ────────────────────────────────────────────────────
 function renderFastTravelMenu(){
   if(!state.pehverse.fastTravel)return'';
   const product=pehActiveProduct();
@@ -576,7 +590,7 @@ function renderFastTravelMenu(){
   return `<div class="peh-ft-overlay" role="dialog" aria-modal="true" aria-label="Fast travel" onclick="if(event.target===this)pehToggleFastTravel(false)">
     <div class="peh-ft">
       <header class="peh-ft-head"><h2>Fast travel</h2><span class="peh-ft-hint">Within ${esc(product.displayName)} · jump to any area</span><button class="peh-ft-close" type="button" onclick="pehToggleFastTravel(false)" aria-label="Close fast travel">×</button></header>
-      <div class="peh-ft-scenes peh-ft-scenes-main">${scenes.length?scenes.map((s)=>`<button class="peh-ft-scene ${here&&here.id===s.id?'active':''}" aria-current="${here&&here.id===s.id?'true':'false'}" type="button" onclick="pehGoScene('${s.id}')">${esc(s.title)}</button>`).join(''):`<span class="peh-ft-empty">No additional areas in ${esc(product.displayName)} yet.</span>`}</div>
+      <div class="peh-ft-scenes peh-ft-scenes-main">${scenes.length?scenes.map((s)=>`<button class="peh-ft-scene ${here&&here.id===s.id?'active':''}" aria-current="${here&&here.id===s.id?'true':'false'}" type="button" onclick="pehGoScene('${s.id}')">${esc(s.title)}</button>`).join(''):`<span class="peh-ft-empty">No additional areas yet.</span>`}</div>
       ${pehDevMode()?renderPehDevSwitcher(product):''}
     </div>
   </div>`;
@@ -585,47 +599,44 @@ function renderPehDevSwitcher(active){
   const pub=pehPublicProducts();
   const future=pehFutureProducts();
   return `<div class="peh-ft-dev">
-    <span class="peh-ft-dev-label">⚙ Dev only · product switcher (hidden in release)</span>
+    <span class="peh-ft-dev-label">⚙ Dev only · product switcher</span>
     <div class="peh-ft-dev-products">
       ${pub.map((p)=>`<button class="peh-ft-dev-product ${p.id===active.id?'active':''}" type="button" onclick="pehDevSwitchProduct('${p.id}')">${esc(p.displayName)}</button>`).join('')}
-      ${future.map((p)=>`<span class="peh-ft-dev-soon" title="Config example only — not a runtime destination">${esc(p.displayName)} · config only</span>`).join('')}
+      ${future.map((p)=>`<span class="peh-ft-dev-soon">${esc(p.displayName)} · config only</span>`).join('')}
     </div>
   </div>`;
 }
 
-// ── Arena Overview console (the kind:'deck' workspace body) ────────────
+// ── Arena Overview console (the kind:'deck' workspace body) ───────────
 function renderArenaConsole(){
   const cards=[
-    {ws:'stress-tests',      scene:'training-grounds', glyph:'spark',    title:'Stress Tests',       desc:'Load generators, ramp-up curves, and failure thresholds.'},
-    {ws:'adversarial-trials', scene:'arena',            glyph:'flame',    title:'Adversarial Trials',  desc:'Edge-case inputs, attack vectors, and red-team results.'},
-    {ws:'regression-trials',  scene:'temple',           glyph:'orbit',    title:'Regression Trials',   desc:'Historical baselines, drift detection, and pass/fail trends.'},
-    {ws:'failure-analysis',   scene:'armory',           glyph:'book',     title:'Failure Analysis',    desc:'Crash logs, error patterns, and root-cause traces.'},
-    {ws:'endurance-receipts',  scene:'market',           glyph:'scroll',   title:'Endurance Receipts',  desc:'Sustained-run logs, fatigue curves, and resilience scores.'}
+    {ws:'arena-status', scene:'main-gate',        glyph:'shield', title:'Arena Status',  desc:'Live backend health, version, state root.'},
+    {ws:'results',      scene:'arena',            glyph:'star',   title:'Results',       desc:'Trial results — verdicts, scores, pass rates.'},
+    {ws:'trial-config', scene:'training-grounds', glyph:'tools',  title:'Trial Config',  desc:'Packs and agents registered in the system.'},
+    {ws:'receipts',     scene:'armory',           glyph:'scroll', title:'Receipts',      desc:'Execution receipts for completed trials.'},
+    {ws:'agents-ws',    scene:'market',           glyph:'signal', title:'Agents',        desc:'Registered agents and their configurations.'},
+    {ws:'history-ws',   scene:'temple',           glyph:'book',   title:'History',       desc:'Full trial history — timeline and audit trail.'}
   ];
-  return `<div class="howa-console">
-    <div class="howa-hero">
-      <span class="howa-hero-mark" aria-hidden="true">⚔️</span>
+  return `<div class="wks-console">
+    <div class="wks-hero">
+      <span class="wks-hero-mark" aria-hidden="true">${pehGlyph('shield')}</span>
       <div>
-        <h2>Welcome to Howa</h2>
-        <p>No shortcuts in this world — every model faces the trials. Pick a station below, or tap a place on the map. I'll be right there with you.</p>
+        <h2>Welcome to the Arena</h2>
+        <p>Past this gate, there are no shortcuts — only trials. I'm Peh, your arena master. Pick a station below, or tap a location on the map and I'll meet you there.</p>
       </div>
     </div>
-    <h3 class="howa-section-title">World stations</h3>
-    <div class="howa-cards">${cards.map((c)=>`
-      <button class="howa-card" type="button" onclick="pehHotspot('${c.ws}','${c.scene}')">
-        <span class="howa-card-glyph">${pehGlyph(c.glyph)}</span>
-        <span class="howa-card-title">${esc(c.title)}</span>
-        <span class="howa-card-desc">${esc(c.desc)}</span>
+    <h3 class="wks-section-title">Arena stations</h3>
+    <div class="wks-cards">${cards.map((c)=>`
+      <button class="wks-card" type="button" onclick="pehHotspot('${c.ws}','${c.scene}')">
+        <span class="wks-card-glyph">${pehGlyph(c.glyph)}</span>
+        <span class="wks-card-title">${esc(c.title)}</span>
+        <span class="wks-card-desc">${esc(c.desc)}</span>
       </button>`).join('')}</div>
-    <div class="howa-virtues">
-      <p>"Every model that enters this world leaves changed — stronger, or broken."</p>
-      <div class="howa-virtues-row">Endurance · Resilience · Precision · Adaptability · Honesty</div>
-    </div>
-    <div class="howa-foot">THE ARENA · Howa · agent proving ground</div>
+    <div class="wks-foot">THE ARENA · howa · past this gate, there are no shortcuts</div>
   </div>`;
 }
 
-// ── Keyboard: Esc closes overlay; Alt+T travel; Alt+M mode toggle ──────
+// ── Keyboard shortcuts ────────────────────────────────────────────────
 let __pehKeysBound=false;
 function pehBindKeys(){
   if(__pehKeysBound)return; __pehKeysBound=true;
@@ -639,11 +650,15 @@ pehBindKeys();
 pehInitProduct();
 
 function render(){
+  if(state.pehverse.mode==='dashboard'&&!state.pehverse.workspaces.length&&!_dashAutoOpenDone){
+    _dashAutoOpenDone=true;
+    pehAutoOpenDashboard();
+  }
   const deckMarkup=renderArenaConsole();
   document.getElementById('app').innerHTML=renderPehverse(deckMarkup);
 }
 
-// Expose handlers used by inline onclick attributes
+// Expose handlers for inline onclick attributes.
 window.pehHotspotActivate=pehHotspotActivate;
 window.pehDismissBubble=pehDismissBubble;
 window.pehToggleFastTravel=pehToggleFastTravel;
@@ -661,19 +676,21 @@ window.pehBackToMap=pehBackToMap;
 window.pehOpenRelatedLane=pehOpenRelatedLane;
 window.pehHotspot=pehHotspot;
 
-// ── Boot ────────────────────────────────────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────
 function boot(){
   try{
     render();
   }catch(err){
     const app=document.getElementById('app');
-    if(app)app.innerHTML='<div style="padding:24px;color:#f3ecdc;font-family:sans-serif">The Arena could not finish loading. <button onclick="boot()" style="margin-left:8px">Retry</button><pre style="color:#b6a079;white-space:pre-wrap">'+esc(String(err&&err.stack||err))+'</pre></div>';
+    if(app)app.innerHTML='<div style="padding:24px;color:#f0ece4;font-family:sans-serif">The Arena could not finish loading. <button onclick="boot()" style="margin-left:8px">Retry</button><pre style="color:#9a8e7a;white-space:pre-wrap">'+esc(String(err&&err.stack||err))+'</pre></div>';
   }
 }
 window.boot=boot;
 boot();
 </script>
-<!-- ── Live backend wiring (loads after the engine; reads its globals) ── -->
+<!-- ── Live backend layer (loaded AFTER the inline engine so its globals exist).
+     api.js → client · scenes.js → live workspace data · peh-guide.js → journal ·
+     app.js → glue (status dot, command bar, floating chat, overrides). All pure vanilla JS. ── -->
 <script src="api.js"></script>
 <script src="scenes.js"></script>
 <script src="peh-guide.js"></script>

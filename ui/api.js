@@ -1,106 +1,77 @@
 // ══════════════════════════════════════════════════════════════════════
-// HOWA · api.js — backend client for the Arena UI (port 18799)
-// Every call returns {ok, data, error} and NEVER throws. The UI can treat
-// a dead backend exactly like an empty one: ok=false, data=null, error set.
-// Pure vanilla. No deps. Mirrors the read-only GET surface of src/api.
+// HOWA · API CLIENT
+// Thin fetch wrapper over the Arena backend (same-origin, port 18799).
+// All calls resolve to { ok, data, error, status } and NEVER throw.
+// Simple TTL cache for GETs; pass { fresh:true } to bypass.
 // ══════════════════════════════════════════════════════════════════════
 (function (global) {
-  "use strict";
+  'use strict';
 
-  // Same-origin when the UI is served by the Howa server. When opened from
-  // disk (file://) fall back to the documented local port so a dev can still
-  // point the page at a running backend.
   function resolveBase() {
     try {
-      if (global.HOWA_API_BASE) return String(global.HOWA_API_BASE).replace(/\/$/, "");
-      const loc = global.location;
-      if (loc && loc.protocol && loc.protocol.indexOf("http") === 0) {
-        return loc.origin;
-      }
-    } catch (e) { /* ignore */ }
-    return "http://127.0.0.1:18799";
+      if (global.HOWA_API_BASE) return String(global.HOWA_API_BASE).replace(/\/$/, '');
+      var loc = global.location;
+      if (loc && loc.protocol && loc.protocol.indexOf('http') === 0) return loc.origin;
+    } catch (e) {}
+    return 'http://127.0.0.1:18799';
   }
 
-  const BASE = resolveBase();
-  const DEFAULT_TIMEOUT_MS = 8000;
+  var BASE = resolveBase();
+  var cache = {};
+  var TTL = 8000;
 
-  // Core fetch wrapper. Resolves (never rejects) to {ok, data, error, status}.
-  async function request(path, opts) {
-    const url = BASE + path;
-    const o = opts || {};
-    let controller = null;
-    let timer = null;
+  async function get(path, opts) {
+    opts = opts || {};
+    var key = path;
+    if (!opts.fresh && cache[key] && (Date.now() - cache[key].ts < (opts.ttl != null ? opts.ttl : TTL))) {
+      return cache[key].result;
+    }
+    var controller, timer;
     try {
-      if (typeof AbortController !== "undefined") {
+      if (typeof AbortController !== 'undefined') {
         controller = new AbortController();
-        timer = setTimeout(() => { try { controller.abort(); } catch (e) {} },
-          o.timeout || DEFAULT_TIMEOUT_MS);
+        timer = setTimeout(function () { try { controller.abort(); } catch (e) {} }, 8000);
       }
-      const res = await fetch(url, {
-        method: o.method || "GET",
-        headers: { Accept: "application/json" },
-        signal: controller ? controller.signal : undefined,
-      });
+      var res = await fetch(BASE + path, { headers: { Accept: 'application/json' }, signal: controller ? controller.signal : undefined });
       if (timer) clearTimeout(timer);
-      const status = res.status;
-      let body = null;
-      const text = await res.text();
-      if (text) { try { body = JSON.parse(text); } catch (e) { body = { raw: text }; } }
-      if (!res.ok) {
-        const msg = (body && (body.error || body.message)) || ("HTTP " + status);
-        return { ok: false, data: body, error: String(msg), status: status };
-      }
-      return { ok: true, data: body, error: null, status: status };
-    } catch (err) {
+      var text = await res.text();
+      var data = null;
+      try { if (text) data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+      var result = { ok: res.ok, status: res.status, data: data, error: res.ok ? null : ((data && (data.error || data.message)) || ('HTTP ' + res.status)) };
+      if (res.ok) cache[key] = { result: result, ts: Date.now() };
+      return result;
+    } catch (e) {
       if (timer) clearTimeout(timer);
-      const aborted = err && (err.name === "AbortError");
-      return {
-        ok: false,
-        data: null,
-        error: aborted ? "request timed out" : ("network error — " + (err && err.message ? err.message : String(err))),
-        status: 0,
-      };
+      return { ok: false, status: 0, data: null, error: e && e.name === 'AbortError' ? 'request timed out' : 'network error — ' + (e ? e.message : String(e)) };
     }
   }
 
-  const HowaAPI = {
-    base: BASE,
-    request: request,
+  async function post(path, body) {
+    try {
+      var res = await fetch(BASE + path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(body || {})
+      });
+      var text = await res.text();
+      var data = null;
+      try { if (text) data = JSON.parse(text); } catch (e) { data = { raw: text }; }
+      return { ok: res.ok, status: res.status, data: data, error: res.ok ? null : ((data && (data.error || data.message)) || ('HTTP ' + res.status)) };
+    } catch (e) {
+      return { ok: false, status: 0, data: null, error: 'network error — ' + (e ? e.message : String(e)) };
+    }
+  }
 
-    // GET /api/health → {ok, stateRoot, version}
-    health: function () { return request("/api/health"); },
-
-    // GET /api/agents → {agents:[...]}
-    agents: function () { return request("/api/agents"); },
-
-    // GET /api/packs → {packs:[...]}
-    packs: function () { return request("/api/packs"); },
-
-    // GET /api/trials → {trials:[...]}  (each entry is a TrialSummary)
-    trials: function () { return request("/api/trials"); },
-
-    // GET /api/trials/:id → TrialSummary
-    trial: function (id) {
-      if (!id) return Promise.resolve({ ok: false, data: null, error: "trial id required" });
-      return request("/api/trials/" + encodeURIComponent(id));
-    },
-
-    // GET /api/receipts/:trialId → {receipts:[...]}
-    receipts: function (trialId) {
-      if (!trialId) return Promise.resolve({ ok: false, data: null, error: "trial id required" });
-      return request("/api/receipts/" + encodeURIComponent(trialId));
-    },
-
-    // GET /api/admin/logs?limit=N → {entries:[...]}
-    logs: function (limit) {
-      const n = Number(limit);
-      const q = Number.isFinite(n) && n > 0 ? "?limit=" + Math.min(n, 1000) : "";
-      return request("/api/admin/logs" + q);
-    },
-
-    // GET /api/admin/cleanup → dry-run reaper report (read-only).
-    cleanupPlan: function () { return request("/api/admin/cleanup"); },
+  global.HowaAPI = {
+    base:      BASE,
+    health:    function (o) { return get('/health', o); },
+    apiHealth: function (o) { return get('/api/health', o); },
+    agents:    function (o) { return get('/api/agents', o); },
+    packs:     function (o) { return get('/api/packs', o); },
+    trials:    function (o) { return get('/api/trials', o); },
+    trial:     function (id, o) { return id ? get('/api/trials/' + encodeURIComponent(id), o) : Promise.resolve({ ok: false, data: null, error: 'id required', status: 0 }); },
+    receipts:  function (trialId, o) { return trialId ? get('/api/receipts/' + encodeURIComponent(trialId), o) : Promise.resolve({ ok: false, data: null, error: 'trial id required', status: 0 }); },
+    logs:      function (limit, o) { var q = Number.isFinite(+limit) && +limit > 0 ? '?limit=' + Math.min(+limit, 1000) : ''; return get('/api/admin/logs' + q, o); },
+    converse:  function (message) { return post('/chat', { message: message }); },
   };
-
-  global.HowaAPI = HowaAPI;
-})(typeof window !== "undefined" ? window : this);
+})(typeof window !== 'undefined' ? window : this);
