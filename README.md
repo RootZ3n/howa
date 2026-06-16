@@ -153,30 +153,38 @@ Pages: **Arena** (dashboard + Champion Board), **New Trial**, **Trials**,
 
 - Git
 - Node.js **18.17 or newer**
-- npm (the version bundled with your Node install is fine)
+- pnpm
 
-Howa v0.1.0 is a **source install** release: clone the repo and run npm
+Howa v0.1.0 is a **source install** release: clone the repo and run pnpm
 commands from the checkout. It is not documented as a global `npm install -g`
 or `npx` package yet.
 
-## Install / Setup — Linux, macOS, WSL2
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18.17 or newer
+- pnpm
+- Git
+
+### Install / Setup — Linux, macOS, WSL2
 
 ```bash
 git clone https://github.com/RootZ3n/howa.git
 cd howa
-npm ci
-npm run build
-npm run smoke
+pnpm install
+pnpm run build
+pnpm run smoke
 ```
 
-## Install / Setup — Windows PowerShell
+### Install / Setup — Windows PowerShell
 
 ```powershell
 git clone https://github.com/RootZ3n/howa.git
 cd howa
-npm ci
-npm run build
-npm run smoke
+pnpm install
+pnpm run build
+pnpm run smoke
 ```
 
 The smoke test uses the built-in mock agent and does not need an external agent,
@@ -205,23 +213,23 @@ number with no honesty stamps.
 
 ## Start the local API/UI
 
-After `npm run build`, start the single-process local server:
+After `pnpm run build`, start the single-process local server:
 
 ```bash
-npm run start
+pnpm run start
 # open http://127.0.0.1:18799
 ```
 
 PowerShell uses the same command:
 
 ```powershell
-npm run start
+pnpm run start
 ```
 
 Dev mode (hot reload, two processes):
 
 ```bash
-npm run dev
+pnpm run dev
 # api: http://127.0.0.1:18799
 # ui:  http://127.0.0.1:5180   ← open this one in dev
 ```
@@ -232,16 +240,16 @@ directory), see [`docs/RUNNING.md`](docs/RUNNING.md).
 ## Headless CLI
 
 ```bash
-npm run cli -- list agents
-npm run cli -- list packs
-npm run cli -- run --agent mock --pack stamina --quiet
-npm run cli -- report <trialId>
+pnpm run cli -- list agents
+pnpm run cli -- list packs
+pnpm run cli -- run --agent mock --pack stamina --quiet
+pnpm run cli -- report <trialId>
 ```
 
 The beginner-friendly equivalent is:
 
 ```bash
-npm run smoke
+pnpm run smoke
 ```
 
 Some packs intentionally expose failures. For example, the mock agent is
@@ -249,10 +257,10 @@ designed to fail part of the truthfulness pack so you can inspect an honest
 failure receipt:
 
 ```bash
-npm run smoke:fail
+pnpm run smoke:fail
 ```
 
-`npm run smoke:fail` succeeds when Howa correctly reports `FAIL` and the
+`pnpm run smoke:fail` succeeds when Howa correctly reports `FAIL` and the
 underlying trial exits `2`.
 
 ### Smoke against a real local agent
@@ -272,7 +280,7 @@ env → literal `aedis` on PATH. Its health check verifies the binary exposes
 `submit` before tests run, so point `AEDIS_BIN` at a real Aedis CLI or wrapper:
 
 ```bash
-AEDIS_BIN=/usr/local/bin/aedis npm run cli -- run --agent aedis --pack truthfulness
+AEDIS_BIN=/usr/local/bin/aedis pnpm run cli -- run --agent aedis --pack truthfulness
 ```
 
 For an arbitrary command-shaped agent that does not have a dedicated adapter yet,
@@ -292,29 +300,29 @@ to the cleanup policy.
 ## Testing
 
 ```bash
-npm test                  # unit tests (no server required)
-npm run test:integration  # open local API smoke test
-npm run test:all          # unit + integration together
-npm run typecheck         # type-check only
-npm run smoke             # build + mock-agent trial (no external deps)
-npm run verify:release    # full release gate (typecheck + build + test + smoke)
+pnpm test                  # unit tests (no server required)
+pnpm run test:integration  # open local API smoke test
+pnpm run test:all          # unit + integration together
+pnpm run typecheck         # type-check only
+pnpm run smoke             # build + mock-agent trial (no external deps)
+pnpm run verify:release    # full release gate (typecheck + build + test + smoke)
 ```
 
-`npm test` runs the Vitest suite. The `api-open.test.ts` integration suite
+`pnpm test` runs the Vitest suite. The `api-open.test.ts` integration suite
 starts the API on an ephemeral local port and verifies routes are reachable
 without auth headers.
 
 Release validation:
 
 ```bash
-npm ci
-npm run verify:release
-npm audit --audit-level=moderate --omit=optional
+pnpm install
+pnpm run verify:release
+pnpm audit --audit-level=moderate --omit=optional
 ```
 
 No JavaScript lint stack is configured in v0.1; typecheck and tests are the
 current release gates. The audit command omits platform-specific optional
-packages so npm's audit endpoint evaluates the installed cross-platform tree
+packages so pnpm audit evaluates the installed cross-platform tree
 consistently.
 
 ## Development
@@ -323,7 +331,7 @@ consistently.
 
 - Git
 - Node.js **18.17 or newer**
-- npm (the version bundled with your Node install is fine)
+- pnpm
 
 ### Setup
 
@@ -332,15 +340,15 @@ Clone the repo and install dependencies:
 ```bash
 git clone https://github.com/RootZ3n/howa.git
 cd howa
-npm ci
-npm run build
-npm run smoke          # verify the build works with the mock agent
+pnpm install
+pnpm run build
+pnpm run smoke          # verify the build works with the mock agent
 ```
 
 ### Dev server (hot reload)
 
 ```bash
-npm run dev
+pnpm run dev
 # api: http://127.0.0.1:18799
 # ui:  http://127.0.0.1:5180   ← open this one in dev
 ```
@@ -348,13 +356,13 @@ npm run dev
 ### Running tests
 
 ```bash
-npm test                  # unit tests (no server required)
-npm run test:integration  # open local API smoke test
-npm run test:all          # unit + integration together
-npm run test:watch        # watch mode for active development
-npm run typecheck         # type-check only
-npm run smoke             # build + mock-agent trial (no external deps)
-npm run verify:release    # full release gate (typecheck + build + test + smoke)
+pnpm test                  # unit tests (no server required)
+pnpm run test:integration  # open local API smoke test
+pnpm run test:all          # unit + integration together
+pnpm run test:watch        # watch mode for active development
+pnpm run typecheck         # type-check only
+pnpm run smoke             # build + mock-agent trial (no external deps)
+pnpm run verify:release    # full release gate (typecheck + build + test + smoke)
 ```
 
 See the [Testing](#testing) section above for more detail on each command.
@@ -362,7 +370,7 @@ See the [Testing](#testing) section above for more detail on each command.
 ### Type-checking
 
 ```bash
-npm run typecheck
+pnpm run typecheck
 ```
 
 Runs the TypeScript compiler in `--noEmit` mode to catch type errors without producing output files.
@@ -391,7 +399,7 @@ For design documentation see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`d
 
 1. Fork the repo and clone your fork locally.
 2. Create a feature branch (`git checkout -b my-feature`).
-3. Make your changes and run `npm test` to verify nothing breaks.
+3. Make your changes and run `pnpm test` to verify nothing breaks.
 4. Push your branch and open a pull request against `main`.
 5. Keep changes focused — one logical change per PR.
 
@@ -399,11 +407,11 @@ For design documentation see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`d
 
 | Symptom | What to do |
 |---|---|
-| `EADDRINUSE :18799` | Another process is already using the default port. Stop it, or set `HOWA_PORT` before `npm run start` (`$env:HOWA_PORT=18899` in PowerShell, `HOWA_PORT=18899 npm run start` in POSIX shells). |
-| `npm ci` or audit reports optional package/platform noise | Use the documented audit command: `npm audit --audit-level=moderate --omit=optional`. |
-| PowerShell cannot find `npm` or `node` | Reopen PowerShell after installing Node, then check `node --version` and `npm --version`. |
-| PowerShell blocks scripts | The npm commands above run Node scripts directly. If your environment blocks npm shims, use a normal PowerShell profile or WSL2. |
-| Missing external agent binary | Start with `npm run smoke`; external adapters require their own binaries or services. Missing binaries produce an adapter setup `ERROR` receipt. |
+| `EADDRINUSE :18799` | Another process is already using the default port. Stop it, or set `HOWA_PORT` before `pnpm run start` (`$env:HOWA_PORT=18899` in PowerShell, `HOWA_PORT=18899 pnpm run start` in POSIX shells). |
+| `pnpm install` or audit reports optional package/platform noise | Use the documented audit command: `pnpm audit --audit-level=moderate --omit=optional`. |
+| PowerShell cannot find `pnpm` or `node` | Reopen PowerShell after installing Node, then check `node --version` and `pnpm --version`. |
+| PowerShell blocks scripts | The pnpm commands above run Node scripts directly. If your environment blocks pnpm shims, use a normal PowerShell profile or WSL2. |
+| Missing external agent binary | Start with `pnpm run smoke`; external adapters require their own binaries or services. Missing binaries produce an adapter setup `ERROR` receipt. |
 | Where are receipts? | Trial summaries and receipts are written under `./howa-state/` by default. The smoke script uses a safe temporary state directory and prints it. |
 
 ---
