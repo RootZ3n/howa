@@ -64,7 +64,7 @@ two runs. You can hand it to your security team.
   for injection probes, destructive commands, and secret leakage. Velum *records
   evidence*; it never hides results.
 - **Adapter-based** — every agent (Aedis, BetterClaw, OpenClaw, Peh,
-  Luna, Hermes, Claude Code, Codex, a generic CLI, your own) is reachable through one
+  Luna, Hermes, a generic CLI, your own) is reachable through one
   small `AgentAdapter` contract. Adapters cannot reach into scoring; they only
   translate.
 - **Live Arena Floor** — trials emit a redacted `TrialEvent` stream over SSE so
