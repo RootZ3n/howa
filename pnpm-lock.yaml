@@ -26,6 +26,9 @@ importers:
       react-router-dom:
         specifier: ^6.26.0
         version: 6.30.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      velum-ai:
+        specifier: file:../velum
+        version: file:../velum
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -1327,6 +1330,11 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
+  velum-ai@file:../velum:
+    resolution: {directory: ../velum, type: directory}
+    engines: {node: '>=18'}
+    hasBin: true
+
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -2580,6 +2588,8 @@ snapshots:
   utils-merge@1.0.1: {}
 
   vary@1.1.2: {}
+
+  velum-ai@file:../velum: {}
 
   vite-node@3.2.4(@types/node@20.19.42)(tsx@4.22.4):
     dependencies:
