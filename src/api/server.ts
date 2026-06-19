@@ -2,6 +2,7 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { velumExpress } from "velum-ai/adapters/express";
 import { agentsRouter } from "./routes/agents.js";
 import { packsRouter } from "./routes/packs.js";
 import { trialsRouter } from "./routes/trials.js";
@@ -50,6 +51,9 @@ export async function buildApp(): Promise<express.Express> {
   await new TrialStore(stateRoot).ensureLayout();
   const app = express();
   app.use(express.json({ limit: "1mb" }));
+
+  // Velum: AI privacy/injection defense middleware
+  app.use(velumExpress({ defaultPiiLevel: 2 }));
 
   app.get("/api/health", (_req, res) =>
     res.json({ status: "ok", uptime: process.uptime() }),
