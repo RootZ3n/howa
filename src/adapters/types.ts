@@ -107,10 +107,10 @@ export interface AgentAdapter {
    * captured during sendPrompt(). Live concurrent streaming (events visible
    * on the Arena Floor *while* the agent is mid-call) is reserved for v0.2.
    *
-   * TODO(v0.2): runner should consume streamEvents concurrently with
+   * FIXME(v0.2): runner should consume streamEvents concurrently with
    * sendPrompt and forward each event as it arrives. Adapters that emit
    * events incrementally already have everything they need; the runner-side
-   * pump is the missing piece.
+   * pump is the missing piece. — tracked as HOWA-217.
    */
   streamEvents?(handle: SessionHandle): AsyncIterable<AgentEvent>;
 

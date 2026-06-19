@@ -83,11 +83,11 @@ function countMultiStepIndicators(run: {
  * A genuine "agent never started" is captured by `truth.no-output` and
  * `truth.final-answer` upstream.
  *
- * TODO(v0.2): When the Aedis SDK surfaces structured events via
+ * FIXME(v0.2): When the Aedis SDK surfaces structured events via
  * `/api/sessions/<id>/events`, the Aedis adapter should switch its
  * `truth.eventStructure` to "structured" and emit typed AgentEvents
  * (`step`, `tool_call`, `plan`). Then this test will see real evidence
- * for Aedis instead of relying on text-pattern heuristics.
+ * for Aedis instead of relying on text-pattern heuristics. — tracked as HOWA-218.
  */
 const multiStep: TestSpec = {
   id: "stamina.multi-step",

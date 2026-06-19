@@ -7,6 +7,12 @@ import { localModelPack } from "./local-model/index.js";
 import { toolCallingPack } from "./tool-calling/index.js";
 import { contextStaminaPack } from "./context-stamina/index.js";
 
+// Shared utility packs — not TestPacks themselves, but exported through the
+// registry barrel so consumers can access them without knowing the internal
+// file structure of src/packs/.
+export { detectClarification, CLARIFICATION_PATTERNS, type ClarificationDetection } from "./clarification.js";
+export { behaviorSignals, hasObservableBehavior, noEvidenceResult, type BehaviorSignals } from "./no-evidence.js";
+
 const packs: Record<string, TestPack> = {
   truthfulness: truthfulnessPack,
   "repo-editing": repoEditingPack,
