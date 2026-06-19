@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Howa Ptah wrapper.
+# Howa the Mechanic wrapper.
 #
 # Bridges the `<bin> submit <prompt>` shape that Howa's adapter expects
-# onto Ptah's HTTP API so a Howa trial measures a real Ptah task — not
+# onto the Mechanic's HTTP API so a Howa trial measures a real the Mechanic task — not
 # the milliseconds it took to POST /api/tasks.
 #
 #   1. POST /api/tasks  {input, repo}      → grab taskId
@@ -11,13 +11,13 @@
 #   3. Print receipt.result.summary        → Howa's finalAnswer
 #
 # Env vars:
-#   PTAH_URL                          (default http://127.0.0.1:18810)
-#   PTAH_API_TOKEN                    (sent as `Authorization: Bearer …` when set)
-#   PTAH_WRAPPER_TIMEOUT_SECONDS      (default 120)
-#   PTAH_WRAPPER_POLL_INTERVAL        (default 1, seconds between polls)
+#   MECHANIC_URL                          (default http://127.0.0.1:18810)
+#   MECHANIC_API_TOKEN                    (sent as `Authorization: Bearer …` when set)
+#   MECHANIC_WRAPPER_TIMEOUT_SECONDS      (default 120)
+#   MECHANIC_WRAPPER_POLL_INTERVAL        (default 1, seconds between polls)
 #
 # Exit codes:
-#   0    Ptah returned a receipt — success, partial, escalated, or failed.
+#   0    the Mechanic returned a receipt — success, partial, escalated, or failed.
 #        The wrapper does not editorialize; receipt.status is printed and
 #        Howa scores the actual answer.
 #   2    Misuse (e.g. `submit` with no prompt, unknown verb).
@@ -26,20 +26,20 @@
 
 set -euo pipefail
 
-PTAH_URL="${PTAH_URL:-http://127.0.0.1:18810}"
-PTAH_WRAPPER_TIMEOUT_SECONDS="${PTAH_WRAPPER_TIMEOUT_SECONDS:-120}"
-PTAH_WRAPPER_POLL_INTERVAL="${PTAH_WRAPPER_POLL_INTERVAL:-1}"
-TOKEN="${PTAH_API_TOKEN:-}"
+MECHANIC_URL="${MECHANIC_URL:-http://127.0.0.1:18810}"
+MECHANIC_WRAPPER_TIMEOUT_SECONDS="${MECHANIC_WRAPPER_TIMEOUT_SECONDS:-120}"
+MECHANIC_WRAPPER_POLL_INTERVAL="${MECHANIC_WRAPPER_POLL_INTERVAL:-1}"
+TOKEN="${MECHANIC_API_TOKEN:-}"
 
 usage() {
-  echo "Usage: ptah <command> [args]"
+  echo "Usage: mechanic <command> [args]"
   echo "Commands: submit, status, health"
 }
 
 require_tools() {
   for tool in curl jq; do
     if ! command -v "$tool" >/dev/null 2>&1; then
-      echo "ptah: missing required tool '$tool' — install it and retry" >&2
+      echo "mechanic: missing required tool '$tool' — install it and retry" >&2
       exit 1
     fi
   done
@@ -52,7 +52,7 @@ fi
 
 curl_get() {
   local path="$1" max_time="${2:-15}"
-  curl -fsS --max-time "$max_time" "${auth_args[@]}" "$PTAH_URL$path"
+  curl -fsS --max-time "$max_time" "${auth_args[@]}" "$MECHANIC_URL$path"
 }
 
 curl_post_json() {
@@ -60,20 +60,20 @@ curl_post_json() {
   curl -fsS --max-time "$max_time" "${auth_args[@]}" \
     -X POST -H 'content-type: application/json' \
     --data "$body" \
-    "$PTAH_URL$path"
+    "$MECHANIC_URL$path"
 }
 
 cmd_health() {
-  # Ptah's /api/health runs binary smoke checks for every registered
+  # the Mechanic's /api/health runs binary smoke checks for every registered
   # adapter (opencode resolution, codex auth probe, …) so it routinely
   # takes ~10 s on a cold service. Give it room.
   if ! body=$(curl_get /api/health 30); then
-    echo "ptah health: GET $PTAH_URL/api/health failed" >&2
+    echo "mechanic health: GET $MECHANIC_URL/api/health failed" >&2
     return 1
   fi
   # First line is a `status: …` summary so Howa's health probe gets a
   # short, scrapable signal (it only reads the first line). The full JSON
-  # follows so a human running `ptah health` sees the detail.
+  # follows so a human running `mechanic health` sees the detail.
   local status
   status=$(printf '%s' "$body" | jq -r '.status // "unknown"' 2>/dev/null || echo "unknown")
   printf 'status: %s\n' "$status"
@@ -82,7 +82,7 @@ cmd_health() {
 
 cmd_status() {
   if ! body=$(curl_get /api/active-task 10); then
-    echo "ptah status: GET $PTAH_URL/api/active-task failed" >&2
+    echo "mechanic status: GET $MECHANIC_URL/api/active-task failed" >&2
     return 1
   fi
   printf '%s\n' "$body"
@@ -94,7 +94,7 @@ render_receipt() {
   jq -r '
     .receipt as $r |
     [
-      "Ptah task " + ($r.taskId // "?") + " — receipt status: " + ($r.status // "?"),
+      "the Mechanic task " + ($r.taskId // "?") + " — receipt status: " + ($r.status // "?"),
       ($r.result.summary // "" | tostring),
       (if ($r.result.confidence // "") != ""
         then "Verification confidence: " + ($r.result.confidence | tostring)
@@ -121,7 +121,7 @@ render_receipt() {
 
 cmd_submit() {
   if [[ $# -lt 1 ]]; then
-    echo "ptah submit: missing prompt" >&2
+    echo "mechanic submit: missing prompt" >&2
     return 2
   fi
   local prompt="$*"
@@ -129,18 +129,18 @@ cmd_submit() {
   local body resp task_id
   body=$(jq -nc --arg input "$prompt" '{input:$input, repo:null}')
   if ! resp=$(curl_post_json /api/tasks "$body" 30); then
-    echo "ptah submit: POST $PTAH_URL/api/tasks failed" >&2
+    echo "mechanic submit: POST $MECHANIC_URL/api/tasks failed" >&2
     return 1
   fi
   if ! task_id=$(printf '%s' "$resp" | jq -r '.taskId // empty') \
       || [[ -z "$task_id" ]]; then
-    echo "ptah submit: no taskId in response: $resp" >&2
+    echo "mechanic submit: no taskId in response: $resp" >&2
     return 1
   fi
 
   local start_ts deadline
   start_ts=$(date +%s)
-  deadline=$(( start_ts + PTAH_WRAPPER_TIMEOUT_SECONDS ))
+  deadline=$(( start_ts + MECHANIC_WRAPPER_TIMEOUT_SECONDS ))
 
   local last_kind=""
   local last_state=""
@@ -148,23 +148,23 @@ cmd_submit() {
 
   while :; do
     if (( $(date +%s) >= deadline )); then
-      local msg="Ptah task $task_id did not produce a receipt within ${PTAH_WRAPPER_TIMEOUT_SECONDS}s — last kind=$last_kind, state=$last_state${last_pending_reason:+, pendingApproval=$last_pending_reason}"
+      local msg="the Mechanic task $task_id did not produce a receipt within ${MECHANIC_WRAPPER_TIMEOUT_SECONDS}s — last kind=$last_kind, state=$last_state${last_pending_reason:+, pendingApproval=$last_pending_reason}"
       # Mirror the message to BOTH streams so callers that capture only
       # stdout (Howa's generic-cli scrapes finalAnswer from stdout)
       # still see an honest "the task did not finish" signal — and so
       # Howa's truthfulness pack can score the disclosure rather
       # than treating an empty stdout as `no_output`.
       printf '%s\n' "$msg"
-      printf 'ptah submit: %s\n' "$msg" >&2
+      printf 'mechanic submit: %s\n' "$msg" >&2
       curl -fsS --max-time 5 "${auth_args[@]}" \
         -X POST -H 'content-type: application/json' \
-        --data '{}' "$PTAH_URL/api/tasks/$task_id/cancel" >/dev/null 2>&1 || true
+        --data '{}' "$MECHANIC_URL/api/tasks/$task_id/cancel" >/dev/null 2>&1 || true
       return 124
     fi
 
     local poll
     if ! poll=$(curl_get "/api/tasks/$task_id" 15); then
-      sleep "$PTAH_WRAPPER_POLL_INTERVAL"
+      sleep "$MECHANIC_WRAPPER_POLL_INTERVAL"
       continue
     fi
 
@@ -181,10 +181,10 @@ cmd_submit() {
         return 0
         ;;
       ""|queued|live)
-        sleep "$PTAH_WRAPPER_POLL_INTERVAL"
+        sleep "$MECHANIC_WRAPPER_POLL_INTERVAL"
         ;;
       *)
-        sleep "$PTAH_WRAPPER_POLL_INTERVAL"
+        sleep "$MECHANIC_WRAPPER_POLL_INTERVAL"
         ;;
     esac
   done

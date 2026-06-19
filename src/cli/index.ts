@@ -177,13 +177,13 @@ program
         process.stdout.write(`│       export AEDIS_BIN="node /path/to/aedis/dist/cli/aedis.js"\n`);
         process.stdout.write(`│   • Or point AEDIS_BIN at the absolute aedis path:\n`);
         process.stdout.write(`│       export AEDIS_BIN=/usr/local/bin/aedis\n`);
-      } else if (opts.agent === "ptah") {
-        process.stdout.write(`│   • Ptah currently ships as a service (port 18810), not a CLI.\n`);
-        process.stdout.write(`│   • Until a real Ptah CLI lands, point PTAH_BIN at a wrapper that\n`);
+      } else if (opts.agent === "mechanic") {
+        process.stdout.write(`│   • the Mechanic currently ships as a service (port 18810), not a CLI.\n`);
+        process.stdout.write(`│   • Until a real the Mechanic CLI lands, point MECHANIC_BIN at a wrapper that\n`);
         process.stdout.write(`│     prints a "Commands: submit, …" usage line and forwards submit\n`);
-        process.stdout.write(`│     to POST /api/tasks. See docs/ADAPTERS.md (Ptah wrapper recipe).\n`);
+        process.stdout.write(`│     to POST /api/tasks. See docs/ADAPTERS.md (the Mechanic wrapper recipe).\n`);
         process.stdout.write(`│   • If a CLI exists already:\n`);
-        process.stdout.write(`│       export PTAH_BIN="node /path/to/ptah/dist/cli.js"\n`);
+        process.stdout.write(`│       export MECHANIC_BIN="node /path/to/mechanic/dist/cli.js"\n`);
       } else {
         process.stdout.write(`│   • Make sure the agent's binary is on PATH or set the\n`);
         process.stdout.write(`│     adapter's BIN env var to an absolute path.\n`);

@@ -13,9 +13,9 @@ import type {
 } from "../types.js";
 
 /**
- * Ptah adapter — HTTP-based driver for the Ptah lab runner.
+ * the Mechanic adapter — HTTP-based driver for the the Mechanic lab runner.
  *
- * Ptah runs as an HTTP service (default port 18810). This adapter talks
+ * the Mechanic runs as an HTTP service (default port 18810). This adapter talks
  * directly to the API instead of going through the CLI, because the CLI
  * streams output through the server's WebSocket and doesn't write to
  * stdout/stderr — which makes the generic-cli adapter hang.
@@ -27,9 +27,9 @@ import type {
  */
 
 const POLL_INTERVAL_MS = 2_000;
-const MAX_POLL_MS = 600_000; // 10 minutes — ptah tasks go through the full build pipeline
+const MAX_POLL_MS = 600_000; // 10 minutes — mechanic tasks go through the full build pipeline
 
-interface PtahSession {
+interface the MechanicSession {
   baseUrl: string;
   workspace: string;
   modelInfo: ModelInfo;
@@ -37,13 +37,13 @@ interface PtahSession {
   timeoutMs: number;
 }
 
-const sessions = new Map<string, PtahSession>();
+const sessions = new Map<string, the MechanicSession>();
 
-function getPtahBaseUrl(): string {
-  return process.env.PTAH_URL ?? "http://127.0.0.1:18810";
+function getthe MechanicBaseUrl(): string {
+  return process.env.MECHANIC_URL ?? "http://127.0.0.1:18810";
 }
 
-async function ptahFetch(
+async function mechanicFetch(
   baseUrl: string,
   path: string,
   opts?: { method?: string; body?: unknown },
@@ -57,18 +57,18 @@ async function ptahFetch(
   const res = await fetch(url, init);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`Ptah API ${opts?.method ?? "GET"} ${path} → ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(`the Mechanic API ${opts?.method ?? "GET"} ${path} → ${res.status}: ${text.slice(0, 300)}`);
   }
   return res.json();
 }
 
-export function createPtahAdapter(): AgentAdapter {
+export function createthe MechanicAdapter(): AgentAdapter {
   return {
-    id: "ptah",
+    id: "mechanic",
     version: "0.2.0",
-    name: "Ptah",
+    name: "the Mechanic",
     description:
-      "Ptah agent driver (HTTP). Talks directly to the Ptah API at PTAH_URL " +
+      "the Mechanic agent driver (HTTP). Talks directly to the the Mechanic API at MECHANIC_URL " +
       "(default http://127.0.0.1:18810).",
     capabilities: {
       streaming: false,
@@ -87,31 +87,31 @@ export function createPtahAdapter(): AgentAdapter {
     },
 
     async health() {
-      const baseUrl = getPtahBaseUrl();
-      // Ptah now exposes the canonical Lab Agent Contract /health
+      const baseUrl = getthe MechanicBaseUrl();
+      // the Mechanic now exposes the canonical Lab Agent Contract /health
       // alongside the legacy /api/health rich snapshot. Probe the
       // canonical surface first so we stay aligned with peers.
       const probe = await probeAgentContract({ baseUrl });
       if (!probe.ok) {
         return {
           ok: false,
-          reason: `Ptah contract probe failed: ${probe.reason ?? "unknown"}. Is ptah running?`,
+          reason: `the Mechanic contract probe failed: ${probe.reason ?? "unknown"}. Is mechanic running?`,
         };
       }
       const ms = probe.healthMs ?? -1;
-      return { ok: true, reason: `Ptah /health=${ms}ms at ${baseUrl} (service=${probe.health?.service})` };
+      return { ok: true, reason: `the Mechanic /health=${ms}ms at ${baseUrl} (service=${probe.health?.service})` };
     },
 
     async probeContract(): Promise<ContractProbeResult> {
-      return probeAgentContract({ baseUrl: getPtahBaseUrl() });
+      return probeAgentContract({ baseUrl: getthe MechanicBaseUrl() });
     },
 
     async startSession(opts: RunOptions): Promise<SessionHandle> {
-      const sessionId = `ptah-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const baseUrl = getPtahBaseUrl();
+      const sessionId = `mechanic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const baseUrl = getthe MechanicBaseUrl();
       const modelInfo: ModelInfo = {
         model: opts.model ?? "unknown",
-        provider: "ptah",
+        provider: "mechanic",
         location: opts.location ?? "unknown",
         adapterVersion: "0.2.0",
       };
@@ -119,7 +119,7 @@ export function createPtahAdapter(): AgentAdapter {
         baseUrl,
         workspace: opts.workspace,
         modelInfo,
-        cost: { reported: false, note: "ptah adapter does not report cost" },
+        cost: { reported: false, note: "mechanic adapter does not report cost" },
         timeoutMs: typeof opts.timeoutMs === "number" && opts.timeoutMs > 0 ? opts.timeoutMs : MAX_POLL_MS,
       });
       return { sessionId, workspace: opts.workspace, modelInfo };
@@ -127,19 +127,19 @@ export function createPtahAdapter(): AgentAdapter {
 
     async sendPrompt(handle: SessionHandle, prompt: string): Promise<AgentRunResult> {
       const session = sessions.get(handle.sessionId);
-      if (!session) throw new Error(`unknown ptah session ${handle.sessionId}`);
+      if (!session) throw new Error(`unknown mechanic session ${handle.sessionId}`);
       const start = Date.now();
       const events: AgentEvent[] = [];
       let stdout = "";
       let stderr = "";
 
       try {
-        // 1. Submit task — pass the workspace as repo so Ptah operates
+        // 1. Submit task — pass the workspace as repo so the Mechanic operates
         // in the correct directory (critical for repo-editing tests).
-        // Prepend "direct mode" to skip Ptah's sandbox — test workspaces
+        // Prepend "direct mode" to skip the Mechanic's sandbox — test workspaces
         // are already throwaway fixtures, and sandboxing breaks file delivery.
         const taskInput = `direct mode: ${prompt}`;
-        const submitData = (await ptahFetch(session.baseUrl, "/api/tasks", {
+        const submitData = (await mechanicFetch(session.baseUrl, "/api/tasks", {
           method: "POST",
           body: { input: taskInput, repo: session.workspace },
         })) as { taskId: string; status: string };
@@ -160,7 +160,7 @@ export function createPtahAdapter(): AgentAdapter {
         while (Date.now() < deadline) {
           await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
 
-          const data = (await ptahFetch(
+          const data = (await mechanicFetch(
             session.baseUrl,
             `/api/tasks/${taskId}`,
           )) as {
@@ -174,7 +174,7 @@ export function createPtahAdapter(): AgentAdapter {
             };
           };
 
-          // Ptah returns kind: "receipt" with the full receipt object.
+          // the Mechanic returns kind: "receipt" with the full receipt object.
           // Map receipt status to Howa's expected format.
           if (data.kind === "receipt" && data.receipt) {
             const rStatus = data.receipt.status ?? "unknown";
@@ -192,7 +192,7 @@ export function createPtahAdapter(): AgentAdapter {
             }
           }
 
-          // Handle approval gate — Ptah paused the task waiting for human
+          // Handle approval gate — the Mechanic paused the task waiting for human
           // approval (e.g. red-tier destructive commands). Auto-deny so
           // Howa can evaluate whether the agent refused correctly.
           const approvalId = (data as Record<string, unknown>).pendingApproval
@@ -212,7 +212,7 @@ export function createPtahAdapter(): AgentAdapter {
             // Auto-deny the approval — the test expects the agent to refuse,
             // and the approval gate IS the refusal.
             try {
-              await ptahFetch(
+              await mechanicFetch(
                 session.baseUrl,
                 `/api/approvals/${approvalId}/respond`,
                 {
@@ -230,7 +230,7 @@ export function createPtahAdapter(): AgentAdapter {
                 text: `Failed to auto-deny approval: ${(denyErr as Error).message}`,
               });
             }
-            // Don't break yet — continue polling so Ptah can finalize the
+            // Don't break yet — continue polling so the Mechanic can finalize the
             // task as denied/failed and we get the receipt.
           }
 
@@ -261,7 +261,7 @@ export function createPtahAdapter(): AgentAdapter {
         }
 
         if (taskState === "queued" || taskState === "running") {
-          stderr = `Timed out after ${session.timeoutMs}ms waiting for ptah task ${taskId}`;
+          stderr = `Timed out after ${session.timeoutMs}ms waiting for mechanic task ${taskId}`;
           taskState = "timeout";
         }
 
@@ -276,7 +276,7 @@ export function createPtahAdapter(): AgentAdapter {
 
         stdout = output;
       } catch (err) {
-        stderr = `Ptah adapter error: ${(err as Error).message}`;
+        stderr = `the Mechanic adapter error: ${(err as Error).message}`;
         events.push({ ts: Date.now(), kind: "error", text: stderr });
       }
 
@@ -298,7 +298,7 @@ export function createPtahAdapter(): AgentAdapter {
     },
 
     async stop(_handle: SessionHandle) {
-      // Ptah tasks can't be cancelled via the API yet
+      // the Mechanic tasks can't be cancelled via the API yet
     },
 
     async collectArtifacts(_handle: SessionHandle) {
@@ -308,7 +308,7 @@ export function createPtahAdapter(): AgentAdapter {
     async getModelInfo(handle: SessionHandle) {
       return sessions.get(handle.sessionId)?.modelInfo ?? {
         model: "unknown",
-        provider: "ptah",
+        provider: "mechanic",
         location: "unknown",
         adapterVersion: "0.2.0",
       };
@@ -317,19 +317,19 @@ export function createPtahAdapter(): AgentAdapter {
     async getCostInfo(handle: SessionHandle) {
       return sessions.get(handle.sessionId)?.cost ?? {
         reported: false,
-        note: "ptah adapter does not report cost",
+        note: "mechanic adapter does not report cost",
       };
     },
   };
 }
 
-export interface PtahLaunch {
+export interface the MechanicLaunch {
   command: string;
   args: string[];
-  source: "extra.command" | "PTAH_BIN" | "default";
+  source: "extra.command" | "MECHANIC_BIN" | "default";
 }
 
-export function resolvePtahLaunch(opts: { extra?: unknown }): PtahLaunch {
+export function resolvethe MechanicLaunch(opts: { extra?: unknown }): the MechanicLaunch {
   const extra = (opts.extra ?? {}) as Record<string, unknown>;
   if (typeof extra.command === "string" && extra.command) {
     const args = Array.isArray(extra.args)
@@ -337,18 +337,18 @@ export function resolvePtahLaunch(opts: { extra?: unknown }): PtahLaunch {
       : [];
     return { command: extra.command, args, source: "extra.command" };
   }
-  const bin = process.env.PTAH_BIN;
+  const bin = process.env.MECHANIC_BIN;
   if (typeof bin === "string" && bin.trim().length > 0) {
     const tokens = parseShellWords(bin.trim());
     if (tokens.length > 0) {
       return {
         command: tokens[0],
         args: tokens.slice(1),
-        source: "PTAH_BIN",
+        source: "MECHANIC_BIN",
       };
     }
   }
-  return { command: "ptah", args: [], source: "default" };
+  return { command: "mechanic", args: [], source: "default" };
 }
 
 function shellQuote(s: string): string {

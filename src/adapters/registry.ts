@@ -4,15 +4,15 @@ import { createBetterClawAdapter } from "./betterclaw.js";
 import { createOpenClawAdapter } from "./openclaw.js";
 import { createHermesAdapter } from "./hermes.js";
 import { createGenericCliAdapter } from "./generic-cli.js";
-import { createLunaAdapter } from "./luna-http.js";
+import { createthe ArtistAdapter } from "./artist-http.js";
 import { createMockAdapter } from "./mock.js";
-import { createPtahAdapter } from "./ptah.js";
+import { createthe MechanicAdapter } from "./mechanic.js";
 import {
   createPehAdapter,
   createPehV2Adapter,
 } from "./peh-http.js";
 
-const LAB_ADAPTERS = new Set(["ptah", "peh-v2"]);
+const LAB_ADAPTERS = new Set(["mechanic", "peh-v2"]);
 
 const factories: Record<string, () => AgentAdapter> = {
   mock: createMockAdapter,
@@ -20,8 +20,8 @@ const factories: Record<string, () => AgentAdapter> = {
   betterclaw: createBetterClawAdapter,
   openclaw: createOpenClawAdapter,
   hermes: createHermesAdapter,
-  luna: createLunaAdapter,
-  ptah: createPtahAdapter,
+  artist: createthe ArtistAdapter,
+  mechanic: createthe MechanicAdapter,
   peh: createPehAdapter,
   "peh-v2": createPehV2Adapter,
   "generic-cli": createGenericCliAdapter,

@@ -73,8 +73,8 @@ packs (assertions) → scoring → receipts/storage → UI/CLI surfaces**.
 
 - **`adapters/`** — the `AgentAdapter` contract (`types.ts`, `registry.ts`) and
   one impl per agent: `mock` (deterministic, bundled), `aedis`, `betterclaw`,
-  `openclaw`, `hermes`, `generic-cli` (CLI-wrapping), `peh-http`, `luna-http`
-  (HTTP), `ptah` (lab-only). `truth-resolver.ts` / `contract-probe.ts` resolve
+  `openclaw`, `hermes`, `generic-cli` (CLI-wrapping), `peh-http`, `artist-http`
+  (HTTP), `mechanic` (lab-only). `truth-resolver.ts` / `contract-probe.ts` resolve
   reported model/cost truth and health-check adapters.
 - **`runner/`** — trial orchestration (`trial-runner.ts`), fixture workspace
   setup/cleanup (`fixture-manager.ts`), artifact capture (`artifact-collector.ts`),

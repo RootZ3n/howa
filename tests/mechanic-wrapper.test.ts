@@ -3,14 +3,14 @@ import { spawn } from "node:child_process";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 
-// scripts/ptah-wrapper.sh — exercised end-to-end against a fake Ptah HTTP
+// scripts/mechanic-wrapper.sh — exercised end-to-end against a fake the Mechanic HTTP
 // server so we measure the wrapper's submit→poll→print contract, not just
-// its env parsing. The fake mirrors the same request/response shape Ptah's
+// its env parsing. The fake mirrors the same request/response shape the Mechanic's
 // own /api/tasks endpoint uses (input field, kind=queued|live|receipt
 // transitions, receipt.result.summary).
 
 const wrapperPath = fileURLToPath(
-  new URL("../scripts/ptah-wrapper.sh", import.meta.url),
+  new URL("../scripts/mechanic-wrapper.sh", import.meta.url),
 );
 
 interface FakeServer {
@@ -18,7 +18,7 @@ interface FakeServer {
   close: () => Promise<void>;
 }
 
-interface FakePtahOptions {
+interface FakeMechanicOptions {
   /** Number of poll calls before kind flips queued → live → receipt. */
   liveTurns?: number;
   /** Don't ever flip to receipt — used to drive wrapper timeout. */
@@ -38,15 +38,15 @@ interface FakeState {
   lastInput: string | null;
 }
 
-async function startFakePtah(
-  opts: FakePtahOptions = {},
+async function startFakeMechanic(
+  opts: FakeMechanicOptions = {},
 ): Promise<FakeServer & { state: FakeState }> {
   const taskId = opts.taskId ?? `tk-${Math.random().toString(36).slice(2, 10)}`;
   const liveTurns = opts.liveTurns ?? 1;
   const neverComplete = opts.neverComplete ?? false;
   const receiptStatus = opts.receiptStatus ?? "success";
   const finalSummary =
-    opts.finalSummary ?? "ptah finished — final answer 42 (smoke).";
+    opts.finalSummary ?? "mechanic finished — final answer 42 (smoke).";
 
   const state: FakeState = {
     taskId,
@@ -155,7 +155,7 @@ interface WrapperResult {
 }
 
 // Async wrapper runner — must be async so the Node event loop is free to
-// service the fake Ptah HTTP server while the subprocess polls it.
+// service the fake the Mechanic HTTP server while the subprocess polls it.
 // `spawnSync` blocks the loop and the fake server never accepts the
 // connection, which is why we don't use it.
 function runWrapper(
@@ -184,15 +184,15 @@ function runWrapper(
   });
 }
 
-describe("ptah-wrapper.sh — submit→poll→print", () => {
-  let fake: Awaited<ReturnType<typeof startFakePtah>> | null = null;
+describe("mechanic-wrapper.sh — submit→poll→print", () => {
+  let fake: Awaited<ReturnType<typeof startFakeMechanic>> | null = null;
 
   beforeAll(async () => {
-    fake = await startFakePtah({
+    fake = await startFakeMechanic({
       liveTurns: 1,
       receiptStatus: "success",
       finalSummary:
-        "Ptah finished — wrote /tmp/answer with result 7 (smoke test).",
+        "the Mechanic finished — wrote /tmp/answer with result 7 (smoke test).",
     });
   });
 
@@ -201,47 +201,47 @@ describe("ptah-wrapper.sh — submit→poll→print", () => {
   });
 
   it("no-args invocation prints `Commands: submit, status, health`", async () => {
-    const r = await runWrapper([], { PTAH_URL: fake!.url });
+    const r = await runWrapper([], { MECHANIC_URL: fake!.url });
     expect(r.status).toBe(0);
     expect(r.stdout).toMatch(/Commands:\s*submit,\s*status,\s*health/);
   });
 
-  it("`ptah health` returns status:ok on the first line", async () => {
-    const r = await runWrapper(["health"], { PTAH_URL: fake!.url });
+  it("`mechanic health` returns status:ok on the first line", async () => {
+    const r = await runWrapper(["health"], { MECHANIC_URL: fake!.url });
     expect(r.status).toBe(0);
     const firstLine = r.stdout.split("\n")[0];
     expect(firstLine).toBe("status: ok");
   });
 
-  it("`ptah submit <prompt>` POSTs `{input}` and prints the receipt summary", async () => {
+  it("`mechanic submit <prompt>` POSTs `{input}` and prints the receipt summary", async () => {
     const prompt = "What is 7? Tricky chars: a&b $(echo 1) | grep \"x\"";
     const r = await runWrapper(["submit", prompt], {
-      PTAH_URL: fake!.url,
-      PTAH_WRAPPER_POLL_INTERVAL: "0.05",
-      PTAH_WRAPPER_TIMEOUT_SECONDS: "10",
+      MECHANIC_URL: fake!.url,
+      MECHANIC_WRAPPER_POLL_INTERVAL: "0.05",
+      MECHANIC_WRAPPER_TIMEOUT_SECONDS: "10",
     });
 
     expect(r.status).toBe(0);
     // The wrapper passed the prompt as data, never as shell-evaled text.
     expect(fake!.state.lastInput).toBe(prompt);
     // Final answer is surfaced for Howa's finalAnswer extractor.
-    expect(r.stdout).toMatch(/Ptah finished — wrote \/tmp\/answer with result 7/);
+    expect(r.stdout).toMatch(/the Mechanic finished — wrote \/tmp\/answer with result 7/);
     expect(r.stdout).toMatch(/receipt status: success/);
     // Step summary is included for stamina-style multi-step evidence.
     expect(r.stdout).toMatch(/Plan task/);
   });
 
   it("propagates failed-receipt evidence (failure class, reasons) on stdout, exit 0", async () => {
-    const failed = await startFakePtah({
+    const failed = await startFakeMechanic({
       liveTurns: 0,
       receiptStatus: "failed",
       finalSummary: "Could not verify the change.",
     });
     try {
       const r = await runWrapper(["submit", "do the failing thing"], {
-        PTAH_URL: failed.url,
-        PTAH_WRAPPER_POLL_INTERVAL: "0.05",
-        PTAH_WRAPPER_TIMEOUT_SECONDS: "10",
+        MECHANIC_URL: failed.url,
+        MECHANIC_WRAPPER_POLL_INTERVAL: "0.05",
+        MECHANIC_WRAPPER_TIMEOUT_SECONDS: "10",
       });
       expect(r.status).toBe(0);
       expect(r.stdout).toMatch(/receipt status: failed/);
@@ -253,12 +253,12 @@ describe("ptah-wrapper.sh — submit→poll→print", () => {
   });
 
   it("times out with exit 124 and a useful message when no receipt arrives", async () => {
-    const stuck = await startFakePtah({ neverComplete: true });
+    const stuck = await startFakeMechanic({ neverComplete: true });
     try {
       const r = await runWrapper(["submit", "stuck task"], {
-        PTAH_URL: stuck.url,
-        PTAH_WRAPPER_POLL_INTERVAL: "0.05",
-        PTAH_WRAPPER_TIMEOUT_SECONDS: "1",
+        MECHANIC_URL: stuck.url,
+        MECHANIC_WRAPPER_POLL_INTERVAL: "0.05",
+        MECHANIC_WRAPPER_TIMEOUT_SECONDS: "1",
       });
       expect(r.status).toBe(124);
       // Honest disclosure surfaces on BOTH streams so Howa's
@@ -292,9 +292,9 @@ describe("ptah-wrapper.sh — submit→poll→print", () => {
     const url = `http://127.0.0.1:${addr.port}`;
     try {
       const r = await runWrapper(["submit", "anything"], {
-        PTAH_URL: url,
-        PTAH_WRAPPER_POLL_INTERVAL: "0.05",
-        PTAH_WRAPPER_TIMEOUT_SECONDS: "5",
+        MECHANIC_URL: url,
+        MECHANIC_WRAPPER_POLL_INTERVAL: "0.05",
+        MECHANIC_WRAPPER_TIMEOUT_SECONDS: "5",
       });
       expect(r.status).not.toBe(0);
       expect(r.stderr).toContain("POST");

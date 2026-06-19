@@ -9,7 +9,7 @@ import { getPack } from "@howa/packs/registry.js";
 async function tmpdir(): Promise<string> {
   const d = path.join(
     os.tmpdir(),
-    `howa-ptah-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-mechanic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(d, { recursive: true });
   return d;
@@ -19,11 +19,11 @@ async function tmpdir(): Promise<string> {
 //  Adapter shape + truth contract
 // ────────────────────────────────────────────────────────────────────
 
-describe("Ptah adapter — shape + truth contract", () => {
-  it("registers under id 'ptah' with the documented truth contract", () => {
-    const a = getAdapter("ptah");
-    expect(a.id).toBe("ptah");
-    expect(a.name).toBe("Ptah");
+describe("the Mechanic adapter — shape + truth contract", () => {
+  it("registers under id 'mechanic' with the documented truth contract", () => {
+    const a = getAdapter("mechanic");
+    expect(a.id).toBe("mechanic");
+    expect(a.name).toBe("the Mechanic");
     expect(a.version).toBeDefined();
     expect(a.truth).toEqual({
       modelIdentity: "unknown",
@@ -34,7 +34,7 @@ describe("Ptah adapter — shape + truth contract", () => {
   });
 
   it("declares HTTP-based protocol", () => {
-    const a = getAdapter("ptah");
+    const a = getAdapter("mechanic");
     // New HTTP adapter may or may not have protocol — but it should work
     expect(a.capabilities.toolUse).toBe(true);
     expect(a.capabilities.fileEditing).toBe(true);
@@ -45,30 +45,30 @@ describe("Ptah adapter — shape + truth contract", () => {
 //  Health probe — HTTP-based
 // ────────────────────────────────────────────────────────────────────
 
-describe("Ptah adapter — health()", () => {
+describe("the Mechanic adapter — health()", () => {
   it("unreachable server returns ok:false", async () => {
-    const old = process.env.PTAH_URL;
-    process.env.PTAH_URL = "http://127.0.0.1:19999";
-    const r = await getAdapter("ptah").health();
+    const old = process.env.MECHANIC_URL;
+    process.env.MECHANIC_URL = "http://127.0.0.1:19999";
+    const r = await getAdapter("mechanic").health();
     expect(r.ok).toBe(false);
-    expect(r.reason).toMatch(/Ptah contract probe failed/i);
-    process.env.PTAH_URL = old;
+    expect(r.reason).toMatch(/the Mechanic contract probe failed/i);
+    process.env.MECHANIC_URL = old;
   });
 
   it("healthy server returns ok:true", async () => {
-    // Only run if ptah is actually running
-    const old = process.env.PTAH_URL;
-    process.env.PTAH_URL = "http://127.0.0.1:18810";
+    // Only run if mechanic is actually running
+    const old = process.env.MECHANIC_URL;
+    process.env.MECHANIC_URL = "http://127.0.0.1:18810";
     try {
-      const r = await getAdapter("ptah").health();
+      const r = await getAdapter("mechanic").health();
       if (r.ok) {
         expect(r.reason).toMatch(/healthy/);
       }
-      // If ptah isn't running, that's fine — skip
+      // If mechanic isn't running, that's fine — skip
     } catch {
-      // Connection refused — ptah not running, skip
+      // Connection refused — mechanic not running, skip
     }
-    process.env.PTAH_URL = old;
+    process.env.MECHANIC_URL = old;
   });
 });
 
@@ -76,18 +76,18 @@ describe("Ptah adapter — health()", () => {
 //  Runner preflight — unreachable server surfaces as adapter_setup_failed
 // ────────────────────────────────────────────────────────────────────
 
-describe("Runner preflight: Ptah server unreachable surfaces as adapter_setup_failed", () => {
+describe("Runner preflight: the Mechanic server unreachable surfaces as adapter_setup_failed", () => {
   it("does NOT misclassify as agent behavior", async () => {
-    const old = process.env.PTAH_URL;
-    process.env.PTAH_URL = "http://127.0.0.1:19999";
+    const old = process.env.MECHANIC_URL;
+    process.env.MECHANIC_URL = "http://127.0.0.1:19999";
     const stateRoot = await tmpdir();
 
     const summary = await runTrial({
-      adapter: getAdapter("ptah"),
+      adapter: getAdapter("mechanic"),
       packs: [getPack("truthfulness")],
       stateRoot,
     });
-    process.env.PTAH_URL = old;
+    process.env.MECHANIC_URL = old;
 
     expect(summary.verdict).toBe("error");
     expect(summary.testCount).toBe(1);

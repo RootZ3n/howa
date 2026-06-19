@@ -172,7 +172,7 @@ describe("adapter truth contract", () => {
 
   it("CLI-wrapping adapters honestly admit unknown identity/cost", async () => {
     const { getAdapter } = await import("@howa/adapters/registry.js");
-    for (const id of ["aedis", "ptah", "openclaw", "hermes", "generic-cli"]) {
+    for (const id of ["aedis", "mechanic", "openclaw", "hermes", "generic-cli"]) {
       const a = getAdapter(id);
       expect(a.truth.modelIdentity).toBe("unknown");
       expect(a.truth.costTruth).toBe("unknown");

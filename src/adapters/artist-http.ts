@@ -10,7 +10,7 @@ import type {
 import type { AgentAdapter } from "./types.js";
 import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
 
-interface LunaSession {
+interface the ArtistSession {
   endpoint: string;
   workspace: string;
   modelInfo: ModelInfo;
@@ -21,16 +21,16 @@ interface LunaSession {
 
 const VERSION = "0.4.0";
 const DEFAULT_ENDPOINT = "http://127.0.0.1:18792";
-const sessions = new Map<string, LunaSession>();
+const sessions = new Map<string, the ArtistSession>();
 
-export function createLunaAdapter(): AgentAdapter {
+export function createthe ArtistAdapter(): AgentAdapter {
   return {
-    id: "luna",
+    id: "artist",
     version: VERSION,
-    name: "Luna",
+    name: "the Artist",
     description:
-      "Luna standalone creative-agent adapter. Sends prompts to the local Luna `/colloquium/chat` route.",
-    // Static capabilities map. Luna also publishes a runtime
+      "the Artist standalone creative-agent adapter. Sends prompts to the local the Artist `/colloquium/chat` route.",
+    // Static capabilities map. the Artist also publishes a runtime
     // capabilityMatrix at GET /capabilities; the dynamic
     // capabilitiesProbe() method below pulls that and lets the
     // Howa runner classify capabilities by actual implemented
@@ -38,15 +38,15 @@ export function createLunaAdapter(): AgentAdapter {
     capabilities: {
       streaming: true,
       toolUse: true,
-      fileEditing: true,        // approval-gated, allowlisted; see luna.file.* tools
-      shellExecution: true,     // profile-allowlisted; see luna.shell.* tools
+      fileEditing: true,        // approval-gated, allowlisted; see artist.file.* tools
+      shellExecution: true,     // profile-allowlisted; see artist.shell.* tools
       modelSelection: true,
       reportsCost: true,
       reportsTokens: true,
     },
     truth: {
       modelIdentity: "declared",
-      // Luna only reports cost when the underlying provider returns it
+      // the Artist only reports cost when the underlying provider returns it
       // (OpenRouter does, Ollama does not). When usage.costUsd is
       // present we mark "reported"; when only tokens come back we
       // remain "unknown" because Howa interprets reported strictly
@@ -56,13 +56,13 @@ export function createLunaAdapter(): AgentAdapter {
       toolSupport: true,
     },
     protocol: {
-      name: "luna-http",
-      submitCommand: "POST $LUNA_URL/colloquium/chat",
+      name: "artist-http",
+      submitCommand: "POST $ARTIST_URL/colloquium/chat",
       notes: [
-        `LUNA_URL overrides the base URL; default is ${DEFAULT_ENDPOINT}.`,
-        "Health probe verifies the local Luna API before any test runs.",
-        "Prompts are sent as JSON to Luna Colloquium; Luna does not get shell or repo-write access.",
-        "Luna resolves provider/model internally through Nous and reports that identity in the response.",
+        `ARTIST_URL overrides the base URL; default is ${DEFAULT_ENDPOINT}.`,
+        "Health probe verifies the local the Artist API before any test runs.",
+        "Prompts are sent as JSON to the Artist Colloquium; the Artist does not get shell or repo-write access.",
+        "the Artist resolves provider/model internally through Nous and reports that identity in the response.",
       ],
     },
 
@@ -73,12 +73,12 @@ export function createLunaAdapter(): AgentAdapter {
         return {
           ok: false,
           reason:
-            `Luna contract probe failed: ${probe.reason ?? "unknown"}. ` +
-            `Start Luna API or set LUNA_URL.`,
+            `the Artist contract probe failed: ${probe.reason ?? "unknown"}. ` +
+            `Start the Artist API or set ARTIST_URL.`,
         };
       }
       const ms = probe.healthMs ?? -1;
-      return { ok: true, reason: `Luna /health=${ms}ms at ${endpoint} (service=${probe.health?.service})` };
+      return { ok: true, reason: `the Artist /health=${ms}ms at ${endpoint} (service=${probe.health?.service})` };
     },
 
     async probeContract(): Promise<ContractProbeResult> {
@@ -88,12 +88,12 @@ export function createLunaAdapter(): AgentAdapter {
     async startSession(opts: RunOptions): Promise<SessionHandle> {
       const extra = (opts.extra ?? {}) as Record<string, unknown>;
       const endpoint = normalizeEndpoint(
-        typeof extra.endpoint === "string" ? extra.endpoint : process.env.LUNA_URL ?? DEFAULT_ENDPOINT,
+        typeof extra.endpoint === "string" ? extra.endpoint : process.env.ARTIST_URL ?? DEFAULT_ENDPOINT,
       );
-      const sessionId = `luna-${nanoid(10)}`;
+      const sessionId = `artist-${nanoid(10)}`;
       const modelInfo: ModelInfo = {
         model: "unknown",
-        provider: "luna",
+        provider: "artist",
         location: opts.location ?? "local",
         adapterVersion: VERSION,
       };
@@ -101,7 +101,7 @@ export function createLunaAdapter(): AgentAdapter {
         endpoint,
         workspace: opts.workspace,
         modelInfo,
-        cost: { reported: false, note: "no Luna response yet for this session" },
+        cost: { reported: false, note: "no the Artist response yet for this session" },
         timeoutMs:
           typeof opts.timeoutMs === "number" && opts.timeoutMs > 0 ? opts.timeoutMs : 60_000,
         events: [],
@@ -113,10 +113,10 @@ export function createLunaAdapter(): AgentAdapter {
       const session = sessions.get(handle.sessionId);
       if (!session) throw new Error(`unknown session ${handle.sessionId}`);
 
-      // Honest adapter path: Luna's chat brain does not auto-dispatch
+      // Honest adapter path: the Artist's chat brain does not auto-dispatch
       // tool calls. If the prompt is a structured "edit a file" or
       // "create a file" instruction targeting the trial workspace, we
-      // detect it here and dispatch the appropriate Luna file-editor
+      // detect it here and dispatch the appropriate the Artist file-editor
       // tool calls. The adapter never invents file edits — it only
       // executes when the prompt matches a known parseable shape AND a
       // workspace is set on the session. Anything else falls through
@@ -153,7 +153,7 @@ export function createLunaAdapter(): AgentAdapter {
           events.push({ ts: Date.now(), kind: "error", text: stderr.slice(0, 500) });
         } else {
           const data = JSON.parse(text) as Record<string, unknown>;
-          const parsed = parseLunaResponse(data);
+          const parsed = parsethe ArtistResponse(data);
           finalAnswer = parsed.finalAnswer;
           stdout = JSON.stringify(data, null, 2);
           session.modelInfo = parsed.modelInfo;
@@ -162,14 +162,14 @@ export function createLunaAdapter(): AgentAdapter {
             events.push({
               ts: Date.now(),
               kind: "tool_result",
-              text: `Luna receipt ${parsed.receiptId}`,
+              text: `the Artist receipt ${parsed.receiptId}`,
               data: { receiptId: parsed.receiptId },
             });
           }
           events.push({
             ts: Date.now(),
             kind: "final",
-            text: finalAnswer ? finalAnswer.slice(0, 500) : "(empty Luna response)",
+            text: finalAnswer ? finalAnswer.slice(0, 500) : "(empty the Artist response)",
             data: {
               provider: session.modelInfo.provider,
               model: session.modelInfo.model,
@@ -177,12 +177,12 @@ export function createLunaAdapter(): AgentAdapter {
           });
           if (!finalAnswer) {
             exitCode = 1;
-            stderr = "Luna response did not include message.content.";
+            stderr = "the Artist response did not include message.content.";
           }
         }
       } catch (err) {
         exitCode = 1;
-        stderr = `Luna request failed: ${(err as Error).message}`;
+        stderr = `the Artist request failed: ${(err as Error).message}`;
         events.push({ ts: Date.now(), kind: "error", text: stderr });
       }
 
@@ -223,15 +223,15 @@ export function createLunaAdapter(): AgentAdapter {
 }
 
 function endpointFromEnv(): string {
-  return normalizeEndpoint(process.env.LUNA_URL ?? DEFAULT_ENDPOINT);
+  return normalizeEndpoint(process.env.ARTIST_URL ?? DEFAULT_ENDPOINT);
 }
 
 /**
- * Probe Luna's runtime capabilityMatrix. Not on the AgentAdapter
- * interface, but exported so the CLI / runner can ask Luna directly
+ * Probe the Artist's runtime capabilityMatrix. Not on the AgentAdapter
+ * interface, but exported so the CLI / runner can ask the Artist directly
  * for the truth instead of trusting the static `capabilities` field.
  */
-export async function probeLunaCapabilities(): Promise<{ ok: boolean; matrix?: unknown; error?: string }> {
+export async function probethe ArtistCapabilities(): Promise<{ ok: boolean; matrix?: unknown; error?: string }> {
   const url = `${endpointFromEnv()}/capabilities`;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
@@ -247,7 +247,7 @@ function normalizeEndpoint(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-function parseLunaResponse(data: Record<string, unknown>): {
+function parsethe ArtistResponse(data: Record<string, unknown>): {
   finalAnswer?: string;
   modelInfo: ModelInfo;
   receiptId?: string;
@@ -255,7 +255,7 @@ function parseLunaResponse(data: Record<string, unknown>): {
 } {
   const message = data.message as { content?: unknown } | undefined;
   const receipt = data.receipt as { id?: unknown } | undefined;
-  const provider = typeof data.provider === "string" ? data.provider : "luna";
+  const provider = typeof data.provider === "string" ? data.provider : "artist";
   const model = typeof data.model === "string" ? data.model : "unknown";
   const providerMode = typeof data.providerMode === "string" ? (data.providerMode as string) : undefined;
   const usage = (data as { usage?: Record<string, unknown> }).usage;
@@ -283,10 +283,10 @@ function parseLunaResponse(data: Record<string, unknown>): {
           totalTokens,
           estimatedCostUsd: costUsd,
           note: costUsd !== undefined
-            ? "Luna reported provider token counts and USD cost"
-            : "Luna reported provider token counts (no USD); local model — zero cost",
+            ? "the Artist reported provider token counts and USD cost"
+            : "the Artist reported provider token counts (no USD); local model — zero cost",
         }
-      : { reported: false, note: providerMode === "stub" ? "Luna stub path reports no usage" : "Luna provider did not return usage" };
+      : { reported: false, note: providerMode === "stub" ? "the Artist stub path reports no usage" : "the Artist provider did not return usage" };
 
   return {
     finalAnswer: typeof message?.content === "string" ? message.content : undefined,
@@ -303,12 +303,12 @@ function parseLunaResponse(data: Record<string, unknown>): {
 
 // ─── Repo-intent dispatch ────────────────────────────────────────────
 //
-// Luna's chat brain does not auto-call tools; the cockpit user issues
+// the Artist's chat brain does not auto-call tools; the cockpit user issues
 // /tool syntax. Howa's repo-editing pack expects a free-form
-// prompt to result in real file changes. To prove Luna's file editor
+// prompt to result in real file changes. To prove the Artist's file editor
 // end-to-end against the pack, the adapter parses two structured
-// prompt shapes and dispatches Luna's luna.file.propose_edit +
-// luna.file.apply_edit.confirm tools against the per-trial workspace.
+// prompt shapes and dispatches the Artist's artist.file.propose_edit +
+// artist.file.apply_edit.confirm tools against the per-trial workspace.
 //
 // Parsed shapes only:
 //   "Edit <relative-path> with content: <body>"   (optional trailing \n)
@@ -366,7 +366,7 @@ function parseRepoIntent(prompt: string): RepoIntent | null {
 }
 
 async function runRepoIntent(
-  session: LunaSession,
+  session: the ArtistSession,
   intent: RepoIntent,
   prompt: string,
   sessionId: string,
@@ -407,8 +407,8 @@ async function runRepoIntent(
   const stdoutLines: string[] = [];
 
   if (intent.kind === "edit" || intent.kind === "create") {
-    events.push({ ts: Date.now(), kind: "tool_call", text: `luna.file.propose_edit ${intent.relativePath}` });
-    const propose = await callTool("luna.file.propose_edit", {
+    events.push({ ts: Date.now(), kind: "tool_call", text: `artist.file.propose_edit ${intent.relativePath}` });
+    const propose = await callTool("artist.file.propose_edit", {
       repo: session.workspace,
       path: intent.relativePath,
       newContent: intent.newContent,
@@ -422,14 +422,14 @@ async function runRepoIntent(
     stdoutLines.push(`propose: ${JSON.stringify(propose)}`);
     if (!propose.ok || !propose.output) {
       exitCode = 1;
-      finalAnswer = `I attempted to ${intent.kind} ${intent.relativePath} but Luna refused at propose: ${propose.error ?? "(no detail)"}`;
+      finalAnswer = `I attempted to ${intent.kind} ${intent.relativePath} but the Artist refused at propose: ${propose.error ?? "(no detail)"}`;
       events.push({ ts: Date.now(), kind: "error", text: finalAnswer });
     } else {
       const proposalId = propose.output.proposalId as string | undefined;
       const currentSha = (propose.output.currentSha as string | null | undefined) ?? null;
       events.push({ ts: Date.now(), kind: "tool_result", text: `proposal ${proposalId}`, data: { receiptId: propose.receiptId } });
-      events.push({ ts: Date.now(), kind: "tool_call", text: `luna.file.apply_edit.confirm ${proposalId}` });
-      const apply = await callTool("luna.file.apply_edit.confirm", { proposalId, currentSha });
+      events.push({ ts: Date.now(), kind: "tool_call", text: `artist.file.apply_edit.confirm ${proposalId}` });
+      const apply = await callTool("artist.file.apply_edit.confirm", { proposalId, currentSha });
       stdoutLines.push(`apply: ${JSON.stringify(apply)}`);
       if (!apply.ok || !apply.output) {
         exitCode = 1;
@@ -459,15 +459,15 @@ async function runRepoIntent(
   // Stamp model/cost as "tool-driven" so Howa scoring sees this
   // ran as a tool dispatch path, not a model chat call.
   const modelInfo: ModelInfo = {
-    provider: "luna-tools",
-    model: "luna.file.propose_edit+apply",
+    provider: "artist-tools",
+    model: "artist.file.propose_edit+apply",
     location: "local",
     adapterVersion: VERSION,
   };
   session.modelInfo = modelInfo;
   session.cost = {
     reported: false,
-    note: "Repo-intent dispatched via Luna tool runtime (no provider call)",
+    note: "Repo-intent dispatched via the Artist tool runtime (no provider call)",
   };
   return {
     events,

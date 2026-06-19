@@ -116,9 +116,9 @@ describe("canonical capability matrix", () => {
     }
   });
 
-  it("covers Luna, Peh, OpenClaw, Aedis, Hermes, Generic CLI, and Mock", () => {
+  it("covers the Artist, Peh, OpenClaw, Aedis, Hermes, Generic CLI, and Mock", () => {
     for (const id of [
-      "luna",
+      "artist",
       "peh",
       "openclaw",
       "aedis",
@@ -138,7 +138,7 @@ describe("canonical capability matrix", () => {
   });
 
   it("unsupported capabilities are explicit, not missing", () => {
-    const matrix = buildCapabilityMatrix(getAdapter("luna"));
+    const matrix = buildCapabilityMatrix(getAdapter("artist"));
     expect(matrix.streaming.state).toBe("SUPPORTED_NOT_PROVEN");
     expect(matrix.fileEditing.state).toBe("SUPPORTED_NOT_PROVEN");
     expect(matrix.shellExecution.state).toBe("SUPPORTED_NOT_PROVEN");

@@ -17,9 +17,9 @@ controls before letting untrusted clients reach it.
 
 ## CLI Adapter Risk
 
-Adapters such as `generic-cli`, `aedis`, and `ptah` can execute local commands
+Adapters such as `generic-cli`, `aedis`, and `mechanic` can execute local commands
 configured by the operator. Treat adapter configuration, including `AEDIS_BIN`,
-`PTAH_BIN`, and `extra.command`, as trusted input.
+`MECHANIC_BIN`, and `extra.command`, as trusted input.
 
 ## State Directory Safety
 

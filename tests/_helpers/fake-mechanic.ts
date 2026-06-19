@@ -3,12 +3,12 @@ import os from "node:os";
 import path from "node:path";
 
 /**
- * Write a fake Ptah CLI script to a fresh temp dir and return:
- *   { dir, scriptPath, transcriptPath, ptahBin }
+ * Write a fake the Mechanic CLI script to a fresh temp dir and return:
+ *   { dir, scriptPath, transcriptPath, mechanicBin }
  *
- * Ptah currently ships as a service, not a CLI. This fixture lets tests
+ * the Mechanic currently ships as a service, not a CLI. This fixture lets tests
  * exercise the adapter's submit-protocol wiring against a real subprocess
- * that mimics the SHAPE we expect a future Ptah CLI (or wrapper script)
+ * that mimics the SHAPE we expect a future the Mechanic CLI (or wrapper script)
  * to expose:
  *
  *   - No-args invocation prints a `Commands: submit, status, health, ...`
@@ -19,7 +19,7 @@ import path from "node:path";
  *   - `health` prints `status: healthy` (or simulates a server-down failure
  *     when `serverDown` is set).
  */
-export async function writeFakePtah(opts?: {
+export async function writeFakethe Mechanic(opts?: {
   /** Omit `submit` from the commands list to test the missing-verb path. */
   withoutSubmit?: boolean;
   /** Make `health` exit non-zero with a server-down style message. */
@@ -28,14 +28,14 @@ export async function writeFakePtah(opts?: {
   dir: string;
   scriptPath: string;
   transcriptPath: string;
-  ptahBin: string;
+  mechanicBin: string;
 }> {
   const dir = path.join(
     os.tmpdir(),
-    `howa-fake-ptah-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    `howa-fake-mechanic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
   await fs.mkdir(dir, { recursive: true });
-  const scriptPath = path.join(dir, "fake-ptah.js");
+  const scriptPath = path.join(dir, "fake-mechanic.js");
   const transcriptPath = path.join(dir, "transcript.log");
 
   const commands = opts?.withoutSubmit
@@ -54,7 +54,7 @@ const args = process.argv.slice(2);
 try { fs.appendFileSync(${JSON.stringify(transcriptPath)}, JSON.stringify(args) + "\\n"); } catch {}
 
 if (args.length === 0) {
-  console.log("Usage: ptah <command> [args]");
+  console.log("Usage: mechanic <command> [args]");
   console.log("Commands: ${commands}");
   process.exit(0);
 }
@@ -67,7 +67,7 @@ if (verb === "submit") {
     console.log("submit <prompt>");
     process.exit(0);
   }
-  console.log("ptah-fake-marker: " + rest.join(" | "));
+  console.log("mechanic-fake-marker: " + rest.join(" | "));
   process.exit(0);
 }
 
@@ -90,6 +90,6 @@ process.exit(1);
     dir,
     scriptPath,
     transcriptPath,
-    ptahBin: `node ${scriptPath}`,
+    mechanicBin: `node ${scriptPath}`,
   };
 }

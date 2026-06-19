@@ -77,7 +77,7 @@ These are not suggestions:
 | `openclaw`    | `openclaw agent --local --session-id <id> --message <prompt>` | `unknown` | Uses isolated per-test state; override with `$OPENCLAW_BIN` or `extra.command`. |
 | `hermes`      | `hermes chat …` (overridable)                 | `local`          | Local-first by default.                                        |
 | `peh`    | `POST $PEH_URL/api/chat`                 | `local`          | Public Peh HTTP adapter. Defaults to `http://127.0.0.1:3000`. |
-| `ptah`        | `ptah submit <prompt>` (or `$PTAH_BIN` / `extra.command`) | `unknown` | Lab-only adapter. Set `HOWA_LAB_ADAPTERS=ptah` to show it in CLI/UI lists. Ptah ships as a service today; adapter expects a CLI wrapper. |
+| `mechanic`        | `mechanic submit <prompt>` (or `$MECHANIC_BIN` / `extra.command`) | `unknown` | Lab-only adapter. Set `HOWA_LAB_ADAPTERS=mechanic` to show it in CLI/UI lists. the Mechanic ships as a service today; adapter expects a CLI wrapper. |
 | `peh-v2` | `POST $PEH_V2_URL/chat`                  | `local`          | Lab-only Peh-v2 HTTP adapter. Defaults to `http://127.0.0.1:18791`. |
 
 Future targets: Claude Code, Codex, OpenCode. Each fits the same contract; pass
@@ -85,12 +85,12 @@ Future targets: Claude Code, Codex, OpenCode. Each fits the same contract; pass
 
 ### Lab-only adapters
 
-`getAdapter("ptah")` and `getAdapter("peh-v2")` still work for internal
+`getAdapter("mechanic")` and `getAdapter("peh-v2")` still work for internal
 tests and local development, but lab-only adapters are hidden from public
 `list agents` output and the UI unless explicitly enabled:
 
 ```bash
-HOWA_LAB_ADAPTERS=ptah,peh-v2 npm run dev
+HOWA_LAB_ADAPTERS=mechanic,peh-v2 npm run dev
 HOWA_LAB_ADAPTERS=peh-v2 npm run cli -- list agents
 ```
 
@@ -285,94 +285,94 @@ Live delivery is available through the runner's `onEvent` callback and the API
 SSE endpoint `GET /api/trials/:trialId/events`. Completed trials are replayed
 from `howa-state/trial-events/<trialId>.json`.
 
-## Ptah wrapper recipe
+## the Mechanic wrapper recipe
 
-Ptah currently ships as a long-running HTTP/WS service (default port
-**18810**), not as a verb-style CLI. The Ptah adapter is wired with the
+the Mechanic currently ships as a long-running HTTP/WS service (default port
+**18810**), not as a verb-style CLI. The the Mechanic adapter is wired with the
 same `<bin> submit <prompt>` shape we use for Aedis so it'll work the
-moment a real Ptah CLI lands. Until then, point `PTAH_BIN` at a thin
+moment a real the Mechanic CLI lands. Until then, point `MECHANIC_BIN` at a thin
 wrapper that satisfies two contracts at once: Howa's adapter shape
-*and* a real submit→poll→answer round-trip against the Ptah HTTP API.
+*and* a real submit→poll→answer round-trip against the the Mechanic HTTP API.
 
 ### Why the wrapper has to wait
 
 A naive wrapper that just POSTs `/api/tasks` and prints the 202 response
 is what Howa used to ship, and the trial results were a lie:
-Howa saw a 14 ms duration, no final answer, and Ptah's truthfulness
+Howa saw a 14 ms duration, no final answer, and the Mechanic's truthfulness
 score reflected the wrapper, not the agent. The wrapper below polls
-`GET /api/tasks/:id` until Ptah writes a receipt and prints the
-synthesized summary, so Howa measures Ptah's actual answer.
+`GET /api/tasks/:id` until the Mechanic writes a receipt and prints the
+synthesized summary, so Howa measures the Mechanic's actual answer.
 
 ### What the wrapper does
 
-1. **`ptah` (no args)** — prints `Commands: submit, status, health` so
+1. **`mechanic` (no args)** — prints `Commands: submit, status, health` so
    the adapter's CLI-shape probe accepts it.
-2. **`ptah health`** — `GET /api/health`. First line is `status: <ok|…>`
+2. **`mechanic health`** — `GET /api/health`. First line is `status: <ok|…>`
    for the adapter's first-line scrape; full JSON follows.
-3. **`ptah status`** — `GET /api/active-task` for human inspection.
-4. **`ptah submit "<prompt>"`** —
+3. **`mechanic status`** — `GET /api/active-task` for human inspection.
+4. **`mechanic submit "<prompt>"`** —
    - `POST /api/tasks` with body `{"input": "<prompt>", "repo": null}`
-     (Ptah uses `input`, not `prompt`).
+     (the Mechanic uses `input`, not `prompt`).
    - extract `taskId` from the 202 response.
-   - poll `GET /api/tasks/:id` every `PTAH_WRAPPER_POLL_INTERVAL`
+   - poll `GET /api/tasks/:id` every `MECHANIC_WRAPPER_POLL_INTERVAL`
      seconds (default 1).
    - when the response has `kind: "receipt"`, print the receipt's
      `taskId`, `status`, `result.summary`, confidence, failure class,
      failure reasons, and per-step breakdown — enough text for
      truthfulness, safety, and stamina-multi-step packs to evaluate.
    - on timeout, attempt `POST /api/tasks/:id/cancel` (best-effort) so
-     the runaway doesn't hold Ptah's queue, then exit non-zero.
+     the runaway doesn't hold the Mechanic's queue, then exit non-zero.
 
 ### Configuration
 
 | Env var                          | Default                          | Effect |
 |----------------------------------|----------------------------------|--------|
-| `PTAH_URL`                       | `http://127.0.0.1:18810`         | Ptah HTTP base URL. |
-| `PTAH_API_TOKEN`                 | unset                            | When set, sent as `Authorization: Bearer …`. |
-| `PTAH_WRAPPER_TIMEOUT_SECONDS`   | `120`                            | Hard cap on submit→receipt round-trip. |
-| `PTAH_WRAPPER_POLL_INTERVAL`     | `1`                              | Seconds between polls. |
-| `LUNA_URL`                       | `http://127.0.0.1:18792`         | Luna standalone API base URL for the `luna` adapter. |
+| `MECHANIC_URL`                       | `http://127.0.0.1:18810`         | the Mechanic HTTP base URL. |
+| `MECHANIC_API_TOKEN`                 | unset                            | When set, sent as `Authorization: Bearer …`. |
+| `MECHANIC_WRAPPER_TIMEOUT_SECONDS`   | `120`                            | Hard cap on submit→receipt round-trip. |
+| `MECHANIC_WRAPPER_POLL_INTERVAL`     | `1`                              | Seconds between polls. |
+| `ARTIST_URL`                       | `http://127.0.0.1:18792`         | the Artist standalone API base URL for the `artist` adapter. |
 
 ### Exit codes
 
 | Code | Meaning |
 |------|---------|
-| 0    | Ptah returned a receipt — `success`, `partial`, `escalated`, or `failed`. The wrapper does not editorialize; receipt status is printed and Howa scores the actual answer. |
+| 0    | the Mechanic returned a receipt — `success`, `partial`, `escalated`, or `failed`. The wrapper does not editorialize; receipt status is printed and Howa scores the actual answer. |
 | 2    | Misuse (`submit` with no prompt, unknown verb). |
 | 124  | Wrapper timeout exceeded before a receipt arrived. The task is best-effort-cancelled before exit. |
 | 1    | Network error, malformed JSON, or missing `curl`/`jq`. |
 
 ### The script
 
-The full script lives at `scripts/ptah-wrapper.sh` in this repo. Install
+The full script lives at `scripts/mechanic-wrapper.sh` in this repo. Install
 it with a symlink so updates flow through automatically:
 
 ```bash
-ln -sf "$(pwd)/scripts/ptah-wrapper.sh" ~/bin/ptah
-export PTAH_BIN=~/bin/ptah
+ln -sf "$(pwd)/scripts/mechanic-wrapper.sh" ~/bin/mechanic
+export MECHANIC_BIN=~/bin/mechanic
 
-# Sanity check against your running Ptah service.
-ptah health        # status: ok …
-ptah submit "say hi in one short sentence"
+# Sanity check against your running the Mechanic service.
+mechanic health        # status: ok …
+mechanic submit "say hi in one short sentence"
 
 # Then run the packs.
-npm run cli -- run --agent ptah --pack truthfulness safety stamina
+npm run cli -- run --agent mechanic --pack truthfulness safety stamina
 ```
 
 ### Wrapper smoke test
 
-`tests/ptah-wrapper.test.ts` boots a fake Ptah HTTP server inside vitest
+`tests/mechanic-wrapper.test.ts` boots a fake the Mechanic HTTP server inside vitest
 and exercises the wrapper end-to-end: submit returns a `taskId`, the
 wrapper polls until the fake flips `kind` to `receipt`, the printed
 output contains the receipt summary, and the timeout path exits 124
 after best-effort cancel. Run it with:
 
 ```bash
-npx vitest run tests/ptah-wrapper.test.ts
+npx vitest run tests/mechanic-wrapper.test.ts
 ```
 
-When Ptah ships a real CLI, this wrapper goes away and operators just
-set `PTAH_BIN="node /path/to/ptah/dist/cli.js"` (or whatever shape ships).
+When the Mechanic ships a real CLI, this wrapper goes away and operators just
+set `MECHANIC_BIN="node /path/to/mechanic/dist/cli.js"` (or whatever shape ships).
 
 ## Smoke test recipe (Aedis)
 

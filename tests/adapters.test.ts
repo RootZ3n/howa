@@ -60,12 +60,12 @@ describe("adapter registry", () => {
       "betterclaw",
       "generic-cli",
       "hermes",
-      "luna",
+      "artist",
       "mock",
       "openclaw",
       "peh",
       "peh-v2",
-      "ptah",
+      "mechanic",
     ]);
   });
 
@@ -77,16 +77,16 @@ describe("adapter registry", () => {
       "betterclaw",
       "generic-cli",
       "hermes",
-      "luna",
+      "artist",
       "mock",
       "openclaw",
       "peh",
     ]);
-    expect(listAdapters().map((a) => a.id)).not.toContain("ptah");
+    expect(listAdapters().map((a) => a.id)).not.toContain("mechanic");
     expect(listAdapters().map((a) => a.id)).not.toContain("peh-v2");
 
-    process.env.HOWA_LAB_ADAPTERS = "ptah,peh-v2";
-    expect(listAdapters().map((a) => a.id)).toContain("ptah");
+    process.env.HOWA_LAB_ADAPTERS = "mechanic,peh-v2";
+    expect(listAdapters().map((a) => a.id)).toContain("mechanic");
     expect(listAdapters().map((a) => a.id)).toContain("peh-v2");
     restoreEnv("HOWA_LAB_ADAPTERS", old);
   });
@@ -370,18 +370,18 @@ describe("Peh HTTP adapters", () => {
   });
 });
 
-describe("Luna HTTP adapter", () => {
-  it("tests Luna through the /colloquium/chat route", async () => {
-    const old = process.env.LUNA_URL;
+describe("the Artist HTTP adapter", () => {
+  it("tests the Artist through the /colloquium/chat route", async () => {
+    const old = process.env.ARTIST_URL;
     const server = await withJsonServer((req, body) => {
       if (req.method === "GET" && req.url === "/health") {
         return {
           ok: true,
-          service: "luna",
+          service: "artist",
           version: "0.1.0",
           status: "ok",
           uptimeMs: 1,
-          identity: { id: "luna", role: "agent", authorityTier: "lab" },
+          identity: { id: "artist", role: "agent", authorityTier: "lab" },
         };
       }
       if (req.method === "POST" && req.url === "/colloquium/chat") {
@@ -396,23 +396,23 @@ describe("Luna HTTP adapter", () => {
           promptBuilt: true,
           message: {
             role: "assistant",
-            content: `luna reply: ${String(messages[0]?.content ?? "")}`,
+            content: `artist reply: ${String(messages[0]?.content ?? "")}`,
           },
-          receipt: { id: "luna_receipt_123", component: "colloquium" },
+          receipt: { id: "artist_receipt_123", component: "colloquium" },
         };
       }
       throw new Error(`unexpected ${req.method} ${req.url}`);
     });
 
     try {
-      process.env.LUNA_URL = server.baseUrl;
-      const adapter = getAdapter("luna");
+      process.env.ARTIST_URL = server.baseUrl;
+      const adapter = getAdapter("artist");
       await expect(adapter.health()).resolves.toMatchObject({ ok: true });
       const ws = await tmpdir();
       const handle = await adapter.startSession({ workspace: ws });
-      const result = await adapter.sendPrompt(handle, "hello Luna");
+      const result = await adapter.sendPrompt(handle, "hello the Artist");
       expect(result.exitCode).toBe(0);
-      expect(result.finalAnswer).toBe("luna reply: hello Luna");
+      expect(result.finalAnswer).toBe("artist reply: hello the Artist");
       expect(result.modelInfo).toMatchObject({
         provider: "stub",
         model: "stub",
@@ -421,19 +421,19 @@ describe("Luna HTTP adapter", () => {
       expect(result.costInfo).toMatchObject({
         reported: false,
       });
-      expect(result.events.some((e) => e.kind === "tool_result" && e.text?.includes("luna_receipt_123"))).toBe(true);
+      expect(result.events.some((e) => e.kind === "tool_result" && e.text?.includes("artist_receipt_123"))).toBe(true);
     } finally {
-      restoreEnv("LUNA_URL", old);
+      restoreEnv("ARTIST_URL", old);
       await server.close();
     }
   });
 
-  it("reports a clear health failure when Luna is not reachable", async () => {
-    const old = process.env.LUNA_URL;
-    process.env.LUNA_URL = "http://127.0.0.1:9";
-    const result = await getAdapter("luna").health();
-    restoreEnv("LUNA_URL", old);
+  it("reports a clear health failure when the Artist is not reachable", async () => {
+    const old = process.env.ARTIST_URL;
+    process.env.ARTIST_URL = "http://127.0.0.1:9";
+    const result = await getAdapter("artist").health();
+    restoreEnv("ARTIST_URL", old);
     expect(result.ok).toBe(false);
-    expect(result.reason).toMatch(/Luna contract probe failed/);
+    expect(result.reason).toMatch(/the Artist contract probe failed/);
   });
 });
