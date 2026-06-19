@@ -57,15 +57,15 @@ describe("adapter registry", () => {
     const ids = adapterIds().sort();
     expect(ids).toEqual([
       "aedis",
+      "artist",
       "betterclaw",
       "generic-cli",
       "hermes",
-      "artist",
+      "mechanic",
       "mock",
       "openclaw",
       "peh",
       "peh-v2",
-      "mechanic",
     ]);
   });
 
@@ -74,10 +74,10 @@ describe("adapter registry", () => {
     delete process.env.HOWA_LAB_ADAPTERS;
     expect(publicAdapterIds().sort()).toEqual([
       "aedis",
+      "artist",
       "betterclaw",
       "generic-cli",
       "hermes",
-      "artist",
       "mock",
       "openclaw",
       "peh",

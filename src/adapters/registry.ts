@@ -4,9 +4,9 @@ import { createBetterClawAdapter } from "./betterclaw.js";
 import { createOpenClawAdapter } from "./openclaw.js";
 import { createHermesAdapter } from "./hermes.js";
 import { createGenericCliAdapter } from "./generic-cli.js";
-import { createthe ArtistAdapter } from "./artist-http.js";
+import { createArtistAdapter } from "./artist-http.js";
 import { createMockAdapter } from "./mock.js";
-import { createthe MechanicAdapter } from "./mechanic.js";
+import { createMechanicAdapter } from "./mechanic.js";
 import {
   createPehAdapter,
   createPehV2Adapter,
@@ -20,8 +20,8 @@ const factories: Record<string, () => AgentAdapter> = {
   betterclaw: createBetterClawAdapter,
   openclaw: createOpenClawAdapter,
   hermes: createHermesAdapter,
-  artist: createthe ArtistAdapter,
-  mechanic: createthe MechanicAdapter,
+  artist: createArtistAdapter,
+  mechanic: createMechanicAdapter,
   peh: createPehAdapter,
   "peh-v2": createPehV2Adapter,
   "generic-cli": createGenericCliAdapter,

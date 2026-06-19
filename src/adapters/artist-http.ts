@@ -10,7 +10,7 @@ import type {
 import type { AgentAdapter } from "./types.js";
 import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
 
-interface the ArtistSession {
+interface ArtistSession {
   endpoint: string;
   workspace: string;
   modelInfo: ModelInfo;
@@ -21,9 +21,9 @@ interface the ArtistSession {
 
 const VERSION = "0.4.0";
 const DEFAULT_ENDPOINT = "http://127.0.0.1:18792";
-const sessions = new Map<string, the ArtistSession>();
+const sessions = new Map<string, ArtistSession>();
 
-export function createthe ArtistAdapter(): AgentAdapter {
+export function createArtistAdapter(): AgentAdapter {
   return {
     id: "artist",
     version: VERSION,
@@ -153,7 +153,7 @@ export function createthe ArtistAdapter(): AgentAdapter {
           events.push({ ts: Date.now(), kind: "error", text: stderr.slice(0, 500) });
         } else {
           const data = JSON.parse(text) as Record<string, unknown>;
-          const parsed = parsethe ArtistResponse(data);
+          const parsed = parseArtistResponse(data);
           finalAnswer = parsed.finalAnswer;
           stdout = JSON.stringify(data, null, 2);
           session.modelInfo = parsed.modelInfo;
@@ -231,7 +231,7 @@ function endpointFromEnv(): string {
  * interface, but exported so the CLI / runner can ask the Artist directly
  * for the truth instead of trusting the static `capabilities` field.
  */
-export async function probethe ArtistCapabilities(): Promise<{ ok: boolean; matrix?: unknown; error?: string }> {
+export async function probeArtistCapabilities(): Promise<{ ok: boolean; matrix?: unknown; error?: string }> {
   const url = `${endpointFromEnv()}/capabilities`;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
@@ -247,7 +247,7 @@ function normalizeEndpoint(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
-function parsethe ArtistResponse(data: Record<string, unknown>): {
+function parseArtistResponse(data: Record<string, unknown>): {
   finalAnswer?: string;
   modelInfo: ModelInfo;
   receiptId?: string;
@@ -366,7 +366,7 @@ function parseRepoIntent(prompt: string): RepoIntent | null {
 }
 
 async function runRepoIntent(
-  session: the ArtistSession,
+  session: ArtistSession,
   intent: RepoIntent,
   prompt: string,
   sessionId: string,

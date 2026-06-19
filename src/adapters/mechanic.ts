@@ -29,7 +29,7 @@ import type {
 const POLL_INTERVAL_MS = 2_000;
 const MAX_POLL_MS = 600_000; // 10 minutes — mechanic tasks go through the full build pipeline
 
-interface the MechanicSession {
+interface MechanicSession {
   baseUrl: string;
   workspace: string;
   modelInfo: ModelInfo;
@@ -37,9 +37,9 @@ interface the MechanicSession {
   timeoutMs: number;
 }
 
-const sessions = new Map<string, the MechanicSession>();
+const sessions = new Map<string, MechanicSession>();
 
-function getthe MechanicBaseUrl(): string {
+function getMechanicBaseUrl(): string {
   return process.env.MECHANIC_URL ?? "http://127.0.0.1:18810";
 }
 
@@ -62,7 +62,7 @@ async function mechanicFetch(
   return res.json();
 }
 
-export function createthe MechanicAdapter(): AgentAdapter {
+export function createMechanicAdapter(): AgentAdapter {
   return {
     id: "mechanic",
     version: "0.2.0",
@@ -87,7 +87,7 @@ export function createthe MechanicAdapter(): AgentAdapter {
     },
 
     async health() {
-      const baseUrl = getthe MechanicBaseUrl();
+      const baseUrl = getMechanicBaseUrl();
       // the Mechanic now exposes the canonical Lab Agent Contract /health
       // alongside the legacy /api/health rich snapshot. Probe the
       // canonical surface first so we stay aligned with peers.
@@ -103,12 +103,12 @@ export function createthe MechanicAdapter(): AgentAdapter {
     },
 
     async probeContract(): Promise<ContractProbeResult> {
-      return probeAgentContract({ baseUrl: getthe MechanicBaseUrl() });
+      return probeAgentContract({ baseUrl: getMechanicBaseUrl() });
     },
 
     async startSession(opts: RunOptions): Promise<SessionHandle> {
       const sessionId = `mechanic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const baseUrl = getthe MechanicBaseUrl();
+      const baseUrl = getMechanicBaseUrl();
       const modelInfo: ModelInfo = {
         model: opts.model ?? "unknown",
         provider: "mechanic",
@@ -323,13 +323,13 @@ export function createthe MechanicAdapter(): AgentAdapter {
   };
 }
 
-export interface the MechanicLaunch {
+export interface MechanicLaunch {
   command: string;
   args: string[];
   source: "extra.command" | "MECHANIC_BIN" | "default";
 }
 
-export function resolvethe MechanicLaunch(opts: { extra?: unknown }): the MechanicLaunch {
+export function resolveMechanicLaunch(opts: { extra?: unknown }): MechanicLaunch {
   const extra = (opts.extra ?? {}) as Record<string, unknown>;
   if (typeof extra.command === "string" && extra.command) {
     const args = Array.isArray(extra.args)
