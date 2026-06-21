@@ -19,7 +19,7 @@ import path from "node:path";
  *   - `health` prints `status: healthy` (or simulates a server-down failure
  *     when `serverDown` is set).
  */
-export async function writeFakethe Mechanic(opts?: {
+export async function writeFakeMechanic(opts?: {
   /** Omit `submit` from the commands list to test the missing-verb path. */
   withoutSubmit?: boolean;
   /** Make `health` exit non-zero with a server-down style message. */
