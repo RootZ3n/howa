@@ -19,8 +19,8 @@ describe("resolveStateRoot (B2 regression)", () => {
   });
 
   it("honors an explicit absolute value", () => {
-    expect(resolveStateRoot("/pehverse/repos/howa/howa-state")).toBe(
-      "/pehverse/repos/howa/howa-state",
+    expect(resolveStateRoot("/pehverse/repos/ecosystem/howa/howa-state")).toBe(
+      "/pehverse/repos/ecosystem/howa/howa-state",
     );
   });
 
