@@ -911,3 +911,115 @@ button{font-family:inherit}
   .howa-chat-btn{bottom:160px;right:12px;width:48px;height:48px;font-size:18px}
   .howa-chat-drawer{right:12px;bottom:220px;width:calc(100vw - 24px);max-height:400px}
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PEH ONBOARDING OVERLAY
+   First-launch welcome screen + guided tour. Semi-transparent backdrop,
+   Peh portrait center, speech bubble, two action buttons.
+   ══════════════════════════════════════════════════════════════════════ */
+.peh-onboard-overlay{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(10,10,12,.88);
+  backdrop-filter:blur(6px);
+  opacity:0;transition:opacity .3s ease;
+  pointer-events:auto;
+}
+.peh-onboard-overlay.visible{opacity:1}
+.peh-onboard-overlay.exiting{opacity:0;pointer-events:none;transition:opacity .28s ease-in}
+
+.peh-onboard-card{
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  max-width:380px;width:calc(100% - 40px);padding:32px 28px;
+  text-align:center;
+  animation:pehOnboardCardIn .35s ease-out both;
+}
+.peh-onboard-overlay.exiting .peh-onboard-card{animation:none;opacity:0}
+
+@keyframes pehOnboardCardIn{
+  from{opacity:0;transform:translateY(18px) scale(.94)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.peh-onboard-portrait{
+  width:120px;height:120px;border-radius:50%;overflow:hidden;
+  background:radial-gradient(circle at 50% 32%,#f6ecd2 0%,#e8d6ab 60%,#cdb37e 100%);
+  border:3px solid #b8965b;
+  box-shadow:0 0 0 6px rgba(220,38,38,.22),0 0 32px rgba(220,38,38,.18),0 12px 32px rgba(0,0,0,.55);
+}
+.peh-onboard-portrait img{width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+
+.peh-onboard-bubble{
+  position:relative;max-width:340px;width:100%;
+  border-radius:16px;padding:16px 20px;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--peh-accent, #dc2626) 20%,rgba(14,12,22,.94)),rgba(10,10,12,.96));
+  border:1px solid color-mix(in srgb,var(--crimson-hot, #f87171) 28%,rgba(220,38,38,.14));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(139,92,246,.06),0 12px 28px rgba(0,0,0,.4);
+  backdrop-filter:blur(8px);
+}
+.peh-onboard-bubble::before{
+  content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%) rotate(45deg);
+  width:14px;height:14px;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--peh-accent, #dc2626) 20%,rgba(14,12,22,.94)),rgba(10,10,12,.96));
+  border:1px solid color-mix(in srgb,var(--crimson-hot, #f87171) 28%,rgba(220,38,38,.14));
+  border-bottom:none;border-right:none;
+}
+
+.peh-onboard-name{
+  display:block;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--crimson-hot, #f87171);margin-bottom:4px;
+}
+.peh-onboard-text{
+  margin:0;font-size:14px;line-height:1.5;color:var(--ink, #f0ece4);font-weight:500;
+}
+
+.peh-onboard-actions{
+  display:flex;flex-direction:column;gap:10px;width:100%;max-width:280px;
+}
+.peh-onboard-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:100%;padding:12px 20px;border-radius:12px;cursor:pointer;
+  font:inherit;font-size:14px;font-weight:700;line-height:1.2;
+  transition:background .15s,border-color .15s,transform .1s;
+}
+.peh-onboard-btn:active{transform:scale(.97)}
+
+.peh-onboard-btn.primary{
+  background:linear-gradient(120deg,var(--peh-accent, #dc2626),var(--peh-accent2, #8b5cf6));
+  border:1px solid transparent;color:#0a0a0c;
+}
+.peh-onboard-btn.primary:hover{filter:brightness(1.12)}
+
+.peh-onboard-btn.secondary{
+  background:rgba(10,10,12,.6);
+  border:1px solid var(--border-subtle, rgba(220,38,38,.14));
+  color:var(--ink-soft, #d8d0c0);
+}
+.peh-onboard-btn.secondary:hover{border-color:var(--peh-accent, #dc2626);color:var(--ink, #f0ece4)}
+
+/* ── Help button (re-trigger onboarding) ──────────────────────────── */
+.peh-onboard-help{
+  position:fixed;bottom:16px;left:16px;z-index:50;
+  width:36px;height:36px;border-radius:50%;cursor:pointer;
+  background:rgba(10,10,12,.78);border:1px solid var(--border-subtle, rgba(220,38,38,.14));
+  color:var(--ink-dim, #9a8e7a);font:inherit;font-size:16px;font-weight:800;
+  backdrop-filter:blur(4px);
+  transition:background .15s,color .15s,border-color .15s;
+}
+.peh-onboard-help:hover{
+  background:rgba(220,38,38,.14);color:var(--ink, #f0ece4);
+  border-color:var(--peh-accent, #dc2626);
+}
+
+/* ── Mobile adjustments ───────────────────────────────────────────── */
+@media (max-width:599px){
+  .peh-onboard-card{padding:24px 20px;gap:16px}
+  .peh-onboard-portrait{width:96px;height:96px}
+  .peh-onboard-bubble{padding:14px 16px}
+  .peh-onboard-text{font-size:13px}
+  .peh-onboard-btn{padding:11px 16px;font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){
+  .peh-onboard-overlay,.peh-onboard-overlay.visible,.peh-onboard-overlay.exiting{transition-duration:.01ms}
+  .peh-onboard-card{animation:none}
+}
