@@ -9,12 +9,22 @@ import { TrialStore, TRIAL_SCHEMA_VERSION, type TrialSummary } from "@howa/stora
 import type { Verdict } from "@howa/types.js";
 
 const cliEntry = path.resolve(__dirname, "../src/cli/index.ts");
+const tsxLoader = path.resolve(__dirname, "../node_modules/tsx/dist/loader.mjs");
 
-function runCli(args: string[], env: Record<string, string> = {}) {
+function runCli(
+  args: string[],
+  env: Record<string, string> = {},
+  options: { cwd?: string; input?: string } = {},
+) {
   const r = spawnSync(
     "node",
-    ["--import", "tsx", cliEntry, ...args],
-    { encoding: "utf8", env: { ...process.env, ...env } },
+    ["--import", tsxLoader, cliEntry, ...args],
+    {
+      encoding: "utf8",
+      env: { ...process.env, ...env },
+      cwd: options.cwd,
+      input: options.input,
+    },
   );
   return r;
 }
@@ -141,6 +151,65 @@ describe("CLI", () => {
     const trialsDir = path.join(stateRoot, "trials");
     const entries = await fs.readdir(trialsDir);
     expect(entries.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it("`run --explain` prints honesty stamp explanations", () => {
+    const stateRoot = path.join(
+      os.tmpdir(),
+      `howa-cli-explain-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    const r = runCli([
+      "run",
+      "--agent",
+      "mock",
+      "--pack",
+      "stamina",
+      "--state",
+      stateRoot,
+      "--quiet",
+      "--explain",
+    ]);
+    expect(r.status).toBe(0);
+    expect(r.stdout).toMatch(/honesty=MOCK\/DEMO,PROVISIONAL/);
+    expect(r.stdout).toContain(
+      "PROVISIONAL: Score based on partial data — some checks were skipped",
+    );
+  }, 30_000);
+
+  it("`init` writes howa.config.json and verifies setup with a mock trial", async () => {
+    const cwd = path.join(
+      os.tmpdir(),
+      `howa-cli-init-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    );
+    const binDir = path.join(cwd, "bin");
+    const home = path.join(cwd, "home");
+    await fs.mkdir(binDir, { recursive: true });
+    await fs.mkdir(home, { recursive: true });
+    const fakeAedis = path.join(binDir, "aedis");
+    await fs.writeFile(fakeAedis, "#!/bin/sh\necho aedis\n", { mode: 0o755 });
+
+    const r = runCli(
+      ["init"],
+      {
+        HOME: home,
+        PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+      },
+      { cwd },
+    );
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("Wrote");
+    expect(r.stdout).toContain("aedis");
+    expect(r.stdout).toMatch(/Mock trial trial-.* — PASS/);
+
+    const config = JSON.parse(await fs.readFile(path.join(cwd, "howa.config.json"), "utf8"));
+    expect(config.stateRoot).toBe(path.join(home, ".howa"));
+    expect(config.agents.aedis).toEqual({
+      adapter: "aedis",
+      binary: fakeAedis,
+      env: "AEDIS_BIN",
+    });
+    const trials = await fs.readdir(path.join(home, ".howa", "trials"));
+    expect(trials.length).toBeGreaterThan(0);
   }, 30_000);
 
   it("`run --agent mock` exits nonzero for a failing trial", () => {

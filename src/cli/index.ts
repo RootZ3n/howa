@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 import { Command } from "commander";
+import { spawnSync } from "node:child_process";
 import { promises as fs } from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { createInterface } from "node:readline/promises";
 import { listAdapters, getAdapter } from "../adapters/registry.js";
 import { listPacks, getPack } from "../packs/registry.js";
 import { runTrial } from "../runner/trial-runner.js";
@@ -9,6 +12,40 @@ import { defaultStateRoot, TrialStore } from "../storage/index.js";
 import { ReceiptStore } from "../receipts/receipt-store.js";
 import { renderReceipt } from "../receipts/receipt.js";
 import { compareTrials, TrialNotFoundError } from "../trials/compare.js";
+import { writeFileAtomic } from "../utils/atomic-write.js";
+
+const INIT_STATE_ROOT_PROMPT_DEFAULT = "~/.howa";
+
+const COMMON_AGENT_BINARIES: Array<{
+  adapter: string;
+  binary: string;
+  env?: string;
+}> = [
+  { adapter: "mechanic", binary: "mechanic", env: "MECHANIC_BIN" },
+  { adapter: "aedis", binary: "aedis", env: "AEDIS_BIN" },
+  { adapter: "openclaw", binary: "openclaw" },
+  { adapter: "hermes", binary: "hermes" },
+  { adapter: "betterclaw", binary: "betterclaw" },
+  { adapter: "artist", binary: "artist" },
+  { adapter: "generic-cli", binary: "claude" },
+  { adapter: "generic-cli", binary: "codex" },
+];
+
+const HONESTY_EXPLANATIONS: Record<string, string> = {
+  "MOCK/DEMO": "This trial used Howa's mock demo adapter — useful for setup checks, not a real agent result",
+  HISTORICAL_SCHEMA: "This trial was recorded before current honesty metadata existed — interpret it cautiously",
+  NO_BEHAVIORAL_EVIDENCE: "No behavioral evidence was collected — Howa cannot score real agent behavior",
+  ALL_FAILED: "Every behavioral check failed — the agent did not demonstrate useful task behavior",
+  PROVISIONAL: "Score based on partial data — some checks were skipped",
+  COST_WITHHELD:
+    "This agent scored zero on behavior, so its low cost was excluded — cheap failure is still failure",
+  MODEL_UNKNOWN:
+    "The agent didn't declare which model it used — cost comparison is impossible",
+  COST_UNKNOWN:
+    "The agent didn't report cost truthfully — best-value comparisons are unavailable",
+  ERROR_NOT_COUNTED:
+    "The adapter or setup failed before useful behavior was measured — this is not counted as an agent behavior score",
+};
 
 const program = new Command();
 program
@@ -19,6 +56,63 @@ program
   .name("howa")
   .description("Howa — Agent Proving Ground")
   .version("0.1.0");
+
+program
+  .command("init")
+  .description("Create howa.config.json by probing local agent binaries")
+  .action(async () => {
+    const stateRootInput = await askStateRoot();
+    const stateRoot = expandHome(stateRootInput || INIT_STATE_ROOT_PROMPT_DEFAULT);
+    const resolvedStateRoot = path.resolve(stateRoot);
+    const configPath = path.resolve(process.cwd(), "howa.config.json");
+    const discovered = await discoverAgentBinaries();
+
+    const config = {
+      schemaVersion: 1,
+      stateRoot: resolvedStateRoot,
+      agents: Object.fromEntries(
+        discovered.map((agent) => [
+          agent.name,
+          {
+            adapter: agent.adapter,
+            binary: agent.path,
+            ...(agent.env ? { env: agent.env } : {}),
+          },
+        ]),
+      ),
+      createdAt: new Date().toISOString(),
+    };
+
+    await fs.mkdir(resolvedStateRoot, { recursive: true });
+    await writeFileAtomic(configPath, `${JSON.stringify(config, null, 2)}\n`);
+
+    process.stdout.write(`Wrote ${configPath}\n`);
+    if (discovered.length === 0) {
+      process.stdout.write(`No common agent binaries found on PATH.\n`);
+    } else {
+      process.stdout.write(`Discovered agents:\n`);
+      for (const agent of discovered) {
+        process.stdout.write(`  ${agent.name.padEnd(12)} ${agent.path}\n`);
+      }
+    }
+
+    process.stdout.write(`Running first mock trial to verify setup...\n`);
+    const summary = await runTrial({
+      adapter: getAdapter("mock"),
+      packs: [getPack("stamina")],
+      stateRoot: resolvedStateRoot,
+      cleanupPolicy: "success",
+      baseRunOptions: { location: "local" },
+    });
+    process.stdout.write(
+      `Mock trial ${summary.trialId} — ${summary.verdict.toUpperCase()} ` +
+        `(pass=${summary.passCount}, fail=${summary.failCount})\n`,
+    );
+    process.stdout.write(`state=${resolvedStateRoot}\n`);
+    if (summary.verdict === "fail" || summary.verdict === "error") {
+      process.exitCode = 2;
+    }
+  });
 
 program
   .command("list")
@@ -72,6 +166,7 @@ program
   .option("--quiet", "Suppress per-event output")
   .option("--watch", "Print live trial events as they happen")
   .option("--live", "Alias for --watch")
+  .option("--explain", "Print plain-English explanations for honesty stamps")
   .option("--skip <ids...>", "Test IDs to skip (e.g. stamina.long-prompt)")
   .option("--only <ids...>", "Only run these test IDs")
   .action(async (raw) => {
@@ -88,6 +183,7 @@ program
       quiet?: boolean;
       watch?: boolean;
       live?: boolean;
+      explain?: boolean;
       skip?: string[];
       only?: string[];
     };
@@ -214,6 +310,14 @@ program
     if (summary.verdict === "error") stamps.push("ERROR_NOT_COUNTED");
     if (stamps.length > 0) {
       process.stdout.write(`  honesty=${stamps.join(",")}\n`);
+      if (opts.explain) {
+        for (const stamp of stamps) {
+          const explanation = HONESTY_EXPLANATIONS[stamp];
+          if (explanation) {
+            process.stdout.write(`    ${stamp}: ${explanation}\n`);
+          }
+        }
+      }
     }
     process.stdout.write(
       `  howa=v${summary.howaVersion}@${summary.gitCommit} · adapter=${summary.adapter}@v${summary.adapterVersion}\n`,
@@ -362,4 +466,55 @@ function formatDelta(value: number | null): string {
 
 function formatVerdict(value: string | null): string {
   return value === null ? "MISSING" : value.toUpperCase();
+}
+
+async function askStateRoot(): Promise<string> {
+  if (!process.stdin.isTTY) return INIT_STATE_ROOT_PROMPT_DEFAULT;
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const answer = await rl.question(`State root [${INIT_STATE_ROOT_PROMPT_DEFAULT}]: `);
+    return answer.trim() || INIT_STATE_ROOT_PROMPT_DEFAULT;
+  } finally {
+    rl.close();
+  }
+}
+
+function expandHome(value: string): string {
+  const home = process.env.HOME?.trim() || os.homedir();
+  if (value === "~") return home;
+  if (value.startsWith("~/")) return path.join(home, value.slice(2));
+  return value;
+}
+
+async function discoverAgentBinaries(): Promise<
+  Array<{ name: string; adapter: string; path: string; env?: string }>
+> {
+  const seen = new Set<string>();
+  const found: Array<{ name: string; adapter: string; path: string; env?: string }> = [];
+  for (const candidate of COMMON_AGENT_BINARIES) {
+    const resolved = findOnPath(candidate.binary);
+    if (!resolved) continue;
+    const key = `${candidate.adapter}:${candidate.binary}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    found.push({
+      name: candidate.binary,
+      adapter: candidate.adapter,
+      path: resolved,
+      env: candidate.env,
+    });
+  }
+  return found;
+}
+
+function findOnPath(binary: string): string | null {
+  const result = spawnSync(process.platform === "win32" ? "where" : "command", [
+    process.platform === "win32" ? binary : "-v",
+    ...(process.platform === "win32" ? [] : [binary]),
+  ], {
+    encoding: "utf8",
+    shell: process.platform !== "win32",
+  });
+  if (result.status !== 0) return null;
+  return result.stdout.split(/\r?\n/).map((line) => line.trim()).find(Boolean) ?? null;
 }
