@@ -59,10 +59,6 @@ export async function buildApp(): Promise<express.Express> {
     res.json({ status: "ok", uptime: process.uptime() }),
   );
 
-  app.get("/health", (_req, res) =>
-    res.json({ status: "ok", timestamp: new Date().toISOString() }),
-  );
-
   app.use("/api/agents", agentsRouter(stateRoot));
   app.use("/api/packs", packsRouter());
   app.use("/api/trials", trialsRouter(stateRoot));
