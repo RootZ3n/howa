@@ -20,6 +20,12 @@ const FIXTURE_MAX_AGE_DAYS = 7;
 /** How often the background reaper runs. */
 const REAPER_INTERVAL_MS = 60 * 60 * 1000; // hourly
 
+/** Mutable reaper health state, exposed via /api/health. */
+const reaperHealth = {
+  lastRunAt: null as string | null,
+  lastError: null as string | null,
+};
+
 /**
  * Run the stale-fixture reaper once now, then on an unref'd hourly interval
  * so it never keeps the process alive on its own. Failures are logged and
@@ -30,7 +36,10 @@ function scheduleFixtureReaper(root: string): void {
   const runOnce = async () => {
     try {
       await fixtures.reapStaleFixtures(FIXTURE_MAX_AGE_DAYS, { dryRun: false });
+      reaperHealth.lastRunAt = new Date().toISOString();
+      reaperHealth.lastError = null;
     } catch (err) {
+      reaperHealth.lastError = (err as Error).message;
       logger.error("reaper", `Fixture reaper pass failed: ${(err as Error).message}`);
     }
   };
@@ -38,6 +47,8 @@ function scheduleFixtureReaper(root: string): void {
   const timer = setInterval(() => void runOnce(), REAPER_INTERVAL_MS);
   timer.unref();
 }
+
+export { reaperHealth };
 
 // HOWA_STATE_ROOT is the canonical env var (matches systemd unit + docs).
 // Use resolveStateRoot so an empty/blank value (systemd + start.sh export
@@ -56,7 +67,14 @@ export async function buildApp(): Promise<express.Express> {
   app.use(velumExpress({ defaultPiiLevel: 2 }));
 
   app.get("/api/health", (_req, res) =>
-    res.json({ status: "ok", uptime: process.uptime() }),
+    res.json({
+      status: "ok",
+      uptime: process.uptime(),
+      fixtureReaper: {
+        lastRunAt: reaperHealth.lastRunAt,
+        lastError: reaperHealth.lastError,
+      },
+    }),
   );
 
   app.use("/api/agents", agentsRouter(stateRoot));
@@ -89,8 +107,13 @@ export async function buildApp(): Promise<express.Express> {
   // Global error handler — logs the error and returns 500.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    // Redact sensitive strings (API keys, tokens, provider raw text) before logging
+    const safeMessage = String(err)
+      .replace(/Bearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]")
+      .replace(/(api[_-]?key|token|password|secret)=[\S]+/gi, "$1=[REDACTED]")
+      .replace(/(sk|pk|rk)[-_][A-Za-z0-9]{10,}/gi, "[REDACTED_KEY]");
     // eslint-disable-next-line no-console
-    console.error(err);
+    console.error(safeMessage);
     res.status(500).json({ error: "Internal server error" });
   });
 
