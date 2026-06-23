@@ -3,6 +3,7 @@ import { getAdapter } from "../../adapters/registry.js";
 import { getPack } from "../../packs/registry.js";
 import { runTrial } from "../../runner/trial-runner.js";
 import { TrialStore, TRIAL_SCHEMA_VERSION, type TrialNote } from "../../storage/index.js";
+import { compareTrials, TrialNotFoundError } from "../../trials/compare.js";
 import { HOWA_VERSION, getGitCommit } from "../../version.js";
 import { logger } from "../../utils/logger.js";
 import type { TrialEvent } from "../../types.js";
@@ -24,6 +25,24 @@ export function trialsRouter(stateRoot: string): Router {
   r.get("/", async (_req, res) => {
     const trials = await store.listTrials();
     res.json({ trials });
+  });
+
+  r.get("/compare", async (req, res) => {
+    const base = typeof req.query.base === "string" ? req.query.base : "";
+    const candidate = typeof req.query.candidate === "string" ? req.query.candidate : "";
+    if (!base || !candidate) {
+      res.status(400).json({ error: "base and candidate query parameters are required" });
+      return;
+    }
+    try {
+      res.json(await compareTrials(stateRoot, base, candidate));
+    } catch (err) {
+      if (err instanceof TrialNotFoundError) {
+        res.status(404).json({ error: err.message, role: err.role, trialId: err.trialId });
+        return;
+      }
+      throw err;
+    }
   });
 
   r.post("/", async (req, res) => {

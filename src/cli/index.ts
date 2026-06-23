@@ -8,6 +8,7 @@ import { runTrial } from "../runner/trial-runner.js";
 import { defaultStateRoot, TrialStore } from "../storage/index.js";
 import { ReceiptStore } from "../receipts/receipt-store.js";
 import { renderReceipt } from "../receipts/receipt.js";
+import { compareTrials, TrialNotFoundError } from "../trials/compare.js";
 
 const program = new Command();
 program
@@ -283,7 +284,82 @@ program
     }
   });
 
+program
+  .command("compare")
+  .argument("<baseTrialId>")
+  .argument("<candidateTrialId>")
+  .option("--state <dir>", "Override state root", defaultStateRoot())
+  .description("Compare two trials by category score and per-test verdict")
+  .action(async (baseTrialId: string, candidateTrialId: string, raw) => {
+    const opts = raw as { state: string };
+    try {
+      const comparison = await compareTrials(opts.state, baseTrialId, candidateTrialId);
+      const { base, candidate, categoryDiffs, testDiffs, regressions } = comparison;
+      process.stdout.write(`Trial comparison\n`);
+      process.stdout.write(`  base=${base.trialId} (${base.verdict.toUpperCase()}, trust=${formatPct(base.score.trust)})\n`);
+      process.stdout.write(
+        `  candidate=${candidate.trialId} (${candidate.verdict.toUpperCase()}, trust=${formatPct(candidate.score.trust)})\n`,
+      );
+      process.stdout.write(`  regressions=${regressions.length}\n`);
+
+      process.stdout.write(`\nCategory diffs\n`);
+      for (const d of categoryDiffs) {
+        process.stdout.write(
+          `  ${String(d.category).padEnd(16)} ${formatScore(d.baseValue).padStart(6)} → ${formatScore(d.candidateValue).padEnd(6)} ${formatDelta(d.delta)} (n ${d.baseN}→${d.candidateN})\n`,
+        );
+      }
+
+      const changed = testDiffs.filter((d) => d.changed);
+      process.stdout.write(`\nTest verdict diffs\n`);
+      if (changed.length === 0) {
+        process.stdout.write(`  No verdict changes.\n`);
+      } else {
+        for (const d of changed) {
+          process.stdout.write(
+            `  ${d.testId.padEnd(32)} ${formatVerdict(d.baseVerdict)} → ${formatVerdict(d.candidateVerdict)}\n`,
+          );
+        }
+      }
+
+      process.stdout.write(`\nRegressions\n`);
+      if (regressions.length === 0) {
+        process.stdout.write(`  None.\n`);
+      } else {
+        for (const r of regressions) {
+          process.stdout.write(
+            `  ${r.testId.padEnd(32)} PASS → ${String(r.candidateVerdict).toUpperCase()}\n`,
+          );
+        }
+      }
+      process.stdout.write(`  state=${path.resolve(opts.state)}\n`);
+    } catch (err) {
+      if (err instanceof TrialNotFoundError) {
+        console.error(`No ${err.role} trial ${err.trialId} under ${opts.state}`);
+        process.exit(1);
+        return;
+      }
+      throw err;
+    }
+  });
+
 program.parseAsync(process.argv).catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+function formatPct(value: number): string {
+  return `${(value * 100).toFixed(0)}%`;
+}
+
+function formatScore(value: number | null): string {
+  return value === null ? "n/a" : value.toFixed(2);
+}
+
+function formatDelta(value: number | null): string {
+  if (value === null) return "(n/a)";
+  return `(${value >= 0 ? "+" : ""}${value.toFixed(2)})`;
+}
+
+function formatVerdict(value: string | null): string {
+  return value === null ? "MISSING" : value.toUpperCase();
+}

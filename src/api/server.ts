@@ -64,7 +64,7 @@ export async function buildApp(): Promise<express.Express> {
   app.use(express.json({ limit: "1mb" }));
 
   // Velum: AI privacy/injection defense middleware
-  app.use(velumExpress({ defaultPiiLevel: 2 }));
+  app.use(velumExpress({ defaultPiiLevel: 2 }) as unknown as express.RequestHandler);
 
   app.get("/api/health", (_req, res) =>
     res.json({
