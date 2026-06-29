@@ -4,6 +4,7 @@
   "description": "Howa — Agent Proving Ground. Stop guessing if your agent works. Put it in the arena.",
   "type": "module",
   "license": "MIT",
+  "author": "RootZ3n <rootz3n@proton.me>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RootZ3n/howa.git"
@@ -29,6 +30,7 @@
     "dev:api": "tsx watch src/api/server.ts",
     "dev:ui": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
+    "prepublishOnly": "npm run build",
     "build:cli": "tsc -p tsconfig.build.json",
     "start": "node dist/api/server.js",
     "start:api": "node dist/api/server.js",
@@ -46,7 +48,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "velum-ai": "file:../velum",
+    "velum-ai": "^0.2.2",
     "commander": "^12.1.0",
     "express": "^4.19.2",
     "nanoid": "^5.0.7",
