@@ -245,17 +245,40 @@
     'history-ws':   fillHistory,
   };
 
+  // Panels that have a meaningful at-a-glance card (a headline stat strip). When
+  // rendered as a compact card or Voltron tile we keep only that strip. Panels
+  // NOT listed (or whose render has no .peh-stats) fall through to full content,
+  // which simply scrolls inside the small window / tile.
+  var GLANCE = {
+    'console': 1, 'arena-status': 1, 'results': 1, 'agents-ws': 1, 'history-ws': 1
+  };
+  function isGlance(defId, summary) { return !!(summary && GLANCE[defId]); }
+
+  // Reduce an already-rendered panel (el) to its headline stat strip for the
+  // glance card. The fillers write into `el`, so we post-process in place.
+  function reduceToGlance(el) {
+    try {
+      var pick = el.querySelector('.peh-live-off, .peh-stats');
+      if (pick) {
+        el.innerHTML = '<div class="peh-live-glance">' + pick.outerHTML +
+          '<div class="peh-glance-hint">Open the console for the full report →</div></div>';
+      }
+    } catch (e) { /* leave full content */ }
+  }
+
   global.HowaScenes = {
     has: function (defId) { return !!FILLERS[defId]; },
-    liveContainer: function (defId) {
-      return '<div id="' + cid(defId) + '" class="peh-live">' + loading() + '</div>';
+    liveContainer: function (defId, summary) {
+      var glance = isGlance(defId, summary);
+      return '<div id="' + cid(defId) + '" class="peh-live' + (glance ? ' peh-live-summary' : '') + '">' + loading() + '</div>';
     },
-    fill: async function (defId) {
+    fill: async function (defId, fresh, summary) {
       var el = document.getElementById(cid(defId));
       if (!el) return;
       var fn = FILLERS[defId];
       if (!fn) { el.innerHTML = '<p class="peh-live-empty">No renderer for this workspace.</p>'; return; }
-      try { await fn(el); } catch (e) { el.innerHTML = offline(e && e.message ? e.message : String(e)); }
+      try { await fn(el); } catch (e) { el.innerHTML = offline(e && e.message ? e.message : String(e)); return; }
+      if (isGlance(defId, summary)) reduceToGlance(el);
     },
   };
 })(typeof window !== 'undefined' ? window : this);
