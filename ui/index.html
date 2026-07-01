@@ -69,11 +69,11 @@ const SCENE_REGISTRY={
      peh:'shield',
      pehSlot:{x:50, y:65, anchor:'center', variant:'sentinel'}, hotspots:[
       {id:'mg-status',   label:'Arena Status',     x:50, y:30, workspace:'arena-status',  greeting:"The Arena status — backend health, agents, trials. Everything at a glance."},
-      {id:'mg-arena',    label:'The Arena',        x:72, y:52, scene:'arena',              greeting:"To the Arena — where trial verdicts are decided. Follow me!"},
-      {id:'mg-training', label:'Training Grounds', x:28, y:52, scene:'training-grounds',   greeting:"The Training Grounds — where weakness is burned away and strength is forged."},
-      {id:'mg-temple',   label:'The Temple',       x:72, y:22, scene:'temple',             greeting:"The Temple — where every trial finds its place in history."},
-      {id:'mg-armory',   label:'The Armory',       x:28, y:72, scene:'armory',             greeting:"The Armory — every receipt stored, every execution accounted for."},
-      {id:'mg-market',   label:'The Market',       x:72, y:72, scene:'market',             greeting:"The Market — registered agents and their configurations. Know your fighters."}
+      {id:'mg-arena',    label:'The Arena',        x:72, y:52, workspace:'results',        greeting:"To the Arena — where trial verdicts are decided. Follow me!"},
+      {id:'mg-training', label:'Training Grounds', x:28, y:52, workspace:'trial-config',    greeting:"The Training Grounds — where weakness is burned away and strength is forged."},
+      {id:'mg-temple',   label:'The Temple',       x:72, y:22, workspace:'history-ws',      greeting:"The Temple — where every trial finds its place in history."},
+      {id:'mg-armory',   label:'The Armory',       x:28, y:72, workspace:'receipts',        greeting:"The Armory — every receipt stored, every execution accounted for."},
+      {id:'mg-market',   label:'The Market',       x:72, y:72, workspace:'agents-ws',       greeting:"The Market — registered agents and their configurations. Know your fighters."}
     ]},
     {id:'arena', title:'The Arena', purpose:'Trial results', route:'/arena',
      desc:'Circular amphitheater with tiered stone seating, red awnings, and a sandy floor. Trial verdicts are decided here.',
@@ -381,21 +381,16 @@ function pehHotspotActivate(sceneId,hotspotId){
   const scene=pehScene(pehActiveProductId(),sceneId);
   const hotspot=scene&&scene.hotspots?scene.hotspots.find((h)=>h.id===hotspotId):null;
   if(!hotspot)return;
-  // Peh greets at the hotspot FIRST, then — after a short beat — the workspace
-  // pops up as a movable window beside the pin (or we travel to a sub-scene).
+  // Peh greets at the hotspot and the workspace opens AS A MOVABLE WINDOW pinned
+  // beside the pin — the map STAYS PUT (the luak model). The other hotspots never
+  // disappear; we do NOT travel to a sub-scene. Pure scene hotspots still travel.
   pehSayGreeting(hotspot,scene);
-  setTimeout(()=>{
-    if(hotspot.workspace){
-      if(hotspot.scene&&pehScene(pehActiveProductId(),hotspot.scene)){
-        state.pehverse.scene=hotspot.scene;state.pehverse.pehPosition=null;
-        try{localStorage.setItem('pehverse-scene',hotspot.scene)}catch(e){}
-      }
-      state.pehverse.pehPopUp={x:hotspot.x,y:hotspot.y};
-      pehOpenWorkspaceAt(hotspot.workspace,hotspot.x,hotspot.y);
-    }else if(hotspot.scene){
-      pehSetScene(hotspot.scene);
-    }
-  },300);
+  if(hotspot.workspace){
+    state.pehverse.pehPopUp={x:hotspot.x,y:hotspot.y};
+    pehOpenWorkspaceAt(hotspot.workspace,hotspot.x,hotspot.y);
+  }else if(hotspot.scene){
+    pehSetScene(hotspot.scene);
+  }
 }
 function pehFocusWorkspace(uid,skipRender){
   const ws=state.pehverse.workspaces.find((w)=>w.uid===uid);
@@ -552,13 +547,10 @@ function renderPehMap(product,scene,deckMarkup){
       <h1 class="peh-scene-title">${esc(scene?scene.title:product.displayName)}</h1>
       <p class="peh-scene-desc">${esc(scene?scene.desc:product.blurb)}</p>
     </div>
-    ${renderPehSlot(scene)}
-    ${renderPehBubble()}
-    ${renderPehGuide(product)}
     ${renderHotspotLayer(scene)}
-    ${renderPehWaypoints(product,scene)}
     ${renderWorkspaceWindows(deckMarkup)}
     ${renderPehPopUp()}
+    ${renderPehBubble()}
   </div>`;
 }
 
