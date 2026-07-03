@@ -27,8 +27,8 @@ importers:
         specifier: ^6.26.0
         version: 6.30.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       velum-ai:
-        specifier: file:../velum
-        version: file:../velum
+        specifier: file:./vendor/velum-ai
+        version: file:vendor/velum-ai
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -1330,8 +1330,8 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
-  velum-ai@file:../velum:
-    resolution: {directory: ../velum, type: directory}
+  velum-ai@file:vendor/velum-ai:
+    resolution: {directory: vendor/velum-ai, type: directory}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -2589,7 +2589,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  velum-ai@file:../velum: {}
+  velum-ai@file:vendor/velum-ai: {}
 
   vite-node@3.2.4(@types/node@20.19.42)(tsx@4.22.4):
     dependencies:

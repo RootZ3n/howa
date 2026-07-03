@@ -1,5 +1,7 @@
 node_modules/
-dist/
+# Build output (howa's own dist only — anchored so the vendored, prebuilt
+# vendor/velum-ai/dist is still committed and travels with a fresh clone).
+/dist/
 .DS_Store
 *.log
 .env

@@ -48,7 +48,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "velum-ai": "^0.2.2",
+    "velum-ai": "file:./vendor/velum-ai",
     "commander": "^12.1.0",
     "express": "^4.19.2",
     "nanoid": "^5.0.7",
