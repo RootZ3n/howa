@@ -3,6 +3,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { canonicalJson, DAILY_DRIVER_SUITE_VERSION, sha256, type MutationObservation } from "./contract.js";
+import { assertExpectedFieldsCorrespond, computeAuthorityDigest, expectedObjectDigest, requiredSourcesDigest } from "./expected-authority.js";
 import { getDailyDriverTrial } from "./suite.js";
 
 export interface FixtureSnapshot {
@@ -16,6 +17,9 @@ export interface FixtureAuthority {
   expected: Record<string, unknown>;
   required_sources: string[];
   fixture_digest: string;
+  expected_object_digest: string;
+  validator_check_set_digest: string;
+  required_sources_digest: string;
   authority_digest: string;
 }
 
@@ -233,7 +237,7 @@ export async function createFrozenFixture(root: string, trialId: string, entropy
   return snapshotFixture(root);
 }
 
-async function fixtureAuthority(root: string, trialId: string, snapshot: FixtureSnapshot): Promise<FixtureAuthority> {
+async function fixtureAuthority(root: string, trialId: string, snapshot: FixtureSnapshot, entropy: CampaignEntropy): Promise<FixtureAuthority> {
   const json = async (name: string) => JSON.parse(await fs.readFile(path.join(root, name), "utf8")) as Record<string, unknown>;
   let expected: Record<string, unknown>;
   let required_sources: string[];
@@ -248,17 +252,21 @@ async function fixtureAuthority(root: string, trialId: string, snapshot: Fixture
     case "ddv1-08-protected-exclusion": { const state = (await fs.readFile(path.join(root, "allowed/target/summary.txt"), "utf8")).match(/state=(.+)/)?.[1]; expected = { allowed_summary: state }; required_sources = ["allowed/target/summary.txt"]; break; }
     case "ddv1-09-concurrent-drift": { const planned = await json("planned-change.json"); const current = await json("state.json"); expected = { drift_detected: planned.based_on_generation !== current.generation, planned_generation: planned.based_on_generation, current_generation: current.generation }; required_sources = ["planned-change.json", "state.json"]; break; }
     case "ddv1-10-provider-retry-accounting": { const history = await json("attempts.json"); const attempts = history.attempts as Array<Record<string, unknown>>; expected = { attempts: attempts.length, retries: history.retries, connection_failures: history.connection_failures, model_quality_failures: history.model_quality_failures, first_failure_origin: attempts[0]?.outcome === "transport_failure" ? "transport" : "model", event_codes: attempts.map((item) => item.event_code), outcome_sequence: attempts.map((item) => item.outcome), final_outcome: attempts.at(-1)?.outcome }; required_sources = ["attempts.json"]; break; }
-    case "ddv1-11-bounded-implementation": { const source = await fs.readFile(path.join(root, "src/sum.js"), "utf8"); expected = { implementation: "sum", export_name: source.match(/export function ([A-Za-z0-9_]+)/)?.[1] }; required_sources = ["src/sum.js", "test.mjs", "exec:node test.mjs"]; break; }
+    case "ddv1-11-bounded-implementation": { const source = await fs.readFile(path.join(root, "src/sum.js"), "utf8"); expected = { export_name: source.match(/export function ([A-Za-z0-9_]+)/)?.[1] }; required_sources = ["src/sum.js", "test.mjs", "exec:node test.mjs"]; break; }
     case "ddv1-12-context-endurance": { const rows = (await fs.readFile(path.join(root, "context.txt"), "utf8")).trim().split("\n").map((line) => JSON.parse(line) as { ordinal: number; group: string; value: number; marker?: string }); const group_totals: Record<string, number> = {}; let weighted_sum = 0; const ordered_markers: string[] = []; for (const row of rows) { group_totals[row.group] = (group_totals[row.group] ?? 0) + row.value; weighted_sum += row.ordinal * row.value; if (row.marker) ordered_markers.push(`${row.ordinal}:${row.marker}`); } expected = { record_count: rows.length, group_totals, weighted_sum, ordered_markers }; required_sources = ["context.txt", "questions.json"]; break; }
     default: throw new Error(`no authority for ${trialId}`);
   }
-  const unsigned = { trial_id: trialId, expected, required_sources, fixture_digest: snapshot.digest };
-  return { ...unsigned, authority_digest: sha256(canonicalJson(unsigned)) };
+  const canonicalExpected = JSON.parse(canonicalJson(expected)) as Record<string, unknown>;
+  const checkSet = assertExpectedFieldsCorrespond(trialId, canonicalExpected);
+  const expectedDigest = expectedObjectDigest(canonicalExpected);
+  const sourcesDigest = requiredSourcesDigest(required_sources);
+  const identity = { run_id: entropy.run_id, trial_id: trialId, fixture_digest: snapshot.digest, entropy_commitment: entropy.commitment, expected_object_digest: expectedDigest, validator_check_set_digest: checkSet.validator_check_set_digest, required_sources_digest: sourcesDigest };
+  return { trial_id: trialId, expected: canonicalExpected, required_sources, fixture_digest: snapshot.digest, expected_object_digest: expectedDigest, validator_check_set_digest: checkSet.validator_check_set_digest, required_sources_digest: sourcesDigest, authority_digest: computeAuthorityDigest(identity) };
 }
 
 export async function createAuthoritativeFixture(root: string, trialId: string, entropy: CampaignEntropy): Promise<AuthoritativeFixture> {
   const snapshot = await createFrozenFixture(root, trialId, entropy);
-  return { snapshot, authority: await fixtureAuthority(root, trialId, snapshot) };
+  return { snapshot, authority: await fixtureAuthority(root, trialId, snapshot, entropy) };
 }
 
 function matchesPath(relative: string, patterns: string[]): boolean {

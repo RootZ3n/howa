@@ -25,6 +25,7 @@ import { validateTrialResult } from "./validators.js";
 import { apiEquivalentCost, DAILY_DRIVER_RATE_CARD_VERSION, lookupRate } from "./rate-card.js";
 import { buildEvidenceManifest } from "./evidence.js";
 import { rejectCandidateRuntimeOverrides, resolveTrustedRuntime } from "./runtime-policy.js";
+import { AUTHORITY_SCHEMA_VERSION, trustedExpectedEvidence } from "./expected-authority.js";
 
 export interface DailyDriverCandidate {
   model_id: string;
@@ -346,13 +347,13 @@ async function captureOfflineTelemetry(sessionRoot: string, attempt: number): Pr
   } catch { return null; }
 }
 
-async function writeEvidence(outputRoot: string, relative: string, content: string): Promise<EvidenceReference> {
+async function writeEvidence(outputRoot: string, relative: string, content: string, explicitKind?: EvidenceReference["kind"], mode = 0o444): Promise<EvidenceReference> {
   const target = path.join(outputRoot, relative);
   await fs.mkdir(path.dirname(target), { recursive: true });
-  const handle = await fs.open(target, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY, 0o444);
+  const handle = await fs.open(target, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY, mode);
   try { await handle.writeFile(content, "utf8"); await handle.sync(); } finally { await handle.close(); }
   const name = path.basename(relative);
-  const kind: EvidenceReference["kind"] = name.includes("stdout") ? "stdout" : name.includes("stderr") ? "stderr" : name.includes("fixture") ? "fixture" : name.includes("validator") ? "validator" : "artifact";
+  const kind: EvidenceReference["kind"] = explicitKind ?? (name.includes("stdout") ? "stdout" : name.includes("stderr") ? "stderr" : name.includes("fixture") ? "fixture" : name.includes("validator") ? "validator" : "artifact");
   return { id: name.replace(/[^a-z0-9_.-]/gi, "_"), kind, path: relative.split(path.sep).join("/"), digest: sha256(content) };
 }
 
@@ -382,6 +383,9 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
   const evidence: EvidenceReference[] = [];
   let fixtureDigest = "";
   let authorityDigest = "";
+  let expectedObjectDigest = "";
+  let validatorCheckSetDigest = "";
+  let requiredSourcesDigest = "";
   let finalValidation: Awaited<ReturnType<typeof validateTrialResult>> | null = null;
   let secretExposure = false;
   const redactionEvents: DailyDriverReceiptV1["redaction_events"] = [];
@@ -416,6 +420,30 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       else if (fixtureDigest !== before.digest) throw new Error(`fixture ${trialId} is not deterministic across attempts`);
       if (!authorityDigest) authorityDigest = fixture.authority.authority_digest;
       else if (authorityDigest !== fixture.authority.authority_digest) throw new Error(`fixture authority ${trialId} is not deterministic across attempts`);
+      if (!expectedObjectDigest) expectedObjectDigest = fixture.authority.expected_object_digest;
+      else if (expectedObjectDigest !== fixture.authority.expected_object_digest) throw new Error(`expected object ${trialId} is not deterministic across attempts`);
+      if (!validatorCheckSetDigest) validatorCheckSetDigest = fixture.authority.validator_check_set_digest;
+      else if (validatorCheckSetDigest !== fixture.authority.validator_check_set_digest) throw new Error(`validator check set ${trialId} changed across attempts`);
+      if (!requiredSourcesDigest) requiredSourcesDigest = fixture.authority.required_sources_digest;
+      else if (requiredSourcesDigest !== fixture.authority.required_sources_digest) throw new Error(`required sources ${trialId} changed across attempts`);
+      const evidenceBase = path.join("artifacts", options.run_id, trialId);
+      const expectedDocument = trustedExpectedEvidence({
+        run_id: options.run_id,
+        trial_id: trialId,
+        attempt,
+        fixture_digest: fixture.authority.fixture_digest,
+        entropy_commitment: entropy.commitment,
+        expected: fixture.authority.expected,
+        expected_object_digest: fixture.authority.expected_object_digest,
+        validator_check_set_digest: fixture.authority.validator_check_set_digest,
+        required_sources_digest: fixture.authority.required_sources_digest,
+        authority_digest: fixture.authority.authority_digest,
+      });
+      const expectedBytes = `${canonicalJson(expectedDocument)}\n`;
+      const expectedScan = redactSecrets(expectedBytes, `attempt-${attempt}.trusted-expected`, secretSentinels);
+      if (expectedScan.text !== expectedBytes || expectedScan.events.length > 0) throw new Error(`trusted expected evidence failed secret scan for ${trialId}; retention aborted rather than altering validator semantics`);
+      const expectedEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.trusted-expected.json`), expectedBytes, "trusted_expected", 0o400);
+      evidence.push(expectedEvidence);
       const args = substituteArgs(options.candidate.hermes_args, { prompt, prompt_file: promptFile, usage_file: usageFile, workspace, session_root: sessionRoot, trial_id: trialId });
       if (authoritativeArgs.length === 0) authoritativeArgs = args;
       const effectiveTimeout = options.timeout_override_ms === undefined ? trial.timeout_ms : Math.max(100, Math.min(trial.timeout_ms, options.timeout_override_ms));
@@ -453,7 +481,6 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       const stderrRedacted = redactSecrets(processResult.stderr, `attempt-${attempt}.stderr`,secretSentinels);
       redactionEvents.push(...stdoutRedacted.events,...stderrRedacted.events);
       secretExposure ||= stdoutRedacted.confirmed || stderrRedacted.confirmed;
-      const evidenceBase = path.join("artifacts", options.run_id, trialId);
       const stdoutEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.stdout.txt`), stdoutRedacted.text);
       const stderrEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.stderr.txt`), stderrRedacted.text);
       evidence.push(stdoutEvidence, stderrEvidence);
@@ -484,17 +511,18 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       attempts[attempts.length - 1]!.outcome = finalValidation.accepted ? "accepted_output" : "model_failure";
       attempts[attempts.length - 1]!.error_kind = finalValidation.accepted ? null : "MODEL_OUTPUT_REJECTED";
       attempts[attempts.length - 1]!.retryable = !finalValidation.accepted && correctionRounds < maxCorrections;
-      const validatorEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.validator.json`), `${canonicalJson({ checks: finalValidation.checks, raw_verdict: finalValidation.raw_verdict, accepted: finalValidation.accepted, disqualifier_codes: finalValidation.disqualifier_codes })}\n`);
-      evidence.push(validatorEvidence);
       const evidenceIdFor = (alias: string): string => {
         if (alias === "candidate.stdout") return evidence.find((item) => item.path.endsWith(`attempt-${attempt}.stdout.txt`))?.id ?? alias;
         if (alias === "fixture.before") return evidence.find((item) => item.path.endsWith(`attempt-${attempt}.fixture-before.json`))?.id ?? alias;
         if (alias === "fixture.after") return evidence.find((item) => item.path.endsWith(`attempt-${attempt}.fixture-after.json`))?.id ?? alias;
         if (alias === "hermes.transcript") return evidence.find((item) => item.path.endsWith(`attempt-${attempt}.hermes-transcript.json`))?.id ?? alias;
-        if (alias === "validator.test") return validatorEvidence.id;
+        if (alias === "trusted.expected") return expectedEvidence.id;
+        if (alias === "validator.test") return `attempt-${attempt}.validator.json`;
         return alias;
       };
       finalValidation.checks = finalValidation.checks.map((item) => ({ ...item, evidence_refs: item.evidence_refs.map(evidenceIdFor) }));
+      const validatorEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.validator.json`), `${canonicalJson({ schema_version: "howa.ddv1-validator-result.v2", run_id: options.run_id, trial_id: trialId, attempt, fixture_digest: fixture.authority.fixture_digest, entropy_commitment: entropy.commitment, expected_object_digest: finalValidation.expected_object_digest, authority_digest: finalValidation.authority_digest, validator_check_set_digest: finalValidation.validator_check_set_digest, consumed_expected_fields: finalValidation.consumed_expected_fields, validator_check_ids: finalValidation.validator_check_ids, checks: finalValidation.checks, raw_verdict: finalValidation.raw_verdict, accepted: finalValidation.accepted, disqualifier_codes: finalValidation.disqualifier_codes })}\n`);
+      evidence.push(validatorEvidence);
       if (!finalValidation.accepted && correctionRounds < maxCorrections) { correctionRounds += 1; continue; }
       break;
     }
@@ -518,7 +546,7 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
     const systemPromptDigest = sha256(canonicalJson({ task_prompt: prompt, prompt_implementation_digest: promptImplementationDigest, hermes_executable_digest: runtime.hermes_executable_digest }));
     const toolRegistryDigest = sha256(canonicalJson({ implementation_digest: toolImplementationDigest, enabled_toolsets: options.candidate.hermes_configuration.toolsets ?? [], permitted_trial_tools: trial.permitted_tools, terminal_sandbox_digest: runtime.terminal_sandbox_digest }));
     const evidenceBase = path.join("artifacts", options.run_id, trialId);
-    evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"trusted-authority.json"),`${canonicalJson({schema_version:"howa.ddv1-authority.v2",run_id:options.run_id,trial_id:trialId,entropy_commitment:entropy.commitment,fixture_digest:fixtureDigest,authority_digest:authorityDigest})}\n`));
+    evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"trusted-authority.json"),`${canonicalJson({schema_version:AUTHORITY_SCHEMA_VERSION,suite_version:DAILY_DRIVER_SUITE_VERSION,runtime_policy_version:runtime.policy_version,run_id:options.run_id,trial_id:trialId,entropy_commitment:entropy.commitment,fixture_digest:fixtureDigest,expected_object_digest:expectedObjectDigest,validator_check_set_digest:validatorCheckSetDigest,required_sources_digest:requiredSourcesDigest,authority_digest:authorityDigest})}\n`, "artifact", 0o400));
     evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"runtime-identity.json"),`${canonicalJson({hermes_launcher_digest:runtime.launcher_digest,terminal_sandbox_digest:runtime.terminal_sandbox_digest,hermes_executable_digest:runtime.hermes_executable_digest,runtime_policy_version:runtime.policy_version,runtime_policy_digest:runtime.policy_digest,hermes_configuration_digest:configurationDigest,system_prompt_digest:systemPromptDigest,tool_registry_digest:toolRegistryDigest,cost_rate_card_version:DAILY_DRIVER_RATE_CARD_VERSION,campaign_entropy_commitment:entropy.commitment})}\n`));
     const manifest = await buildEvidenceManifest(options.output_root,options.run_id,trialId,evidence);
     const receipt = sealReceipt({
@@ -546,6 +574,9 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       tool_registry_digest: toolRegistryDigest,
       fixture_digest: fixtureDigest,
       campaign_entropy_commitment: entropy.commitment,
+      expected_object_digest: expectedObjectDigest,
+      authority_digest: authorityDigest,
+      validator_check_set_digest: validatorCheckSetDigest,
       start_timestamp: startTimestamp,
       end_timestamp: new Date(runFinishedMs).toISOString(),
       wall_clock_duration_ms: runFinishedMs - runStartedMs,

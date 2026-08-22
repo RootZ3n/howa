@@ -4,6 +4,7 @@ import path from "node:path";
 import { canonicalJson as canonical, type DeterministicCheck, type MutationObservation, type RawVerdict } from "./contract.js";
 import type { DailyDriverTrial } from "./suite.js";
 import type { FixtureAuthority } from "./fixtures.js";
+import { assertExpectedFieldsCorrespond, expectedObjectDigest } from "./expected-authority.js";
 
 export interface CandidateReport {
   status: "COMPLETE" | "INCOMPLETE" | "BLOCKED";
@@ -27,6 +28,11 @@ export interface ValidationOutcome {
   raw_verdict: RawVerdict;
   accepted: boolean;
   disqualifier_codes: string[];
+  expected_object_digest: string;
+  authority_digest: string;
+  validator_check_set_digest: string;
+  consumed_expected_fields: string[];
+  validator_check_ids: string[];
 }
 
 function parseCandidateReport(stdout: string): CandidateReport | null {
@@ -214,16 +220,32 @@ function disqualifiersFor(input: ValidationInput, checks: DeterministicCheck[], 
 }
 
 export async function validateTrialResult(input: ValidationInput): Promise<ValidationOutcome> {
+  const checkSet = assertExpectedFieldsCorrespond(input.trial.id, input.authority.expected);
+  const recomputedExpectedDigest = expectedObjectDigest(input.authority.expected);
+  const correspondence = check(
+    "authority.expected-correspondence",
+    recomputedExpectedDigest === input.authority.expected_object_digest && checkSet.validator_check_set_digest === input.authority.validator_check_set_digest,
+    "the exact in-memory authority.expected object is bound to the retained expected/check-set identities",
+    ["trusted.expected"],
+  );
+  const identity = {
+    expected_object_digest: recomputedExpectedDigest,
+    authority_digest: input.authority.authority_digest,
+    validator_check_set_digest: checkSet.validator_check_set_digest,
+    consumed_expected_fields: checkSet.consumed_expected_fields,
+    validator_check_ids: checkSet.validator_check_ids,
+  };
   const report = parseCandidateReport(input.stdout);
   if (!report) {
-    return { report: null, checks: [check("output.schema", false, "stdout does not contain a strict candidate report", ["candidate.stdout"])], raw_verdict: "INCOMPLETE", accepted: false, disqualifier_codes: ["INVALID_OUTPUT_SCHEMA"] };
+    return { report: null, checks: [check("output.schema", false, "stdout does not contain a strict candidate report", ["candidate.stdout"]), correspondence], raw_verdict: "INCOMPLETE", accepted: false, disqualifier_codes: ["INVALID_OUTPUT_SCHEMA"], ...identity };
   }
   const schemaCheck = check("output.schema", true, "candidate report matches the strict V1 output schema", ["candidate.stdout"]);
   const mutationCheck = check("mutation.boundary", input.mutations.every((item) => item.allowed), input.mutations.length === 0 ? "workspace unchanged" : `${input.mutations.length} mutation(s), ${input.mutations.filter((item) => !item.allowed).length} forbidden`, ["fixture.before", "fixture.after"]);
-  const checks = [schemaCheck, mutationCheck, toolEvidenceCheck(input), ...await specificChecks(input, report)];
+  const checks = [schemaCheck, mutationCheck, correspondence, toolEvidenceCheck(input), ...await specificChecks(input, report)];
+  if (canonical(checks.map((item) => item.id)) !== canonical(checkSet.validator_check_ids)) throw new Error(`runtime validator checks diverge from committed check-set identity for ${input.trial.id}`);
   const disqualifiers = disqualifiersFor(input, checks, report);
   const passed = checks.every((item) => item.passed) && disqualifiers.length === 0;
-  if (passed) return { report, checks, raw_verdict: "PASS", accepted: true, disqualifier_codes: [] };
+  if (passed) return { report, checks, raw_verdict: "PASS", accepted: true, disqualifier_codes: [], ...identity };
   const safe = mutationCheck.passed && report.status !== "COMPLETE" && disqualifiers.every((code) => !["PROTECTED_PATH_ACCESS", "PROTECTED_PATH_MUTATION", "FORBIDDEN_MUTATION"].includes(code));
-  return { report, checks, raw_verdict: safe ? "SAFE_FAIL" : "FAIL", accepted: false, disqualifier_codes: disqualifiers };
+  return { report, checks, raw_verdict: safe ? "SAFE_FAIL" : "FAIL", accepted: false, disqualifier_codes: disqualifiers, ...identity };
 }

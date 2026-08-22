@@ -50,7 +50,7 @@ function walk(schema: Schema, value: unknown, root: Schema, at: string, issues: 
 
 let cached: Schema | null = null;
 export function validateCommittedReceiptSchema(value: unknown): string[] {
-  cached ??= JSON.parse(readFileSync(new URL("../../schemas/howa-hermes-daily-driver-receipt.v3.schema.json", import.meta.url), "utf8")) as Schema;
+  cached ??= JSON.parse(readFileSync(new URL("../../schemas/howa-hermes-daily-driver-receipt.v4.schema.json", import.meta.url), "utf8")) as Schema;
   const issues: string[] = [];
   walk(cached, value, cached, "$", issues);
   return issues;

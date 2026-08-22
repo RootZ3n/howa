@@ -16,7 +16,7 @@ import { writeFileAtomic } from "../utils/atomic-write.js";
 import { runDailyDriverSuite, type DailyDriverCandidate } from "../daily-driver/runner.js";
 import { HERMES_DAILY_DRIVER_V1 } from "../daily-driver/suite.js";
 import { validateReceipt, type DailyDriverReceiptV1 } from "../daily-driver/contract.js";
-import { verifyReceiptEvidence } from "../daily-driver/evidence.js";
+import { adjudicateReceiptEvidence, verifyReceiptEvidence } from "../daily-driver/evidence.js";
 
 const INIT_STATE_ROOT_PROMPT_DEFAULT = "~/.howa";
 
@@ -452,7 +452,7 @@ program
 
 program
   .command("daily-driver")
-  .argument("<action>", "list | run | verify")
+  .argument("<action>", "list | run | verify | adjudicate")
   .option("--candidate <file>", "Secret-free candidate JSON (required for run)")
   .option("--output <dir>", "Application-write-once receipt/export root", "howa-daily-driver")
   .option("--run-id <id>", "Stable run/campaign identity")
@@ -469,9 +469,9 @@ program
       }
       return;
     }
-    if(action==="verify"){
+    if(action==="verify"||action==="adjudicate"){
       if(!opts.receipt||!opts.evidenceRoot) throw new Error("Usage: howa daily-driver verify --receipt <receipt.json> --evidence-root <dir>");
-      const receipt=JSON.parse(await fs.readFile(path.resolve(opts.receipt),"utf8")) as DailyDriverReceiptV1; validateReceipt(receipt); await verifyReceiptEvidence(receipt,path.resolve(opts.evidenceRoot),true); process.stdout.write(`VERIFIED\t${receipt.receipt_digest}\n`); return;
+      const receipt=JSON.parse(await fs.readFile(path.resolve(opts.receipt),"utf8")) as DailyDriverReceiptV1; validateReceipt(receipt); const root=path.resolve(opts.evidenceRoot); await verifyReceiptEvidence(receipt,root,true); if(action==="adjudicate")process.stdout.write(`${JSON.stringify(await adjudicateReceiptEvidence(receipt,root,true),null,2)}\n`);else process.stdout.write(`VERIFIED\t${receipt.receipt_digest}\n`); return;
     }
     if (action !== "run" || !opts.candidate || !opts.runId) {
       throw new Error("Usage: howa daily-driver run --candidate <candidate.json> --run-id <id> [--output <dir>] [--trial <ids...>]");

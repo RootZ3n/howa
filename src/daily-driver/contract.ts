@@ -4,8 +4,8 @@ import path from "node:path";
 import { validateCommittedReceiptSchema } from "./json-schema.js";
 import { DAILY_DRIVER_RATE_CARD_VERSION } from "./rate-card.js";
 
-export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v3" as const;
-export const DAILY_DRIVER_SUITE_VERSION = "hermes-daily-driver.v1.1" as const;
+export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v4" as const;
+export const DAILY_DRIVER_SUITE_VERSION = "hermes-daily-driver.v1.2" as const;
 
 export type RawVerdict = "PASS" | "FAIL" | "SAFE_FAIL" | "INCOMPLETE" | "ERROR";
 export type AttemptOutcome = "accepted_output" | "model_failure" | "transport_failure" | "timeout";
@@ -80,7 +80,7 @@ export interface DeterministicCheck {
 
 export interface EvidenceReference {
   id: string;
-  kind: "stdout" | "stderr" | "artifact" | "fixture" | "validator";
+  kind: "stdout" | "stderr" | "artifact" | "fixture" | "validator" | "trusted_expected";
   path: string;
   digest: string;
 }
@@ -111,6 +111,9 @@ export interface DailyDriverReceiptV1 {
   tool_registry_digest: string;
   fixture_digest: string;
   campaign_entropy_commitment: string;
+  expected_object_digest: string;
+  authority_digest: string;
+  validator_check_set_digest: string;
   start_timestamp: string;
   end_timestamp: string;
   wall_clock_duration_ms: number;
@@ -187,7 +190,7 @@ const TOP_LEVEL_KEYS = [
   "schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "timestamp",
   "model_id", "provider_id", "provider_route", "reasoning_level", "served_model_identity",
   "hermes_version", "hermes_commit", "hermes_launcher_digest", "terminal_sandbox_digest", "runtime_policy_version", "runtime_policy_digest", "hermes_executable_digest", "hermes_arguments", "requested_temperature", "hermes_configuration_digest", "system_prompt_digest",
-  "tool_registry_digest", "fixture_digest", "campaign_entropy_commitment", "start_timestamp", "end_timestamp",
+  "tool_registry_digest", "fixture_digest", "campaign_entropy_commitment", "expected_object_digest", "authority_digest", "validator_check_set_digest", "start_timestamp", "end_timestamp",
   "wall_clock_duration_ms", "attempts", "retries", "connection_failures", "timeout_events",
   "compaction_events", "input_tokens", "output_tokens", "charged_cost_usd", "api_equivalent_cost_usd", "plan_credit_consumed", "subscription_quota_consumed", "cost_rate_card_version", "cost_provenance", "candidate_accommodations", "max_turns", "max_output_tokens", "limits_enforcement", "tool_calls",
   "mutation_observations", "deterministic_checks", "raw_verdict", "evidence_references", "evidence_manifest_path", "evidence_manifest_digest", "evidence_bundle_mode", "redaction_events",
@@ -269,7 +272,7 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   if (r.trial_suite_version !== DAILY_DRIVER_SUITE_VERSION) issues.push(`$.trial_suite_version unsupported: ${String(r.trial_suite_version)}`);
   if (r.cost_rate_card_version !== DAILY_DRIVER_RATE_CARD_VERSION) issues.push(`$.cost_rate_card_version unsupported: ${String(r.cost_rate_card_version)}`);
   stringField(r, "served_model_identity", "$", issues, true);
-  for (const key of ["receipt_digest", "hermes_launcher_digest", "terminal_sandbox_digest", "runtime_policy_digest", "hermes_executable_digest", "hermes_configuration_digest", "system_prompt_digest", "tool_registry_digest", "fixture_digest", "campaign_entropy_commitment", "evidence_manifest_digest"] as const) digestField(r, key, "$", issues);
+  for (const key of ["receipt_digest", "hermes_launcher_digest", "terminal_sandbox_digest", "runtime_policy_digest", "hermes_executable_digest", "hermes_configuration_digest", "system_prompt_digest", "tool_registry_digest", "fixture_digest", "campaign_entropy_commitment", "expected_object_digest", "authority_digest", "validator_check_set_digest", "evidence_manifest_digest"] as const) digestField(r, key, "$", issues);
   if (r.hermes_launcher_digest === r.terminal_sandbox_digest) issues.push("$.terminal_sandbox_digest must independently bind the terminal sandbox bytes");
   if (r.evidence_bundle_mode !== "receipt-plus-evidence-directory") issues.push("$.evidence_bundle_mode is unsupported");
   arrayField(r, "hermes_arguments", "$", issues).forEach((arg, index) => { if (typeof arg !== "string") issues.push(`$.hermes_arguments[${index}] must be a string`); });
@@ -361,7 +364,7 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
     const at = `$.evidence_references[${index}]`;
     if (!exactKeys(item, ["id", "kind", "path", "digest"], at, issues)) return;
     stringField(item, "id", at, issues); stringField(item, "path", at, issues); digestField(item, "digest", at, issues);
-    if (!["stdout", "stderr", "artifact", "fixture", "validator"].includes(String(item.kind))) issues.push(`${at}.kind is invalid`);
+    if (!["stdout", "stderr", "artifact", "fixture", "validator", "trusted_expected"].includes(String(item.kind))) issues.push(`${at}.kind is invalid`);
     if (typeof item.path === "string" && (path.isAbsolute(item.path) || item.path.split(/[\\/]/).includes(".."))) issues.push(`${at}.path must be a safe relative path`);
   });
   arrayField(r, "redaction_events", "$", issues).forEach((item, index) => {
