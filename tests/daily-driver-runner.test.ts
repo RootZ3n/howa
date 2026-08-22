@@ -13,7 +13,6 @@ const candidate: DailyDriverCandidate = {
   provider_id: "offline",
   provider_route: "direct",
   reasoning_level: "test",
-  expected_served_model_identity: "offline/mock-v1",
   hermes_command: "/bin/bash",
   hermes_args: ["-c", `out=$(/home/zen/.hermes/node/bin/node ${path.join(fixtureDir, "daily-driver-reference-candidate.mjs")} "$1"); printf '%s\\n' "$out"`, "reference", "{trial_id}"],
   hermes_version: "test",

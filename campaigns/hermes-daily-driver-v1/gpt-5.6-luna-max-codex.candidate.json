@@ -5,7 +5,6 @@
   "reasoning_level": "max",
   "temperature": 0,
   "provider_credential_env": "HOWA_OPENAI_CODEX_AUTH_BUNDLE",
-  "expected_served_model_identity": "gpt-5.6-luna",
   "hermes_command": "../../scripts/hermes-daily-driver-sandbox.sh",
   "hermes_executable_path": "/home/zen/.local/bin/hermes",
   "hermes_install_root": "/home/zen/.hermes/hermes-agent",

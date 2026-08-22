@@ -30,7 +30,6 @@ export interface DailyDriverCandidate {
   provider_route: string;
   reasoning_level: string;
   temperature?: number;
-  expected_served_model_identity?: string;
   hermes_command: string;
   hermes_executable_path?: string;
   /** Trusted host path whose exact prompt/tool implementation files are bound into effective digests. */

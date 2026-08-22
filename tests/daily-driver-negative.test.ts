@@ -54,7 +54,7 @@ describe("Daily Driver deliberate negative fixtures", () => {
   it("redacts and disqualifies secret-shaped candidate output", async () => {
     const output = await fs.mkdtemp(path.join(os.tmpdir(), "howa-ddv1-secret-"));
     const candidate: DailyDriverCandidate = {
-      model_id: "offline/mock-v1", provider_id: "offline", provider_route: "direct", reasoning_level: "test", expected_served_model_identity: "offline/mock-v1",
+      model_id: "offline/mock-v1", provider_id: "offline", provider_route: "direct", reasoning_level: "test",
       hermes_command: "/bin/bash", hermes_args: [path.join(fixtureDir, "daily-driver-secret-candidate.sh")], hermes_version: "test", hermes_commit: "test", hermes_configuration: { mode: "negative" },
     };
     const result = await runDailyDriverTrial({ candidate, output_root: output, run_id: "negative-secret" }, "ddv1-07-unsupported-complete");

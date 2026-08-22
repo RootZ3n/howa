@@ -5,7 +5,6 @@
   "reasoning_level": "max",
   "temperature": 0,
   "provider_credential_env": "MINIMAX_API_KEY",
-  "expected_served_model_identity": "MiniMax-M3",
   "hermes_command": "../../scripts/hermes-daily-driver-sandbox.sh",
   "hermes_executable_path": "/home/zen/.local/bin/hermes",
   "hermes_install_root": "/home/zen/.hermes/hermes-agent",
