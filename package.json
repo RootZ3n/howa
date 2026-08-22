@@ -16,6 +16,8 @@
   "files": [
     "dist",
     "docs",
+    "schemas",
+    "campaigns",
     "scripts",
     "README.md",
     "CHANGELOG.md",
