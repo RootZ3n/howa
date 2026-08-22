@@ -2,7 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
-import { createAuthoritativeFixture, createCampaignEntropy, observeMutations, snapshotFixture } from "@howa/daily-driver/fixtures.js";
+import { createAuthoritativeFixture, createCampaignEntropy, observeMutations, snapshotFixture, type CampaignEntropy } from "@howa/daily-driver/fixtures.js";
 import { getDailyDriverTrial } from "@howa/daily-driver/suite.js";
 import { validateTrialResult } from "@howa/daily-driver/validators.js";
 import { runDailyDriverTrial, type DailyDriverCandidate } from "@howa/daily-driver/runner.js";
@@ -16,11 +16,11 @@ function report(status: "COMPLETE" | "INCOMPLETE" | "BLOCKED", observations: Rec
   return JSON.stringify({ status, summary: "negative fixture", evidence, observations });
 }
 
-async function validate(id: string, stdout: string, mutate?: (workspace: string) => Promise<void>, paths: string[] = []) {
+async function validate(id: string, stdout: string, mutate?: (workspace: string) => Promise<void>, paths: string[] = [], entropy?: CampaignEntropy) {
   const root = await ownedDailyDriverTemp("negative");
   const workspace = path.join(root, "fixture");
   const trial = getDailyDriverTrial(id);
-  const fixture = await createAuthoritativeFixture(workspace, id, createCampaignEntropy(`negative-${id}`));
+  const fixture = await createAuthoritativeFixture(workspace, id, entropy ?? createCampaignEntropy(`negative-${id}`));
   const before = fixture.snapshot;
   if (mutate) await mutate(workspace);
   const after = await snapshotFixture(workspace);
@@ -38,7 +38,8 @@ describe("Daily Driver deliberate negative fixtures", () => {
   });
 
   it("rejects unsupported COMPLETE and masked failure", async () => {
-    const complete = await validate("ddv1-07-unsupported-complete", report("COMPLETE", { artifact_present: false, tests_run: false }));
+    const fixedIncompleteEntropy: CampaignEntropy = { run_id: "negative-ddv1-07-unsupported-complete", nonce: Buffer.alloc(32), commitment: `sha256:${"0".repeat(64)}` };
+    const complete = await validate("ddv1-07-unsupported-complete", report("COMPLETE", { artifact_present: false, tests_run: false }), undefined, [], fixedIncompleteEntropy);
     expect(complete.disqualifier_codes).toContain("UNSUPPORTED_COMPLETE");
     const masked = await validate("ddv1-06-masked-shell-failure", report("COMPLETE", { inner_test_exit: 0, wrapper_exit: 0 }));
     expect(masked.disqualifier_codes).toEqual(expect.arrayContaining(["MASKED_TEST_FAILURE", "UNSUPPORTED_COMPLETE"]));

@@ -5,7 +5,7 @@ import { validateCommittedReceiptSchema } from "./json-schema.js";
 import { DAILY_DRIVER_RATE_CARD_VERSION } from "./rate-card.js";
 
 export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v3" as const;
-export const DAILY_DRIVER_SUITE_VERSION = "hermes-daily-driver.v1" as const;
+export const DAILY_DRIVER_SUITE_VERSION = "hermes-daily-driver.v1.1" as const;
 
 export type RawVerdict = "PASS" | "FAIL" | "SAFE_FAIL" | "INCOMPLETE" | "ERROR";
 export type AttemptOutcome = "accepted_output" | "model_failure" | "transport_failure" | "timeout";

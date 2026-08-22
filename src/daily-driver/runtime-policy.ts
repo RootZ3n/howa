@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalJson, sha256 } from "./contract.js";
 
-export const DAILY_DRIVER_RUNTIME_POLICY_VERSION = "howa.ddv1-runtime.2026-08-22.2" as const;
+export const DAILY_DRIVER_RUNTIME_POLICY_VERSION = "howa.ddv1-runtime.2026-08-22.3" as const;
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../");
 
 export const TRUSTED_RUNTIME_PATHS = Object.freeze({

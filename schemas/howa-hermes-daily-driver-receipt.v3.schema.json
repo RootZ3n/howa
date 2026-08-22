@@ -20,7 +20,7 @@
     "schema_version": { "const": "howa.hermes-daily-driver.receipt.v3" },
     "receipt_digest": { "$ref": "#/$defs/digest" },
     "trial_id": { "type": "string", "minLength": 1 },
-    "trial_suite_version": { "const": "hermes-daily-driver.v1" },
+    "trial_suite_version": { "const": "hermes-daily-driver.v1.1" },
     "run_id": { "type": "string", "minLength": 1 },
     "timestamp": { "$ref": "#/$defs/timestamp" },
     "model_id": { "type": "string", "minLength": 1 },

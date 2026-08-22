@@ -381,6 +381,7 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
   const allMutations: MutationObservation[] = [];
   const evidence: EvidenceReference[] = [];
   let fixtureDigest = "";
+  let authorityDigest = "";
   let finalValidation: Awaited<ReturnType<typeof validateTrialResult>> | null = null;
   let secretExposure = false;
   const redactionEvents: DailyDriverReceiptV1["redaction_events"] = [];
@@ -413,6 +414,8 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       const before = fixture.snapshot;
       if (!fixtureDigest) fixtureDigest = before.digest;
       else if (fixtureDigest !== before.digest) throw new Error(`fixture ${trialId} is not deterministic across attempts`);
+      if (!authorityDigest) authorityDigest = fixture.authority.authority_digest;
+      else if (authorityDigest !== fixture.authority.authority_digest) throw new Error(`fixture authority ${trialId} is not deterministic across attempts`);
       const args = substituteArgs(options.candidate.hermes_args, { prompt, prompt_file: promptFile, usage_file: usageFile, workspace, session_root: sessionRoot, trial_id: trialId });
       if (authoritativeArgs.length === 0) authoritativeArgs = args;
       const effectiveTimeout = options.timeout_override_ms === undefined ? trial.timeout_ms : Math.max(100, Math.min(trial.timeout_ms, options.timeout_override_ms));
@@ -515,7 +518,7 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
     const systemPromptDigest = sha256(canonicalJson({ task_prompt: prompt, prompt_implementation_digest: promptImplementationDigest, hermes_executable_digest: runtime.hermes_executable_digest }));
     const toolRegistryDigest = sha256(canonicalJson({ implementation_digest: toolImplementationDigest, enabled_toolsets: options.candidate.hermes_configuration.toolsets ?? [], permitted_trial_tools: trial.permitted_tools, terminal_sandbox_digest: runtime.terminal_sandbox_digest }));
     const evidenceBase = path.join("artifacts", options.run_id, trialId);
-    evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"trusted-authority.json"),`${canonicalJson({schema_version:"howa.ddv1-authority.v1",run_id:options.run_id,trial_id:trialId,nonce_hex:entropy.nonce.toString("hex"),entropy_commitment:entropy.commitment,fixture_digest:fixtureDigest})}\n`));
+    evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"trusted-authority.json"),`${canonicalJson({schema_version:"howa.ddv1-authority.v2",run_id:options.run_id,trial_id:trialId,entropy_commitment:entropy.commitment,fixture_digest:fixtureDigest,authority_digest:authorityDigest})}\n`));
     evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"runtime-identity.json"),`${canonicalJson({hermes_launcher_digest:runtime.launcher_digest,terminal_sandbox_digest:runtime.terminal_sandbox_digest,hermes_executable_digest:runtime.hermes_executable_digest,runtime_policy_version:runtime.policy_version,runtime_policy_digest:runtime.policy_digest,hermes_configuration_digest:configurationDigest,system_prompt_digest:systemPromptDigest,tool_registry_digest:toolRegistryDigest,cost_rate_card_version:DAILY_DRIVER_RATE_CARD_VERSION,campaign_entropy_commitment:entropy.commitment})}\n`));
     const manifest = await buildEvidenceManifest(options.output_root,options.run_id,trialId,evidence);
     const receipt = sealReceipt({
@@ -597,9 +600,14 @@ export async function runDailyDriverSuite(options: RunDailyDriverOptions): Promi
     if (typeof activeCostLimit === "number" && campaignCost >= activeCostLimit) throw new Error(`${isCanary ? "canary" : "campaign"} cost limit reached before ${id}`);
     const result = await runDailyDriverTrial({ ...options, campaign_entropy: campaignEntropy }, id);
     results.push(result);
-    if (result.receipt.api_equivalent_cost_usd === null) throw new Error(`campaign cost cannot be enforced after ${id}: API-equivalent cost is unknown`);
-    campaignCost += result.receipt.api_equivalent_cost_usd;
+    campaignCost = addKnownCampaignCost(campaignCost, result.receipt.api_equivalent_cost_usd, id);
     if (typeof activeCostLimit === "number" && campaignCost > activeCostLimit) throw new Error(`${isCanary ? "canary" : "campaign"} cost limit exceeded after ${id}; receipts remain application-write-once and tamper-evident`);
   }
   return results;
+}
+
+/** Single fail-closed path used by campaign ceilings and directly regression-tested. */
+export function addKnownCampaignCost(current: number, next: number | null, trialId: string): number {
+  if (next === null) throw new Error(`campaign cost cannot be enforced after ${trialId}: API-equivalent cost is unknown`);
+  return current + next;
 }

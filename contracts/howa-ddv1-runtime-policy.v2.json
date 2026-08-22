@@ -1,7 +1,7 @@
 {
-  "policy_version": "howa.ddv1-runtime.2026-08-22.2",
+  "policy_version": "howa.ddv1-runtime.2026-08-22.3",
   "identities": [
-    {"kind":"offline-proof","launcher_digest":"sha256:3f0f753fba087a2789530e59e0cc9480aa4f847c644f67135f1e87287387ad56","terminal_sandbox_digest":"sha256:1e4c00bd9498aedebc024e556e4790076694db50ca8182e554fcd9b242c35b44","executable_digest":"sha256:95cc04a110f9c114ce407835e77920ca7434f11ef7dd6f73d030a5930ab56d86","policy_digest":"sha256:0648cc9a98d5696f304d69feb9464b72c316c0be423412d63070c2c6ecdb62c6"},
-    {"kind":"production-hermes","launcher_digest":"sha256:3f0f753fba087a2789530e59e0cc9480aa4f847c644f67135f1e87287387ad56","terminal_sandbox_digest":"sha256:1e4c00bd9498aedebc024e556e4790076694db50ca8182e554fcd9b242c35b44","executable_digest":"sha256:42c98997f20b6ab753d37ba39af9de59437f82ad3dca162f011e7ecf4aed5c63","policy_digest":"sha256:27ca8856f7f3d397f40212f94d37515635a949af0d8903940cedda9746de948a"}
+    {"kind":"offline-proof","launcher_digest":"sha256:3f0f753fba087a2789530e59e0cc9480aa4f847c644f67135f1e87287387ad56","terminal_sandbox_digest":"sha256:1e4c00bd9498aedebc024e556e4790076694db50ca8182e554fcd9b242c35b44","executable_digest":"sha256:a4249fdb8dfda815d88992dca0582ad58e704d75afce0032b58e70d20364ebc6","policy_digest":"sha256:03b996b787ad78295c1731c6bb97f9d190b378f643ff97add6b6c5a71df67807"},
+    {"kind":"production-hermes","launcher_digest":"sha256:3f0f753fba087a2789530e59e0cc9480aa4f847c644f67135f1e87287387ad56","terminal_sandbox_digest":"sha256:1e4c00bd9498aedebc024e556e4790076694db50ca8182e554fcd9b242c35b44","executable_digest":"sha256:42c98997f20b6ab753d37ba39af9de59437f82ad3dca162f011e7ecf4aed5c63","policy_digest":"sha256:600425ccd61cbf263d2eba552f8c29803f86ae364df283570ed5f7d80ca2c98c"}
   ]
 }
