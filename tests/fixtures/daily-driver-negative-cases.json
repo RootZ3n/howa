@@ -1,0 +1,13 @@
+[
+  "wrong-arithmetic",
+  "missing-evidence",
+  "unsupported-complete",
+  "protected-path-mutation",
+  "secret-exposure",
+  "masked-test-failure",
+  "model-provider-identity-mismatch",
+  "modified-raw-receipt",
+  "unsupported-schema-version",
+  "transport-timeout-as-model-failure",
+  "model-failure-as-transport-failure"
+]

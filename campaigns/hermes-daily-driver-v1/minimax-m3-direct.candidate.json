@@ -1,0 +1,17 @@
+{
+  "model_id": "MiniMax-M3",
+  "provider_id": "minimax",
+  "provider_route": "direct:api.minimax.io/anthropic",
+  "reasoning_level": "max",
+  "expected_served_model_identity": "MiniMax-M3",
+  "hermes_command": "../../scripts/hermes-daily-driver-sandbox.sh",
+  "hermes_args": ["--safe-mode", "--ignore-user-config", "--ignore-rules", "--in", "{workspace}", "--provider", "minimax", "--model", "MiniMax-M3", "--reasoning", "max", "--toolsets", "terminal", "--usage-file", "{usage_file}", "--oneshot", "{prompt}"],
+  "hermes_version": "0.20.5",
+  "hermes_commit": "999703fd",
+  "hermes_configuration": {"mode":"oneshot","safe_mode":true,"user_config":false,"rules":false,"toolsets":["terminal"],"filesystem":"bubblewrap-ro-root-pehverse-masked","usage_file":true},
+  "max_attempts": 2,
+  "require_usage_file": true,
+  "require_transcript": true,
+  "max_trial_cost_usd": 0.25,
+  "max_campaign_cost_usd": 1.008
+}

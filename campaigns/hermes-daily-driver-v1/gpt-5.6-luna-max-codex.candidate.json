@@ -1,0 +1,17 @@
+{
+  "model_id": "gpt-5.6-luna",
+  "provider_id": "openai-codex",
+  "provider_route": "codex-subscription",
+  "reasoning_level": "max",
+  "expected_served_model_identity": "gpt-5.6-luna",
+  "hermes_command": "../../scripts/hermes-daily-driver-sandbox.sh",
+  "hermes_args": ["--safe-mode", "--ignore-user-config", "--ignore-rules", "--in", "{workspace}", "--provider", "openai-codex", "--model", "gpt-5.6-luna", "--reasoning", "max", "--toolsets", "terminal", "--usage-file", "{usage_file}", "--oneshot", "{prompt}"],
+  "hermes_version": "0.20.5",
+  "hermes_commit": "999703fd",
+  "hermes_configuration": {"mode":"oneshot","safe_mode":true,"user_config":false,"rules":false,"toolsets":["terminal"],"filesystem":"bubblewrap-ro-root-pehverse-masked","usage_file":true,"billing":"subscription-included"},
+  "max_attempts": 2,
+  "require_usage_file": true,
+  "require_transcript": true,
+  "max_trial_cost_usd": 0.2,
+  "max_campaign_cost_usd": 0.768
+}
