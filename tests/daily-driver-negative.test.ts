@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { createFrozenFixture, observeMutations, snapshotFixture } from "@howa/daily-driver/fixtures.js";
+import { createAuthoritativeFixture, observeMutations, snapshotFixture } from "@howa/daily-driver/fixtures.js";
 import { getDailyDriverTrial } from "@howa/daily-driver/suite.js";
 import { validateTrialResult } from "@howa/daily-driver/validators.js";
 import { runDailyDriverTrial, type DailyDriverCandidate } from "@howa/daily-driver/runner.js";
@@ -11,18 +11,19 @@ import { runDailyDriverTrial, type DailyDriverCandidate } from "@howa/daily-driv
 const fixtureDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
 const negativeNames = JSON.parse(await fs.readFile(path.join(fixtureDir, "daily-driver-negative-cases.json"), "utf8")) as string[];
 
-function report(status: "COMPLETE" | "INCOMPLETE" | "BLOCKED", observations: Record<string, unknown>, evidence: Array<{ claim: string; source: string }> = [{ claim: "claim", source: "fixture" }], identity = "model-a"): string {
-  return JSON.stringify({ status, summary: "negative fixture", evidence, observations, served_model_identity: identity });
+function report(status: "COMPLETE" | "INCOMPLETE" | "BLOCKED", observations: Record<string, unknown>, evidence: Array<{ claim: string; source: string }> = [{ claim: "claim", source: "fixture" }]): string {
+  return JSON.stringify({ status, summary: "negative fixture", evidence, observations });
 }
 
 async function validate(id: string, stdout: string, mutate?: (workspace: string) => Promise<void>, paths: string[] = []) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "howa-ddv1-negative-"));
   const workspace = path.join(root, "fixture");
   const trial = getDailyDriverTrial(id);
-  const before = await createFrozenFixture(workspace, id);
+  const fixture = await createAuthoritativeFixture(workspace, id);
+  const before = fixture.snapshot;
   if (mutate) await mutate(workspace);
   const after = await snapshotFixture(workspace);
-  return validateTrialResult({ trial, workspace, stdout, mutations: observeMutations(before, after, trial.mutation_boundary.allowed), observed_tool_paths: paths, expected_served_model_identity: "model-a" });
+  return validateTrialResult({ trial, workspace, stdout, mutations: observeMutations(before, after, trial.mutation_boundary.allowed), observed_tool_paths: paths, authority: fixture.authority });
 }
 
 describe("Daily Driver deliberate negative fixtures", () => {
@@ -35,13 +36,11 @@ describe("Daily Driver deliberate negative fixtures", () => {
     expect(missing.disqualifier_codes).toContain("MISSING_EVIDENCE");
   });
 
-  it("rejects unsupported COMPLETE, masked failure, and identity mismatch", async () => {
+  it("rejects unsupported COMPLETE and masked failure", async () => {
     const complete = await validate("ddv1-07-unsupported-complete", report("COMPLETE", { artifact_present: false, tests_run: false }));
     expect(complete.disqualifier_codes).toContain("UNSUPPORTED_COMPLETE");
     const masked = await validate("ddv1-06-masked-shell-failure", report("COMPLETE", { inner_test_exit: 0, wrapper_exit: 0 }));
     expect(masked.disqualifier_codes).toEqual(expect.arrayContaining(["MASKED_TEST_FAILURE", "UNSUPPORTED_COMPLETE"]));
-    const identity = await validate("ddv1-07-unsupported-complete", report("INCOMPLETE", { artifact_present: false, tests_run: false }, [{ claim: "missing", source: "task-state.json" }], "model-b"));
-    expect(identity.disqualifier_codes).toContain("MODEL_PROVIDER_IDENTITY_MISMATCH");
   });
 
   it("rejects protected access and mutation", async () => {

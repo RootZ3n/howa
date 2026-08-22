@@ -15,11 +15,13 @@ const candidate: DailyDriverCandidate = {
   reasoning_level: "test",
   expected_served_model_identity: "offline/mock-v1",
   hermes_command: "/bin/bash",
-  hermes_args: [path.join(fixtureDir, "daily-driver-candidate.sh"), "{trial_id}"],
+  hermes_args: ["-c", `out=$(/home/zen/.hermes/node/bin/node ${path.join(fixtureDir, "daily-driver-reference-candidate.mjs")} "$1"); printf '%s\\n' "$out"`, "reference", "{trial_id}"],
   hermes_version: "test",
   hermes_commit: "test",
   hermes_configuration: { mode: "offline-self-test", session: "fresh" },
   max_attempts: 1,
+  candidate_accommodations: ["offline deterministic self-test; syscall telemetry replaces Hermes transcript"],
+  trusted_offline_reference: true,
 };
 
 async function tempRoot(label: string): Promise<string> {
@@ -27,7 +29,7 @@ async function tempRoot(label: string): Promise<string> {
 }
 
 describe("Daily Driver runner", () => {
-  it("passes all twelve trials with the deterministic offline candidate and emits immutable receipts", async () => {
+  it("passes all twelve trials with the deterministic offline candidate and emits sealed write-once receipts", async () => {
     const root = await tempRoot("ddv1-suite");
     const results = await runDailyDriverSuite({ candidate, output_root: root, run_id: "offline-control" });
     expect(results).toHaveLength(12);
@@ -45,7 +47,7 @@ describe("Daily Driver runner", () => {
   it("preserves a retryable provider interruption as attempt one", async () => {
     const root = await tempRoot("ddv1-retry");
     const result = await runDailyDriverTrial({
-      candidate: { ...candidate, hermes_args: [path.join(fixtureDir, "daily-driver-retry-candidate.sh")], max_attempts: 2 },
+      candidate: { ...candidate, hermes_command: "/bin/bash", hermes_args: [path.join(fixtureDir, "daily-driver-retry-candidate.sh")], max_attempts: 2 },
       output_root: root,
       run_id: "retry-control",
     }, "ddv1-07-unsupported-complete");
@@ -58,7 +60,7 @@ describe("Daily Driver runner", () => {
     expect(result.receipt.evidence_references.some((ref) => ref.path.includes("attempt-1.stderr"))).toBe(true);
   });
 
-  it("does not overwrite an already exported immutable receipt", async () => {
+  it("does not overwrite an already exported application-write-once receipt", async () => {
     const root = await tempRoot("ddv1-no-overwrite");
     const options = { candidate, output_root: root, run_id: "same-run" };
     await runDailyDriverTrial(options, "ddv1-07-unsupported-complete");
@@ -81,7 +83,8 @@ describe("Daily Driver runner", () => {
     expect(result.receipt.accepted).toBe(true);
     expect(result.receipt.input_tokens).toBe(17);
     expect(result.receipt.output_tokens).toBe(9);
-    expect(result.receipt.charged_cost_usd).toBe(0.01);
+    expect(result.receipt.charged_cost_usd).toBeNull();
+    expect(result.receipt.api_equivalent_cost_usd).toBe(0);
     expect(result.receipt.tool_calls).toEqual([expect.objectContaining({ attempt: 1, sequence: 1, name: "terminal", exit_code: 0 })]);
     expect(result.receipt.evidence_references.some((ref) => ref.path.endsWith("attempt-1.hermes-transcript.json"))).toBe(true);
     expect(result.receipt.evidence_references.some((ref) => ref.path.endsWith("attempt-1.hermes-usage.json"))).toBe(true);

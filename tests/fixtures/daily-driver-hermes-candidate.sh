@@ -9,4 +9,4 @@ INSERT INTO messages VALUES (2,'assistant',NULL,NULL,'[{"id":"call-1","function"
 INSERT INTO messages VALUES (3,'tool','{"exit_code":0,"output":"tests_run=false"}','call-1',NULL,'terminal','read_only',1787418002,4,NULL,0);
 SQL
 printf '%s\n' '{"estimated_cost_usd":0.01,"input_tokens":17,"output_tokens":9,"model":"offline/mock-v1","provider":"offline"}' > "$usage_file"
-printf '%s\n' '{"status":"INCOMPLETE","summary":"trusted transcript fixture","evidence":[{"claim":"artifact absent and tests not run","source":"task-state.json"}],"observations":{"artifact_present":false,"tests_run":false},"served_model_identity":"offline/mock-v1"}'
+printf '%s\n' '{"status":"INCOMPLETE","summary":"trusted transcript fixture","evidence":[{"claim":"artifact absent and tests not run","source":"task-state.json"}],"observations":{"artifact_present":false,"tests_run":false}}'

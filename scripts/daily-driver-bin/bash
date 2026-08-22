@@ -1,0 +1,57 @@
+#!/bin/bash
+set -euo pipefail
+
+workspace="${HOWA_DAILY_DRIVER_WORKSPACE:?missing HOWA_DAILY_DRIVER_WORKSPACE}"
+workspace_real="$(realpath -- "$workspace")"
+case "$workspace_real" in /tmp/howa-ddv1-*/fixture-attempt-*) ;; *) echo "refusing non-Howa fixture" >&2; exit 78 ;; esac
+
+# Candidate tools see runtime files plus their single fixture. The host root,
+# user homes, Hermes capture, provider configuration, and network are absent.
+namespace_args=(--unshare-user-try --unshare-pid --unshare-ipc --unshare-uts --unshare-cgroup-try)
+if [[ "${HOWA_SANDBOX_FILESYSTEM_SELF_TEST:-0}" != 1 ]]; then
+  namespace_args+=(--unshare-net)
+fi
+
+# Deliberately small command surface for all V1 trials. Shared libraries are
+# read-only; no host configuration, application data, package cache, provider
+# client, network utility, or unrelated repository is mounted.
+runtime_args=(--dir /usr --dir /usr/bin --dir /usr/lib64 --ro-bind /home/zen/.hermes/node/bin/node /usr/bin/node)
+for executable in \
+  /usr/bin/bash /usr/bin/git /usr/bin/jq \
+  /usr/bin/cat /usr/bin/chmod /usr/bin/cp /usr/bin/cut /usr/bin/dirname \
+  /usr/bin/env /usr/bin/find /usr/bin/grep /usr/bin/head /usr/bin/ls \
+  /usr/bin/mkdir /usr/bin/mv /usr/bin/readlink /usr/bin/realpath /usr/bin/rm \
+  /usr/bin/sed /usr/bin/sha256sum /usr/bin/sort /usr/bin/stat /usr/bin/tail \
+  /usr/bin/tee /usr/bin/test /usr/bin/timeout /usr/bin/touch /usr/bin/tr \
+  /usr/bin/uniq /usr/bin/wc /usr/bin/xargs
+do
+  [[ -x "$executable" ]] || { echo "required runtime executable missing: $executable" >&2; exit 78; }
+  runtime_args+=(--ro-bind "$executable" "$executable")
+done
+exec /usr/bin/bwrap \
+  --die-with-parent \
+  --new-session \
+  "${namespace_args[@]}" \
+  --tmpfs / \
+  --proc /proc \
+  --dev /dev \
+  "${runtime_args[@]}" \
+  --ro-bind /usr/lib64 /usr/lib64 \
+  --symlink usr/bin /bin \
+  --symlink usr/lib64 /lib64 \
+  --dir /tmp \
+  --dir /home \
+  --dir /home/candidate \
+  --bind "$workspace_real" "$workspace_real" \
+  --tmpfs /tmp/candidate \
+  --chdir "$workspace_real" \
+  --clearenv \
+  --setenv HOME /home/candidate \
+  --setenv PATH /usr/bin:/bin \
+  --setenv LANG C \
+  --setenv LC_ALL C \
+  --setenv TMPDIR /tmp/candidate \
+  --setenv GIT_CONFIG_GLOBAL /dev/null \
+  --setenv GIT_CONFIG_SYSTEM /dev/null \
+  --setenv GIT_OPTIONAL_LOCKS 0 \
+  /usr/bin/bash "$@"

@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { constants as fsConstants, promises as fs } from "node:fs";
 import path from "node:path";
+import { validateCommittedReceiptSchema } from "./json-schema.js";
 
-export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v1" as const;
+export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v2" as const;
 export const DAILY_DRIVER_SUITE_VERSION = "hermes-daily-driver.v1" as const;
 
 export type RawVerdict = "PASS" | "FAIL" | "SAFE_FAIL" | "INCOMPLETE" | "ERROR";
@@ -89,6 +90,10 @@ export interface DailyDriverReceiptV1 {
   served_model_identity: string | null;
   hermes_version: string;
   hermes_commit: string;
+  hermes_launcher_digest: string;
+  hermes_executable_digest: string;
+  hermes_arguments: string[];
+  requested_temperature: number | null;
   hermes_configuration_digest: string;
   system_prompt_digest: string;
   tool_registry_digest: string;
@@ -104,6 +109,15 @@ export interface DailyDriverReceiptV1 {
   input_tokens: number | null;
   output_tokens: number | null;
   charged_cost_usd: number | null;
+  api_equivalent_cost_usd: number | null;
+  plan_credit_consumed: number | null;
+  subscription_quota_consumed: number | null;
+  cost_rate_card_version: string;
+  cost_provenance: "provider_actual" | "rate_card_estimate" | "subscription" | "token_plan" | "unknown";
+  candidate_accommodations: string[];
+  max_turns: number;
+  max_output_tokens: number;
+  limits_enforcement: "enforced" | "post_hoc";
   tool_calls: ToolCallRecord[];
   mutation_observations: MutationObservation[];
   deterministic_checks: DeterministicCheck[];
@@ -155,16 +169,17 @@ export function sealReceipt(receipt: Omit<DailyDriverReceiptV1, "receipt_digest"
 const TOP_LEVEL_KEYS = [
   "schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "timestamp",
   "model_id", "provider_id", "provider_route", "reasoning_level", "served_model_identity",
-  "hermes_version", "hermes_commit", "hermes_configuration_digest", "system_prompt_digest",
+  "hermes_version", "hermes_commit", "hermes_launcher_digest", "hermes_executable_digest", "hermes_arguments", "requested_temperature", "hermes_configuration_digest", "system_prompt_digest",
   "tool_registry_digest", "fixture_digest", "start_timestamp", "end_timestamp",
   "wall_clock_duration_ms", "attempts", "retries", "connection_failures", "timeout_events",
-  "compaction_events", "input_tokens", "output_tokens", "charged_cost_usd", "tool_calls",
+  "compaction_events", "input_tokens", "output_tokens", "charged_cost_usd", "api_equivalent_cost_usd", "plan_credit_consumed", "subscription_quota_consumed", "cost_rate_card_version", "cost_provenance", "candidate_accommodations", "max_turns", "max_output_tokens", "limits_enforcement", "tool_calls",
   "mutation_observations", "deterministic_checks", "raw_verdict", "evidence_references",
   "correction_rounds", "accepted", "disqualifier_codes",
 ] as const;
 
 const SECRET_KEY = /(?:api[_-]?key|authorization|credential|password|private[_-]?key|access[_-]?token|refresh[_-]?token|secret)$/i;
 const SECRET_VALUE = /(?:\bBearer\s+[A-Za-z0-9._~+\/-]{12,}|\bsk-[A-Za-z0-9_-]{12,}|(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD)\s*[=:]\s*[^\s,;]{6,})/i;
+const TRANSPORT_KINDS = new Set(["TIMEOUT", "CONNECTION_RESET", "DNS", "RATE_LIMIT", "UNAVAILABLE", "NETWORK", "HTTP_5XX"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -189,6 +204,12 @@ function numberField(record: Record<string, unknown>, key: string, at: string, i
   const value = record[key];
   if (nullable && value === null) return;
   if (typeof value !== "number" || !Number.isFinite(value) || value < 0) issues.push(`${at}.${key} must be a non-negative finite number${nullable ? " or null" : ""}`);
+}
+
+function integerField(record: Record<string, unknown>, key: string, at: string, issues: string[], nullable = false, minimum = 0): void {
+  const value = record[key];
+  if (nullable && value === null) return;
+  if (typeof value !== "number" || !Number.isInteger(value) || value < minimum) issues.push(`${at}.${key} must be an integer >= ${minimum}${nullable ? " or null" : ""}`);
 }
 
 function arrayField(record: Record<string, unknown>, key: string, at: string, issues: string[]): unknown[] {
@@ -223,31 +244,43 @@ function scanSecrets(value: unknown, at: string, issues: string[]): void {
 }
 
 export function validateReceipt(value: unknown): asserts value is DailyDriverReceiptV1 {
-  const issues: string[] = [];
+  const issues: string[] = validateCommittedReceiptSchema(value).map((issue) => `JSON Schema ${issue}`);
   if (!exactKeys(value, TOP_LEVEL_KEYS, "$", issues)) throw new ContractValidationError(issues);
   const r = value;
-  for (const key of ["schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "model_id", "provider_id", "provider_route", "reasoning_level", "hermes_version", "hermes_commit"] as const) stringField(r, key, "$", issues);
+  for (const key of ["schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "model_id", "provider_id", "provider_route", "reasoning_level", "hermes_version", "hermes_commit", "cost_rate_card_version"] as const) stringField(r, key, "$", issues);
   if (r.schema_version !== DAILY_DRIVER_SCHEMA_VERSION) issues.push(`$.schema_version unsupported: ${String(r.schema_version)}`);
   if (r.trial_suite_version !== DAILY_DRIVER_SUITE_VERSION) issues.push(`$.trial_suite_version unsupported: ${String(r.trial_suite_version)}`);
   stringField(r, "served_model_identity", "$", issues, true);
-  for (const key of ["receipt_digest", "hermes_configuration_digest", "system_prompt_digest", "tool_registry_digest", "fixture_digest"] as const) digestField(r, key, "$", issues);
+  for (const key of ["receipt_digest", "hermes_launcher_digest", "hermes_executable_digest", "hermes_configuration_digest", "system_prompt_digest", "tool_registry_digest", "fixture_digest"] as const) digestField(r, key, "$", issues);
+  arrayField(r, "hermes_arguments", "$", issues).forEach((arg, index) => { if (typeof arg !== "string") issues.push(`$.hermes_arguments[${index}] must be a string`); });
+  numberField(r, "requested_temperature", "$", issues, true);
   for (const key of ["timestamp", "start_timestamp", "end_timestamp"] as const) isoField(r, key, "$", issues);
-  for (const key of ["wall_clock_duration_ms", "retries", "correction_rounds"] as const) numberField(r, key, "$", issues);
-  for (const key of ["input_tokens", "output_tokens", "charged_cost_usd"] as const) numberField(r, key, "$", issues, true);
+  numberField(r, "wall_clock_duration_ms", "$", issues);
+  for (const key of ["retries", "correction_rounds"] as const) integerField(r, key, "$", issues);
+  for (const key of ["max_turns", "max_output_tokens"] as const) integerField(r, key, "$", issues, false, 1);
+  for (const key of ["input_tokens", "output_tokens"] as const) integerField(r, key, "$", issues, true);
+  for (const key of ["charged_cost_usd", "api_equivalent_cost_usd", "plan_credit_consumed", "subscription_quota_consumed"] as const) numberField(r, key, "$", issues, true);
+  if (!["provider_actual", "rate_card_estimate", "subscription", "token_plan", "unknown"].includes(String(r.cost_provenance))) issues.push("$.cost_provenance is invalid");
+  if (!["enforced", "post_hoc"].includes(String(r.limits_enforcement))) issues.push("$.limits_enforcement is invalid");
+  arrayField(r, "candidate_accommodations", "$", issues).forEach((item, index) => { if (typeof item !== "string" || item.length === 0) issues.push(`$.candidate_accommodations[${index}] must be a non-empty string`); });
   if (typeof r.accepted !== "boolean") issues.push("$.accepted must be boolean");
   if (!["PASS", "FAIL", "SAFE_FAIL", "INCOMPLETE", "ERROR"].includes(String(r.raw_verdict))) issues.push("$.raw_verdict is invalid");
 
   const attempts = arrayField(r, "attempts", "$", issues);
+  if (attempts.length === 0) issues.push("$.attempts must not be empty");
   attempts.forEach((item, index) => {
     const at = `$.attempts[${index}]`;
     if (!exactKeys(item, ["attempt", "started_at", "finished_at", "duration_ms", "exit_code", "outcome", "error_kind", "retryable", "stdout_digest", "stderr_digest"], at, issues)) return;
-    numberField(item, "attempt", at, issues); numberField(item, "duration_ms", at, issues);
+    integerField(item, "attempt", at, issues, false, 1); numberField(item, "duration_ms", at, issues);
     isoField(item, "started_at", at, issues); isoField(item, "finished_at", at, issues);
     if (item.exit_code !== null && (!Number.isInteger(item.exit_code) || typeof item.exit_code !== "number")) issues.push(`${at}.exit_code must be integer or null`);
     if (!["accepted_output", "model_failure", "transport_failure", "timeout"].includes(String(item.outcome))) issues.push(`${at}.outcome is invalid`);
     if (item.error_kind !== null && typeof item.error_kind !== "string") issues.push(`${at}.error_kind must be string or null`);
     if (typeof item.retryable !== "boolean") issues.push(`${at}.retryable must be boolean`);
     digestField(item, "stdout_digest", at, issues); digestField(item, "stderr_digest", at, issues);
+    if (item.attempt !== index + 1) issues.push(`${at}.attempt must be contiguous and one-based`);
+    if (item.outcome === "model_failure" && typeof item.error_kind === "string" && TRANSPORT_KINDS.has(item.error_kind)) issues.push(`${at} transport error misreported as model_failure`);
+    if ((item.outcome === "transport_failure" || item.outcome === "timeout") && (typeof item.error_kind !== "string" || !TRANSPORT_KINDS.has(item.error_kind))) issues.push(`${at} model/process failure misreported as transport_failure`);
   });
   if (typeof r.retries === "number" && attempts.length > 0 && r.retries !== attempts.length - 1) issues.push("$.retries must equal attempts.length - 1");
 
@@ -255,26 +288,27 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   connections.forEach((item, index) => {
     const at = `$.connection_failures[${index}]`;
     if (!exactKeys(item, ["attempt", "kind", "timestamp", "message"], at, issues)) return;
-    numberField(item, "attempt", at, issues); stringField(item, "kind", at, issues); isoField(item, "timestamp", at, issues); stringField(item, "message", at, issues);
+    integerField(item, "attempt", at, issues, false, 1); stringField(item, "kind", at, issues); isoField(item, "timestamp", at, issues); stringField(item, "message", at, issues);
+    if (typeof item.kind === "string" && !TRANSPORT_KINDS.has(item.kind)) issues.push(`${at}.kind is not a transport failure`);
   });
   const timeouts = arrayField(r, "timeout_events", "$", issues);
   timeouts.forEach((item, index) => {
     const at = `$.timeout_events[${index}]`;
     if (!exactKeys(item, ["attempt", "timestamp", "timeout_ms", "phase"], at, issues)) return;
-    numberField(item, "attempt", at, issues); isoField(item, "timestamp", at, issues); numberField(item, "timeout_ms", at, issues);
+    integerField(item, "attempt", at, issues, false, 1); isoField(item, "timestamp", at, issues); integerField(item, "timeout_ms", at, issues, false, 1);
     if (!["candidate_process", "validator"].includes(String(item.phase))) issues.push(`${at}.phase is invalid`);
   });
   const compactions = arrayField(r, "compaction_events", "$", issues);
   compactions.forEach((item, index) => {
     const at = `$.compaction_events[${index}]`;
     if (!exactKeys(item, ["attempt", "timestamp", "before_tokens", "after_tokens"], at, issues)) return;
-    numberField(item, "attempt", at, issues); isoField(item, "timestamp", at, issues); numberField(item, "before_tokens", at, issues, true); numberField(item, "after_tokens", at, issues, true);
+    integerField(item, "attempt", at, issues, false, 1); isoField(item, "timestamp", at, issues); integerField(item, "before_tokens", at, issues, true); integerField(item, "after_tokens", at, issues, true);
   });
   const tools = arrayField(r, "tool_calls", "$", issues);
   tools.forEach((item, index) => {
     const at = `$.tool_calls[${index}]`;
     if (!exactKeys(item, ["attempt", "sequence", "name", "arguments_digest", "started_at", "finished_at", "exit_code", "timed_out"], at, issues)) return;
-    numberField(item, "attempt", at, issues); numberField(item, "sequence", at, issues); stringField(item, "name", at, issues); digestField(item, "arguments_digest", at, issues); isoField(item, "started_at", at, issues);
+    integerField(item, "attempt", at, issues, false, 1); integerField(item, "sequence", at, issues, false, 1); stringField(item, "name", at, issues); digestField(item, "arguments_digest", at, issues); isoField(item, "started_at", at, issues);
     if (item.finished_at !== null) isoField(item, "finished_at", at, issues);
     if (item.exit_code !== null && (!Number.isInteger(item.exit_code) || typeof item.exit_code !== "number")) issues.push(`${at}.exit_code must be integer or null`);
     if (typeof item.timed_out !== "boolean") issues.push(`${at}.timed_out must be boolean`);
@@ -307,6 +341,9 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   arrayField(r, "disqualifier_codes", "$", issues).forEach((code, index) => { if (typeof code !== "string" || !/^[A-Z][A-Z0-9_]*$/.test(code)) issues.push(`$.disqualifier_codes[${index}] is invalid`); });
   if (r.accepted === true && r.raw_verdict !== "PASS") issues.push("$.accepted may only be true for raw_verdict PASS");
   if (r.accepted === true && Array.isArray(r.disqualifier_codes) && r.disqualifier_codes.length > 0) issues.push("$.accepted receipt cannot have disqualifiers");
+  if (r.accepted === true && checks.some((item) => isRecord(item) && item.passed !== true)) issues.push("$.accepted receipt cannot contain failed deterministic checks");
+  if (r.accepted === true && mutations.some((item) => isRecord(item) && item.allowed !== true)) issues.push("$.accepted receipt cannot contain forbidden mutation");
+  if (r.accepted === true && evidence.length === 0) issues.push("$.accepted receipt requires retained evidence");
   if (r.accepted === true && (r.served_model_identity === null || r.served_model_identity !== r.model_id)) issues.push("$.served_model_identity must match model_id for accepted receipts");
   const evidenceIds = new Set(evidence.filter(isRecord).map((item) => item.id).filter((id): id is string => typeof id === "string"));
   checks.forEach((item, index) => {
@@ -321,7 +358,9 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   if (issues.length > 0) throw new ContractValidationError(issues);
 }
 
-export async function writeImmutableReceipt(receipt: DailyDriverReceiptV1, outputRoot: string): Promise<string> {
+/** Application-write-once and digest-sealed. Filesystem immutability is not claimed. */
+/** Application-write-once export; the canonical digest makes later filesystem tampering evident. */
+export async function writeOnceReceipt(receipt: DailyDriverReceiptV1, outputRoot: string): Promise<string> {
   validateReceipt(receipt);
   const dir = path.join(outputRoot, "receipts", receipt.run_id);
   await fs.mkdir(dir, { recursive: true });

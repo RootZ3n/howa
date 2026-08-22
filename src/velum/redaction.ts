@@ -23,6 +23,10 @@ const PATTERNS: { kind: string; re: RegExp }[] = [
   { kind: "slack_token", re: /xox[baprs]-[A-Za-z0-9-]{10,}/g },
   { kind: "private_key_block", re: /-----BEGIN (?:RSA |EC |DSA |OPENSSH |)PRIVATE KEY-----[\s\S]*?-----END[^-]*-----/g },
   { kind: "jwt", re: /eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g },
+  { kind: "bare_jwt", re: /\b[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/g },
+  { kind: "hex_secret", re: /\b(?:0x)?[a-fA-F0-9]{48,}\b/g },
+  { kind: "base64_key_body", re: /(?:^|[\s"':=])(?:[A-Za-z0-9+/]{64,}={0,2})(?=$|[\s"',}])/gm },
+  { kind: "json_credential", re: /"(?:api[_-]?key|access[_-]?token|refresh[_-]?token|credential|password|private[_-]?key|secret)"\s*:\s*"[^"\n]{6,}"/gi },
   { kind: "dotenv_assignment", re: /(?:^|\n)\s*(?:[A-Z][A-Z0-9_]*_(?:KEY|TOKEN|SECRET|PASSWORD))\s*=\s*[^\n]{6,}/g },
 ];
 

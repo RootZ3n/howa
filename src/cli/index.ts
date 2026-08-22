@@ -452,7 +452,7 @@ program
   .command("daily-driver")
   .argument("<action>", "list | run")
   .option("--candidate <file>", "Secret-free candidate JSON (required for run)")
-  .option("--output <dir>", "Immutable receipt/export root", "howa-daily-driver")
+  .option("--output <dir>", "Application-write-once receipt/export root", "howa-daily-driver")
   .option("--run-id <id>", "Stable run/campaign identity")
   .option("--trial <ids...>", "Run only the named V1 trial ids")
   .option("--keep-fixtures", "Preserve temporary synthetic fixtures for debugging")

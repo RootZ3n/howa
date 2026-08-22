@@ -4,12 +4,12 @@ import { canonicalJson, computeReceiptDigest, ContractValidationError, sealRecei
 function validReceipt(): DailyDriverReceiptV1 {
   const now = "2026-08-22T12:00:00.000Z";
   return sealReceipt({
-    schema_version: "howa.hermes-daily-driver.receipt.v1", trial_id: "ddv1-01-porcelain-parser", trial_suite_version: "hermes-daily-driver.v1", run_id: "run-1", timestamp: now,
+    schema_version: "howa.hermes-daily-driver.receipt.v2", trial_id: "ddv1-01-porcelain-parser", trial_suite_version: "hermes-daily-driver.v1", run_id: "run-1", timestamp: now,
     model_id: "m", provider_id: "p", provider_route: "direct", reasoning_level: "max", served_model_identity: "m",
-    hermes_version: "1", hermes_commit: "abc", hermes_configuration_digest: sha256("config"), system_prompt_digest: sha256("prompt"), tool_registry_digest: sha256("tools"), fixture_digest: sha256("fixture"),
+    hermes_version: "1", hermes_commit: "abc", hermes_launcher_digest: sha256("launcher"), hermes_executable_digest: sha256("exe"), hermes_arguments: ["--oneshot"], requested_temperature: null, hermes_configuration_digest: sha256("config"), system_prompt_digest: sha256("prompt"), tool_registry_digest: sha256("tools"), fixture_digest: sha256("fixture"),
     start_timestamp: now, end_timestamp: now, wall_clock_duration_ms: 0,
     attempts: [{ attempt: 1, started_at: now, finished_at: now, duration_ms: 0, exit_code: 0, outcome: "accepted_output", error_kind: null, retryable: false, stdout_digest: sha256("out"), stderr_digest: sha256("") }],
-    retries: 0, connection_failures: [], timeout_events: [], compaction_events: [], input_tokens: 1, output_tokens: 1, charged_cost_usd: 0,
+    retries: 0, connection_failures: [], timeout_events: [], compaction_events: [], input_tokens: 1, output_tokens: 1, charged_cost_usd: null, api_equivalent_cost_usd: 0, plan_credit_consumed: null, subscription_quota_consumed: null, cost_rate_card_version: "test", cost_provenance: "rate_card_estimate", candidate_accommodations: [], max_turns: 1, max_output_tokens: 1, limits_enforcement: "enforced",
     tool_calls: [], mutation_observations: [], deterministic_checks: [{ id: "x", passed: true, details: "verified", evidence_refs: ["stdout"] }], raw_verdict: "PASS",
     evidence_references: [{ id: "stdout", kind: "stdout", path: "artifacts/out.txt", digest: sha256("out") }], correction_rounds: 0, accepted: true, disqualifier_codes: [],
   });
@@ -24,7 +24,7 @@ describe("Daily Driver contract", () => {
   });
 
   it("rejects forward versions, modified raw receipts, unknown fields, and secret exposure", () => {
-    const forward = { ...validReceipt(), schema_version: "howa.hermes-daily-driver.receipt.v2" };
+    const forward = { ...validReceipt(), schema_version: "howa.hermes-daily-driver.receipt.v3" };
     expect(() => validateReceipt(forward)).toThrow(ContractValidationError);
     const tampered = { ...validReceipt(), accepted: false };
     expect(() => validateReceipt(tampered)).toThrow(/digest/);
