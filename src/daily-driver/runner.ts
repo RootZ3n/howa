@@ -380,6 +380,7 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.stderr.txt`), stderrRedacted.text));
       evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.fixture-before.json`), `${canonicalJson(before)}\n`));
       evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.fixture-after.json`), `${canonicalJson(after)}\n`));
+      if (usage) evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.hermes-usage.json`), `${canonicalJson(usage)}\n`));
       if (transcript) {
         const sanitized = redactSecrets(`${canonicalJson(transcript)}\n`);
         secretExposure ||= sanitized.found;

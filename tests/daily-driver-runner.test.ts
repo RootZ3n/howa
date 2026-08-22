@@ -84,5 +84,6 @@ describe("Daily Driver runner", () => {
     expect(result.receipt.charged_cost_usd).toBe(0.01);
     expect(result.receipt.tool_calls).toEqual([expect.objectContaining({ attempt: 1, sequence: 1, name: "terminal", exit_code: 0 })]);
     expect(result.receipt.evidence_references.some((ref) => ref.path.endsWith("attempt-1.hermes-transcript.json"))).toBe(true);
+    expect(result.receipt.evidence_references.some((ref) => ref.path.endsWith("attempt-1.hermes-usage.json"))).toBe(true);
   });
 });
