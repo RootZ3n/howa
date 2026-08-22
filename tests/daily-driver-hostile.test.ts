@@ -106,6 +106,15 @@ describe("Daily Driver hostile trust-boundary tests", () => {
     expect(result.receipt.accepted).toBe(true); expect(result.receipt.correction_rounds).toBe(1); expect(result.receipt.attempts.map((item) => item.outcome)).toEqual(["model_failure", "accepted_output"]);
   });
 
+  it("unknown trusted cost cannot bypass a campaign ceiling", async () => {
+    const output = await fs.mkdtemp(path.join(os.tmpdir(), "howa-ddv1-unknown-cost-"));
+    await expect(runDailyDriverSuite({ candidate: { ...base, model_id: "offline/unpriced", max_trial_cost_usd: 0.01, max_campaign_cost_usd: 0.01 }, output_root: output, run_id: "unknown-cost", trial_ids: ["ddv1-07-unsupported-complete"] })).rejects.toThrow(/cost cannot be enforced/);
+    const receipts = await fs.readdir(path.join(output, "receipts", "unknown-cost"));
+    const value = JSON.parse(await fs.readFile(path.join(output, "receipts", "unknown-cost", receipts[0]!), "utf8"));
+    expect(value.api_equivalent_cost_usd).toBeNull();
+    expect(value.disqualifier_codes).toEqual(expect.arrayContaining(["COST_UNKNOWN", "TRIAL_COST_LIMIT_UNVERIFIABLE"]));
+  });
+
   it("Velum redacts hostile secret formats and retained evidence hashes its redacted bytes", async () => {
     const secrets = [
       "-----BEGIN OPENSSH PRIVATE KEY-----\nQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=\n-----END OPENSSH PRIVATE KEY-----",
