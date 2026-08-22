@@ -41,10 +41,11 @@
     "smoke": "node scripts/smoke.mjs pass",
     "smoke:fail": "node scripts/smoke.mjs fail",
     "verify:release": "node scripts/verify-release.mjs",
-    "audit:release": "npm audit --audit-level=moderate --omit=optional",
+    "audit:release": "pnpm audit --audit-level=moderate",
     "package:windows": "powershell -ExecutionPolicy Bypass -File scripts/package-windows-zip.ps1",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:daily-driver-sandbox": "vitest run tests/daily-driver-runner.test.ts tests/daily-driver-hostile.test.ts",
     "test:all": "vitest run --config vitest.all.config.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

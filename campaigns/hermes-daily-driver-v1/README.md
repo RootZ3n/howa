@@ -10,16 +10,16 @@ Run a three-trial canary only after both repositories' self-tests pass, CC indep
 
 ```bash
 cd /tmp/howa-hermes-daily-driver-v1
-pnpm cli -- daily-driver run --candidate campaigns/hermes-daily-driver-v1/minimax-m3-direct.candidate.json --run-id ddv1-m3-canary-YYYYMMDD --output /tmp/howa-ddv1-control/m3-canary --trial ddv1-01-porcelain-parser ddv1-08-protected-exclusion ddv1-11-bounded-implementation
-pnpm cli -- daily-driver run --candidate campaigns/hermes-daily-driver-v1/mimo-v2.5-pro-direct.candidate.json --run-id ddv1-mimo-canary-YYYYMMDD --output /tmp/howa-ddv1-control/mimo-canary --trial ddv1-01-porcelain-parser ddv1-08-protected-exclusion ddv1-11-bounded-implementation
-pnpm cli -- daily-driver run --candidate campaigns/hermes-daily-driver-v1/gpt-5.6-luna-max-codex.candidate.json --run-id ddv1-luna-canary-YYYYMMDD --output /tmp/howa-ddv1-control/luna-canary --trial ddv1-01-porcelain-parser ddv1-08-protected-exclusion ddv1-11-bounded-implementation
+pnpm cli daily-driver run --candidate campaigns/hermes-daily-driver-v1/minimax-m3-direct.candidate.json --run-id ddv1-m3-canary-YYYYMMDD --output /tmp/howa-ddv1-control/m3-canary --trial ddv1-01-porcelain-parser ddv1-08-protected-exclusion ddv1-11-bounded-implementation
+pnpm cli daily-driver run --candidate campaigns/hermes-daily-driver-v1/mimo-v2.5-pro-direct.candidate.json --run-id ddv1-mimo-canary-YYYYMMDD --output /tmp/howa-ddv1-control/mimo-canary --trial ddv1-01-porcelain-parser ddv1-08-protected-exclusion ddv1-11-bounded-implementation
+pnpm cli daily-driver run --candidate campaigns/hermes-daily-driver-v1/gpt-5.6-luna-max-codex.candidate.json --run-id ddv1-luna-canary-YYYYMMDD --output /tmp/howa-ddv1-control/luna-canary --trial ddv1-01-porcelain-parser ddv1-08-protected-exclusion ddv1-11-bounded-implementation
 ```
 
 The full campaign remains a later, separately authorized operation:
 
 ```bash
 cd /tmp/howa-hermes-daily-driver-v1
-pnpm cli -- daily-driver run --candidate campaigns/hermes-daily-driver-v1/minimax-m3-direct.candidate.json --run-id ddv1-m3-YYYYMMDD --output /tmp/howa-ddv1-control/m3
-pnpm cli -- daily-driver run --candidate campaigns/hermes-daily-driver-v1/mimo-v2.5-pro-direct.candidate.json --run-id ddv1-mimo-YYYYMMDD --output /tmp/howa-ddv1-control/mimo
-pnpm cli -- daily-driver run --candidate campaigns/hermes-daily-driver-v1/gpt-5.6-luna-max-codex.candidate.json --run-id ddv1-luna-YYYYMMDD --output /tmp/howa-ddv1-control/luna
+pnpm cli daily-driver run --candidate campaigns/hermes-daily-driver-v1/minimax-m3-direct.candidate.json --run-id ddv1-m3-YYYYMMDD --output /tmp/howa-ddv1-control/m3
+pnpm cli daily-driver run --candidate campaigns/hermes-daily-driver-v1/mimo-v2.5-pro-direct.candidate.json --run-id ddv1-mimo-YYYYMMDD --output /tmp/howa-ddv1-control/mimo
+pnpm cli daily-driver run --candidate campaigns/hermes-daily-driver-v1/gpt-5.6-luna-max-codex.candidate.json --run-id ddv1-luna-YYYYMMDD --output /tmp/howa-ddv1-control/luna
 ```

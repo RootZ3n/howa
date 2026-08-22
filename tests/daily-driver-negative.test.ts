@@ -1,25 +1,26 @@
 import { promises as fs } from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
-import { createAuthoritativeFixture, observeMutations, snapshotFixture } from "@howa/daily-driver/fixtures.js";
+import { afterEach, describe, expect, it } from "vitest";
+import { createAuthoritativeFixture, createCampaignEntropy, observeMutations, snapshotFixture } from "@howa/daily-driver/fixtures.js";
 import { getDailyDriverTrial } from "@howa/daily-driver/suite.js";
 import { validateTrialResult } from "@howa/daily-driver/validators.js";
 import { runDailyDriverTrial, type DailyDriverCandidate } from "@howa/daily-driver/runner.js";
+import { cleanupOwnedDailyDriverTemps, ownedDailyDriverTemp } from "./helpers/daily-driver-temp.js";
 
 const fixtureDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
 const negativeNames = JSON.parse(await fs.readFile(path.join(fixtureDir, "daily-driver-negative-cases.json"), "utf8")) as string[];
+afterEach(cleanupOwnedDailyDriverTemps);
 
 function report(status: "COMPLETE" | "INCOMPLETE" | "BLOCKED", observations: Record<string, unknown>, evidence: Array<{ claim: string; source: string }> = [{ claim: "claim", source: "fixture" }]): string {
   return JSON.stringify({ status, summary: "negative fixture", evidence, observations });
 }
 
 async function validate(id: string, stdout: string, mutate?: (workspace: string) => Promise<void>, paths: string[] = []) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "howa-ddv1-negative-"));
+  const root = await ownedDailyDriverTemp("negative");
   const workspace = path.join(root, "fixture");
   const trial = getDailyDriverTrial(id);
-  const fixture = await createAuthoritativeFixture(workspace, id);
+  const fixture = await createAuthoritativeFixture(workspace, id, createCampaignEntropy(`negative-${id}`));
   const before = fixture.snapshot;
   if (mutate) await mutate(workspace);
   const after = await snapshotFixture(workspace);
@@ -52,16 +53,16 @@ describe("Daily Driver deliberate negative fixtures", () => {
   });
 
   it("redacts and disqualifies secret-shaped candidate output", async () => {
-    const output = await fs.mkdtemp(path.join(os.tmpdir(), "howa-ddv1-secret-"));
+    const output = await ownedDailyDriverTemp("secret");
     const candidate: DailyDriverCandidate = {
-      model_id: "offline/mock-v1", provider_id: "offline", provider_route: "direct", reasoning_level: "test",
-      hermes_command: "/bin/bash", hermes_args: [path.join(fixtureDir, "daily-driver-secret-candidate.sh")], hermes_version: "test", hermes_commit: "test", hermes_configuration: { mode: "negative" },
+      model_id: "offline/secret-v1", provider_id: "offline", provider_route: "direct", reasoning_level: "test",
+      hermes_args: [], hermes_configuration: { mode: "negative" },
     };
     const result = await runDailyDriverTrial({ candidate, output_root: output, run_id: "negative-secret" }, "ddv1-07-unsupported-complete");
     expect(result.receipt.accepted).toBe(false);
     expect(result.receipt.disqualifier_codes).toContain("SECRET_EXPOSURE");
-    const stdout = result.receipt.evidence_references.find((item) => item.kind === "stdout")!;
-    expect(await fs.readFile(path.join(output, stdout.path), "utf8")).not.toContain("supersecretvalue");
+    const stderr = result.receipt.evidence_references.find((item) => item.kind === "stderr")!;
+    expect(await fs.readFile(path.join(output, stderr.path), "utf8")).not.toContain("signature-secret-value");
   });
 
   it("pins the complete eleven-case negative corpus", () => {
