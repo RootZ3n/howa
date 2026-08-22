@@ -1,0 +1,12 @@
+{
+  "model_id": "offline/static-key-v1",
+  "provider_id": "offline",
+  "provider_route": "direct",
+  "reasoning_level": "none",
+  "hermes_args": [],
+  "hermes_configuration": { "mode": "hostile-static-answer-key", "toolsets": ["terminal"] },
+  "max_attempts": 1,
+  "max_turns": 1,
+  "max_output_tokens": 2048,
+  "limits_enforcement": "enforced"
+}

@@ -15,7 +15,7 @@ export const DAILY_DRIVER_RATE_CARD: readonly RateCardEntry[] = Object.freeze([
   { provider_id: "minimax", provider_route: "direct:api.minimax.io/anthropic", model_id: "MiniMax-M3", input_usd_per_million: 0.30, output_usd_per_million: 1.20, billing: "api_metered", source_note: "operator-verified public API rate, 2026-08-22" },
   { provider_id: "xiaomi", provider_route: "direct:api.xiaomimimo.com/v1", model_id: "mimo-v2.5-pro", input_usd_per_million: 0.40, output_usd_per_million: 1.22, billing: "api_metered", source_note: "operator-verified public API rate, 2026-08-22" },
   { provider_id: "openai-codex", provider_route: "codex-subscription", model_id: "gpt-5.6-luna", input_usd_per_million: 0.25, output_usd_per_million: 0.70, billing: "subscription", source_note: "operator-verified API-equivalent rate; subscription charge is separate, 2026-08-22" },
-  { provider_id: "offline", provider_route: "direct", model_id: "offline/mock-v1", input_usd_per_million: 0, output_usd_per_million: 0, billing: "api_metered", source_note: "self-test only" },
+  ...["offline/mock-v2","offline/static-key-v1","offline/timeout-v1","offline/forge-v1","offline/hash-v1","offline/retry-v1","offline/malformed-v1","offline/secret-v1","offline/correction-v1"].map((model_id) => ({ provider_id: "offline", provider_route: "direct", model_id, input_usd_per_million: 0, output_usd_per_million: 0, billing: "api_metered" as const, source_note: "unpaid frozen offline proof only" })),
 ]);
 
 export function lookupRate(providerId: string, providerRoute: string, modelId: string): RateCardEntry | null {

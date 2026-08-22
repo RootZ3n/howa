@@ -1,0 +1,14 @@
+{
+  "model_id": "offline/mock-v2",
+  "provider_id": "offline",
+  "provider_route": "direct",
+  "reasoning_level": "deterministic",
+  "hermes_args": [],
+  "hermes_configuration": { "mode": "unpaid-frozen-offline-proof", "toolsets": ["terminal"] },
+  "max_attempts": 1,
+  "max_turns": 24,
+  "max_output_tokens": 8192,
+  "limits_enforcement": "enforced",
+  "require_usage_file": true,
+  "candidate_accommodations": ["deterministic unpaid Hermes-compatible runtime for evaluator verification only"]
+}

@@ -19,10 +19,12 @@ import {
   type TimeoutEvent,
   type ToolCallRecord,
 } from "./contract.js";
-import { createAuthoritativeFixture, observeMutations, snapshotFixture } from "./fixtures.js";
+import { createAuthoritativeFixture, createCampaignEntropy, observeMutations, snapshotFixture, type CampaignEntropy } from "./fixtures.js";
 import { getDailyDriverTrial, HERMES_DAILY_DRIVER_V1, type DailyDriverTrial } from "./suite.js";
 import { validateTrialResult } from "./validators.js";
 import { apiEquivalentCost, DAILY_DRIVER_RATE_CARD_VERSION, lookupRate } from "./rate-card.js";
+import { buildEvidenceManifest } from "./evidence.js";
+import { rejectCandidateRuntimeOverrides, resolveTrustedRuntime } from "./runtime-policy.js";
 
 export interface DailyDriverCandidate {
   model_id: string;
@@ -30,20 +32,19 @@ export interface DailyDriverCandidate {
   provider_route: string;
   reasoning_level: string;
   temperature?: number;
-  hermes_command: string;
+  /** Deprecated and always rejected. The frozen runtime policy owns these identities. */
+  hermes_command?: string;
   hermes_executable_path?: string;
-  /** Trusted host path whose exact prompt/tool implementation files are bound into effective digests. */
   hermes_install_root?: string;
   /** No shell is used. Supported placeholders: {prompt}, {prompt_file}, {usage_file}, {workspace}, {session_root}, {trial_id}. */
   hermes_args: string[];
-  hermes_version: string;
-  hermes_commit: string;
+  hermes_version?: string;
+  hermes_commit?: string;
   /** Public, secret-free configuration descriptor used only for a digest. */
   hermes_configuration: Record<string, unknown>;
   provider_credential_env?: "MINIMAX_API_KEY" | "MIMO_API_KEY" | "OPENAI_API_KEY" | "HOWA_OPENAI_CODEX_AUTH_BUNDLE";
   candidate_accommodations?: string[];
-  /** Test-only: parent supplies known fixture interactions; forbidden for non-offline providers. */
-  trusted_offline_reference?: boolean;
+  trusted_offline_reference?: never;
   max_turns?: number;
   max_output_tokens?: number;
   limits_enforcement?: "enforced" | "post_hoc";
@@ -63,6 +64,10 @@ export interface RunDailyDriverOptions {
   run_id: string;
   trial_ids?: string[];
   keep_fixtures?: boolean;
+  /** Trusted evaluator state. The CLI never accepts this field. */
+  campaign_entropy?: CampaignEntropy;
+  /** Test harness only; never deserialized by the production CLI. */
+  timeout_override_ms?: number;
 }
 
 export interface TrialRunResult {
@@ -78,38 +83,43 @@ interface ProcessResult {
   startedAt: string;
   finishedAt: string;
   durationMs: number;
+  timeoutStage: "none" | "term_sent" | "kill_sent" | "drain_bounded";
+  signalsSent: Array<"SIGTERM" | "SIGKILL">;
+  cleanupOutcome: "not_required" | "group_terminated" | "group_killed" | "cleanup_unconfirmed";
 }
 
 const MAX_CAPTURE_BYTES = 2 * 1024 * 1024;
-function redactSecrets(value: string): { text: string; found: boolean } {
+function redactSecrets(value: string, source = "unknown", sentinels: string[] = []): { text: string; confirmed: boolean; events: Array<{ source: string; kind: string; classification: "confirmed_secret" | "possible_sensitive"; match_digest: string }> } {
   const result = redact(value);
-  return { text: result.redacted, found: result.matches.length > 0 };
+  let text=result.redacted; const events=result.matches.map((match) => ({ source, kind: match.kind, classification: match.classification, match_digest: sha256(value.slice(match.start, match.end)) }));
+  for(const sentinel of sentinels.filter((item)=>item.length>=6)){ if(value.includes(sentinel)){ text=text.split(sentinel).join("[REDACTED:provider_credential_sentinel]"); events.push({source,kind:"provider_credential_sentinel",classification:"confirmed_secret" as const,match_digest:sha256(sentinel)}); } }
+  return { text, confirmed: events.some((match) => match.classification === "confirmed_secret"), events };
 }
 
+function providerSecretSentinels(candidate: DailyDriverCandidate): string[] { const raw=candidate.provider_credential_env?process.env[candidate.provider_credential_env]:undefined; if(!raw)return[]; if(candidate.provider_credential_env!=="HOWA_OPENAI_CODEX_AUTH_BUNDLE")return[raw]; try{const v=JSON.parse(raw) as Record<string,unknown>; return [v.access_token,v.refresh_token].filter((x):x is string=>typeof x==="string");}catch{return[raw];} }
+
 function assertCandidate(candidate: DailyDriverCandidate): void {
+  rejectCandidateRuntimeOverrides(candidate as unknown as Record<string, unknown>);
   for (const [key, value] of Object.entries({
     model_id: candidate.model_id, provider_id: candidate.provider_id, provider_route: candidate.provider_route,
-    reasoning_level: candidate.reasoning_level, hermes_command: candidate.hermes_command,
-    hermes_version: candidate.hermes_version, hermes_commit: candidate.hermes_commit,
+    reasoning_level: candidate.reasoning_level,
   })) {
     if (typeof value !== "string" || value.trim().length === 0) throw new Error(`candidate.${key} is required`);
   }
   if (!Array.isArray(candidate.hermes_args) || candidate.hermes_args.some((value) => typeof value !== "string")) throw new Error("candidate.hermes_args must be a string array");
-  if (candidate.require_usage_file === true && !candidate.hermes_args.some((value) => value.includes("{usage_file}"))) throw new Error("candidate.require_usage_file requires a {usage_file} argument placeholder");
+  if (candidate.provider_id !== "offline" && candidate.require_usage_file === true && !candidate.hermes_args.some((value) => value.includes("{usage_file}"))) throw new Error("candidate.require_usage_file requires a {usage_file} argument placeholder");
   for (const [key, value] of Object.entries({ max_trial_cost_usd: candidate.max_trial_cost_usd, max_campaign_cost_usd: candidate.max_campaign_cost_usd, max_canary_cost_usd: candidate.max_canary_cost_usd })) {
     if (value !== undefined && (typeof value !== "number" || !Number.isFinite(value) || value <= 0)) throw new Error(`candidate.${key} must be a positive finite number`);
   }
   const serialized = canonicalJson(candidate.hermes_configuration);
-  if (redactSecrets(serialized).found) throw new Error("candidate.hermes_configuration must not contain credentials or secrets");
+  if (redactSecrets(serialized).confirmed) throw new Error("candidate.hermes_configuration must not contain credentials or secrets");
   if (candidate.provider_id !== "offline" && !candidate.provider_credential_env) throw new Error("candidate.provider_credential_env binds the single allowed provider credential");
   const credentialByProvider: Record<string, DailyDriverCandidate["provider_credential_env"]> = { minimax: "MINIMAX_API_KEY", xiaomi: "MIMO_API_KEY", "openai-codex": "HOWA_OPENAI_CODEX_AUTH_BUNDLE" };
   if (candidate.provider_id !== "offline" && credentialByProvider[candidate.provider_id] !== candidate.provider_credential_env) throw new Error(`candidate.provider_credential_env does not match provider ${candidate.provider_id}`);
-  if (candidate.provider_id !== "offline" && !candidate.hermes_executable_path) throw new Error("candidate.hermes_executable_path is required to bind the actual Hermes executable separately from its launcher");
-  if (candidate.provider_id !== "offline" && !candidate.hermes_install_root) throw new Error("candidate.hermes_install_root is required to bind the effective prompt and tool registry implementations");
   if (candidate.max_turns !== undefined && (!Number.isInteger(candidate.max_turns) || candidate.max_turns < 1)) throw new Error("candidate.max_turns must be a positive integer");
   if (candidate.max_output_tokens !== undefined && (!Number.isInteger(candidate.max_output_tokens) || candidate.max_output_tokens < 1)) throw new Error("candidate.max_output_tokens must be a positive integer");
   if (candidate.canary_trial_ids && (new Set(candidate.canary_trial_ids).size !== candidate.canary_trial_ids.length || candidate.canary_trial_ids.length !== 3 || candidate.canary_trial_ids.some((id) => !HERMES_DAILY_DRIVER_V1.trials.some((trial) => trial.id === id)))) throw new Error("candidate.canary_trial_ids must contain exactly three unique suite trials");
-  if (candidate.trusted_offline_reference && candidate.provider_id !== "offline") throw new Error("trusted_offline_reference is restricted to the offline self-test provider");
+  if (candidate.provider_id === "offline" && candidate.provider_credential_env) throw new Error("offline proof candidates cannot receive provider credentials");
 }
 
 function buildPrompt(trial: DailyDriverTrial): string {
@@ -219,15 +229,18 @@ function transcriptTelemetry(rows: TranscriptRow[], attempt: number): { tools: T
   return { tools, paths };
 }
 
-function trustedChildEnv(candidate: DailyDriverCandidate, cwd: string, captureRoot: string, attempt: number): NodeJS.ProcessEnv {
+function trustedChildEnv(candidate: DailyDriverCandidate, cwd: string, captureRoot: string, attempt: number, trialId: string): NodeJS.ProcessEnv {
+  const offlineScenarios: Record<string,string>={"offline/mock-v2":"reference","offline/static-key-v1":"static","offline/timeout-v1":"timeout","offline/forge-v1":"forge","offline/hash-v1":"hash","offline/retry-v1":"retry","offline/malformed-v1":"malformed","offline/secret-v1":"secret","offline/correction-v1":"correction"};
   const env: NodeJS.ProcessEnv = {
     PATH: "/home/zen/.local/bin:/usr/local/bin:/usr/bin:/bin", LANG: "C.UTF-8", LC_ALL: "C.UTF-8",
     HOWA_DAILY_DRIVER: "1", HOWA_DAILY_DRIVER_WORKSPACE: cwd, HOWA_DAILY_DRIVER_CAPTURE_ROOT: captureRoot,
     HOWA_ATTEMPT: String(attempt), GIT_OPTIONAL_LOCKS: "0", HERMES_HOME: captureRoot,
+    HOWA_TRIAL_ID: trialId, HOWA_TRUSTED_RUNTIME_KIND: candidate.provider_id === "offline" ? "offline-proof" : "production-hermes",
     HERMES_SESSION_DIR: captureRoot, HERMES_STATE_DIR: captureRoot, XDG_CACHE_HOME: path.join(captureRoot, "cache"),
     XDG_CONFIG_HOME: path.join(captureRoot, "config"), XDG_DATA_HOME: path.join(captureRoot, "data"), TMPDIR: path.join(captureRoot, "tmp"),
     HOWA_MAX_TURNS: String(candidate.max_turns ?? 24), HOWA_MAX_OUTPUT_TOKENS: String(candidate.max_output_tokens ?? 8192),
   };
+  if(candidate.provider_id==="offline"){ const scenario=offlineScenarios[candidate.model_id]; if(!scenario) throw new Error(`offline model is not frozen in runtime policy: ${candidate.model_id}`); env.HOWA_TRUSTED_OFFLINE_SCENARIO=scenario; env.HOWA_REQUESTED_MODEL_ID=candidate.model_id; }
   if (candidate.provider_credential_env) {
     const value = process.env[candidate.provider_credential_env];
     if (!value) throw new Error(`required provider credential ${candidate.provider_credential_env} is unavailable`);
@@ -249,19 +262,23 @@ export async function mintTrustedProviderCredential(candidate: DailyDriverCandid
   await fs.writeFile(path.join(captureRoot, "auth.json"), `${JSON.stringify(auth)}\n`, { encoding: "utf8", mode: 0o600, flag: "wx" });
 }
 
-async function runProcess(command: string, args: string[], cwd: string, timeoutMs: number, captureRoot: string, candidate?: DailyDriverCandidate, attempt = 1): Promise<ProcessResult> {
+async function runProcess(command: string, args: string[], cwd: string, timeoutMs: number, captureRoot: string, candidate?: DailyDriverCandidate, attempt = 1, trialId = "internal"): Promise<ProcessResult> {
   const started = Date.now();
   const startedAt = new Date(started).toISOString();
   let stdout = "";
   let stderr = "";
   let timedOut = false;
   let settled = false;
+  let timeoutStage: ProcessResult["timeoutStage"] = "none";
+  const signalsSent: ProcessResult["signalsSent"] = [];
+  let cleanupOutcome: ProcessResult["cleanupOutcome"] = "not_required";
   const exitCode = await new Promise<number | null>((resolve) => {
     const child = spawn(command, args, {
       cwd,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
-      env: candidate ? trustedChildEnv(candidate, cwd, captureRoot, attempt) : { PATH: "/usr/bin:/bin", HOME: captureRoot, LANG: "C.UTF-8" },
+      detached: process.platform !== "win32",
+      env: candidate ? trustedChildEnv(candidate, cwd, captureRoot, attempt, trialId) : { PATH: "/usr/bin:/bin", HOME: captureRoot, LANG: "C.UTF-8" },
     });
     const finish = (code: number | null) => {
       if (settled) return;
@@ -269,21 +286,31 @@ async function runProcess(command: string, args: string[], cwd: string, timeoutM
       clearTimeout(timer);
       resolve(code);
     };
+    const signalGroup = (signal: "SIGTERM" | "SIGKILL") => {
+      signalsSent.push(signal);
+      try { if (child.pid && process.platform !== "win32") process.kill(-child.pid, signal); else child.kill(signal); } catch { /* already gone */ }
+    };
     const timer = setTimeout(() => {
       timedOut = true;
+      timeoutStage = "term_sent";
       stderr += `\nHowa: candidate timeout after ${timeoutMs}ms`;
-      child.kill("SIGTERM");
-      const hardKill = setTimeout(() => child.kill("SIGKILL"), 2_000);
-      hardKill.unref();
+      signalGroup("SIGTERM");
+      setTimeout(() => {
+        if (settled) return;
+        timeoutStage = "kill_sent"; cleanupOutcome = "group_killed"; signalGroup("SIGKILL");
+        setTimeout(() => {
+          if (settled) return;
+          timeoutStage = "drain_bounded"; child.stdout.destroy(); child.stderr.destroy(); cleanupOutcome = "group_killed"; finish(124);
+        }, 300);
+      }, 300);
     }, timeoutMs);
-    timer.unref();
     child.stdout.on("data", (chunk: Buffer) => { if (stdout.length < MAX_CAPTURE_BYTES) stdout += chunk.toString("utf8").slice(0, MAX_CAPTURE_BYTES - stdout.length); });
     child.stderr.on("data", (chunk: Buffer) => { if (stderr.length < MAX_CAPTURE_BYTES) stderr += chunk.toString("utf8").slice(0, MAX_CAPTURE_BYTES - stderr.length); });
     child.once("error", (error) => { stderr += `\nHowa spawn error: ${error.message}`; finish(127); });
-    child.once("close", (code) => finish(timedOut ? 124 : code));
+    child.once("close", (code) => { if (timedOut) { cleanupOutcome = signalsSent.includes("SIGKILL") ? "group_killed" : "group_terminated"; finish(124); } else finish(code); });
   });
   const finished = Date.now();
-  return { stdout, stderr, exitCode, timedOut, startedAt, finishedAt: new Date(finished).toISOString(), durationMs: finished - started };
+  return { stdout, stderr, exitCode, timedOut, startedAt, finishedAt: new Date(finished).toISOString(), durationMs: finished - started, timeoutStage, signalsSent, cleanupOutcome };
 }
 
 function classifyTransport(result: ProcessResult): { transport: boolean; kind: string | null; retryable: boolean } {
@@ -297,21 +324,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-async function executableDigest(command: string): Promise<string> {
-  const resolved = command.includes(path.sep) ? await fs.realpath(command) : await fs.realpath(`/usr/bin/${command}`);
-  return sha256(await fs.readFile(resolved));
-}
-
 async function runtimeComponentDigest(candidate: DailyDriverCandidate, relativePaths: string[], fallback: unknown): Promise<string> {
-  if (!candidate.hermes_install_root) return sha256(canonicalJson(fallback));
+  const installRoot = candidate.provider_id === "offline" ? null : "/home/zen/.hermes/hermes-agent";
+  if (!installRoot) return sha256(canonicalJson(fallback));
   const components: Array<{ path: string; digest: string }> = [];
   for (const relative of relativePaths) {
-    const target = path.resolve(candidate.hermes_install_root, relative);
-    const root = `${path.resolve(candidate.hermes_install_root)}${path.sep}`;
+    const target = path.resolve(installRoot, relative);
+    const root = `${path.resolve(installRoot)}${path.sep}`;
     if (!target.startsWith(root)) throw new Error(`Hermes runtime component escapes install root: ${relative}`);
     components.push({ path: relative, digest: sha256(await fs.readFile(target)) });
   }
   return sha256(canonicalJson(components));
+}
+
+interface OfflineTelemetry { schema_version: string; model: string; provider: string; input_tokens: number; output_tokens: number; tool_rows: Array<{ sequence:number; command:string; started:number; finished:number; exit_code:number|null }> }
+async function captureOfflineTelemetry(sessionRoot: string, attempt: number): Promise<{ usage: HermesUsage; tools: ToolCallRecord[]; paths: string[] } | null> {
+  try {
+    const value=JSON.parse(await fs.readFile(path.join(sessionRoot,"trusted-telemetry.json"),"utf8")) as OfflineTelemetry;
+    if(value.schema_version!=="howa.offline-telemetry.v1"||!Array.isArray(value.tool_rows)) return null;
+    return { usage:{estimated_cost_usd:0,input_tokens:value.input_tokens,output_tokens:value.output_tokens,model:value.model,provider:value.provider}, paths:value.tool_rows.map((row)=>row.command), tools:value.tool_rows.map((row)=>({attempt,sequence:row.sequence,name:"terminal",arguments_digest:sha256(canonicalJson({command:row.command})),started_at:new Date(row.started*1000).toISOString(),finished_at:new Date(row.finished*1000).toISOString(),exit_code:row.exit_code,timed_out:false})) };
+  } catch { return null; }
 }
 
 async function writeEvidence(outputRoot: string, relative: string, content: string): Promise<EvidenceReference> {
@@ -332,6 +364,9 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
   assertCandidate(options.candidate);
   if (!/^[A-Za-z0-9_.-]+$/.test(options.run_id)) throw new Error("run_id must contain only letters, digits, dot, underscore, and hyphen");
   const trial = getDailyDriverTrial(trialId);
+  const entropy = options.campaign_entropy ?? createCampaignEntropy(options.run_id);
+  if (entropy.run_id !== options.run_id) throw new Error("campaign entropy run identity mismatch");
+  const runtime = await resolveTrustedRuntime(options.candidate.provider_id);
   const runStartedMs = Date.now();
   const startTimestamp = new Date(runStartedMs).toISOString();
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), `howa-ddv1-${options.run_id}-${trialId}-`));
@@ -348,6 +383,8 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
   let fixtureDigest = "";
   let finalValidation: Awaited<ReturnType<typeof validateTrialResult>> | null = null;
   let secretExposure = false;
+  const redactionEvents: DailyDriverReceiptV1["redaction_events"] = [];
+  const secretSentinels = providerSecretSentinels(options.candidate);
   let usageMissing = false;
   let usageIdentityMismatch = false;
   let transcriptMissing = false;
@@ -360,8 +397,6 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
   const observedCompactions: CompactionEvent[] = [];
   const maxAttempts = Math.min(3, Math.max(1, Math.floor(options.candidate.max_attempts ?? 1)));
   const maxCorrections = Math.min(2, Math.max(0, Math.floor(options.candidate.max_correction_rounds ?? 0)));
-  const launcherHash = await executableDigest(options.candidate.hermes_command);
-  const executableHash = await executableDigest(options.candidate.hermes_executable_path ?? options.candidate.hermes_command);
   const promptImplementationDigest = await runtimeComponentDigest(options.candidate, ["agent/prompt_builder.py"], { offline: true, prompt_builder: "Howa buildPrompt" });
   const toolImplementationDigest = await runtimeComponentDigest(options.candidate, ["toolsets.py", "model_tools.py", "tools/terminal_tool.py"], { offline: true, tools: trial.permitted_tools });
 
@@ -374,16 +409,18 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       const usageFile = path.join(sessionRoot, "usage.json");
       await Promise.all(["cache", "config", "data", "tmp"].map((name) => fs.mkdir(path.join(sessionRoot, name), { recursive: true, mode: 0o700 })));
       await mintTrustedProviderCredential(options.candidate, sessionRoot);
-      const fixture = await createAuthoritativeFixture(workspace, trialId);
+      const fixture = await createAuthoritativeFixture(workspace, trialId, entropy);
       const before = fixture.snapshot;
       if (!fixtureDigest) fixtureDigest = before.digest;
       else if (fixtureDigest !== before.digest) throw new Error(`fixture ${trialId} is not deterministic across attempts`);
       const args = substituteArgs(options.candidate.hermes_args, { prompt, prompt_file: promptFile, usage_file: usageFile, workspace, session_root: sessionRoot, trial_id: trialId });
       if (authoritativeArgs.length === 0) authoritativeArgs = args;
-      const processResult = await runProcess(options.candidate.hermes_command, args, workspace, trial.timeout_ms, sessionRoot, options.candidate, attempt);
-      const usage = await readUsage(usageFile);
+      const effectiveTimeout = options.timeout_override_ms === undefined ? trial.timeout_ms : Math.max(100, Math.min(trial.timeout_ms, options.timeout_override_ms));
+      const processResult = await runProcess(runtime.launcher_path, args, workspace, effectiveTimeout, sessionRoot, options.candidate, attempt, trialId);
+      const offlineTelemetry = options.candidate.provider_id === "offline" ? await captureOfflineTelemetry(sessionRoot, attempt) : null;
+      const usage = offlineTelemetry?.usage ?? await readUsage(usageFile);
       if (!usage) {
-        usageMissing ||= options.candidate.require_usage_file === true;
+        usageMissing ||= options.candidate.require_usage_file === true && !classifyTransport(processResult).transport;
         if (options.candidate.provider_id !== "offline") tokensReported = false;
         else servedModelIdentity = options.candidate.model_id;
       } else {
@@ -398,11 +435,9 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       const after = await snapshotFixture(workspace);
       const mutations = observeMutations(before, after, trial.mutation_boundary.allowed);
       allMutations.push(...prefixMutations(attempt, mutations));
-      const transcript = await captureHermesTranscript(sessionRoot);
+      const transcript = options.candidate.provider_id === "offline" ? null : await captureHermesTranscript(sessionRoot);
       transcriptMissing ||= transcript === null && options.candidate.require_transcript === true;
-      const telemetry = transcript ? transcriptTelemetry(transcript, attempt) : options.candidate.trusted_offline_reference
-        ? { paths: fixture.authority.required_sources.map((value) => value.startsWith("git:") ? `git ${value.slice(4)}` : value.startsWith("exec:") ? value.slice(5) : value), tools: fixture.authority.required_sources.map((value, index) => ({ attempt, sequence: index + 1, name: "offline.reference_interaction", arguments_digest: sha256(canonicalJson({ value })), started_at: processResult.startedAt, finished_at: processResult.finishedAt, exit_code: 0, timed_out: false })) }
-        : { paths: [], tools: [] };
+      const telemetry = transcript ? transcriptTelemetry(transcript, attempt) : offlineTelemetry ? { paths: offlineTelemetry.paths, tools: offlineTelemetry.tools } : { paths: [], tools: [] };
       if (transcript?.some((row) => row.compacted === 1)) {
         const compacted = transcript.filter((row) => row.compacted === 1);
         const timestamp = Math.max(...compacted.map((row) => Number(row.timestamp)).filter(Number.isFinite));
@@ -411,28 +446,34 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       }
       toolCalls.push(...telemetry.tools);
       const transport = classifyTransport(processResult);
-      const stdoutRedacted = redactSecrets(processResult.stdout);
-      const stderrRedacted = redactSecrets(processResult.stderr);
-      secretExposure ||= stdoutRedacted.found || stderrRedacted.found;
+      const stdoutRedacted = redactSecrets(processResult.stdout, `attempt-${attempt}.stdout`,secretSentinels);
+      const stderrRedacted = redactSecrets(processResult.stderr, `attempt-${attempt}.stderr`,secretSentinels);
+      redactionEvents.push(...stdoutRedacted.events,...stderrRedacted.events);
+      secretExposure ||= stdoutRedacted.confirmed || stderrRedacted.confirmed;
       const evidenceBase = path.join("artifacts", options.run_id, trialId);
       const stdoutEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.stdout.txt`), stdoutRedacted.text);
       const stderrEvidence = await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.stderr.txt`), stderrRedacted.text);
       evidence.push(stdoutEvidence, stderrEvidence);
       evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.fixture-before.json`), `${canonicalJson(before)}\n`));
       evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.fixture-after.json`), `${canonicalJson(after)}\n`));
-      if (usage) evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.hermes-usage.json`), `${canonicalJson(usage)}\n`));
+      if (usage) { const safeUsage=redactSecrets(`${canonicalJson(usage)}\n`,`attempt-${attempt}.usage`,secretSentinels); redactionEvents.push(...safeUsage.events); secretExposure||=safeUsage.confirmed; evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.hermes-usage.json`), safeUsage.text)); }
+      if (offlineTelemetry) {
+        const sanitized = redactSecrets(`${canonicalJson({paths:offlineTelemetry.paths,tools:offlineTelemetry.tools})}\n`, `attempt-${attempt}.tool-state`, secretSentinels);
+        redactionEvents.push(...sanitized.events); secretExposure ||= sanitized.confirmed;
+        evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,`attempt-${attempt}.trusted-tool-telemetry.json`),sanitized.text));
+      }
       if (transcript) {
-        const sanitized = redactSecrets(`${canonicalJson(transcript)}\n`);
-        secretExposure ||= sanitized.found;
+        const sanitized = redactSecrets(`${canonicalJson(transcript)}\n`, `attempt-${attempt}.tool-state`,secretSentinels);
+        redactionEvents.push(...sanitized.events); secretExposure ||= sanitized.confirmed;
         evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.hermes-transcript.json`), sanitized.text));
       } else {
         evidence.push(await writeEvidence(options.output_root, path.join(evidenceBase, `attempt-${attempt}.hermes-transcript.json`), `${canonicalJson({ available: false, reason: "isolated Hermes state.db unavailable" })}\n`));
       }
       const outcome: AttemptRecord["outcome"] = processResult.timedOut ? "timeout" : transport.transport ? "transport_failure" : processResult.exitCode === 0 ? "accepted_output" : "model_failure";
-      attempts.push({ attempt, started_at: processResult.startedAt, finished_at: processResult.finishedAt, duration_ms: processResult.durationMs, exit_code: processResult.exitCode, outcome, error_kind: transport.kind, retryable: transport.retryable, stdout_digest: stdoutEvidence.digest, stderr_digest: stderrEvidence.digest });
+      attempts.push({ attempt, started_at: processResult.startedAt, finished_at: processResult.finishedAt, duration_ms: processResult.durationMs, exit_code: processResult.exitCode, outcome, error_kind: transport.kind, retryable: transport.retryable, stdout_digest: stdoutEvidence.digest, stderr_digest: stderrEvidence.digest, timeout_stage: processResult.timeoutStage, signals_sent: processResult.signalsSent, cleanup_outcome: processResult.cleanupOutcome });
       if (transport.transport) {
         connectionFailures.push({ attempt, kind: transport.kind ?? "UNKNOWN", timestamp: processResult.finishedAt, message: `candidate attempt ${attempt} ended with ${transport.kind ?? "transport failure"}` });
-        if (processResult.timedOut) timeoutEvents.push({ attempt, timestamp: processResult.finishedAt, timeout_ms: trial.timeout_ms, phase: "candidate_process" });
+        if (processResult.timedOut) timeoutEvents.push({ attempt, timestamp: processResult.finishedAt, timeout_ms: effectiveTimeout, phase: "candidate_process", stage: processResult.timeoutStage === "none" ? "term_sent" : processResult.timeoutStage, signals_sent: processResult.signalsSent, cleanup_outcome: processResult.cleanupOutcome === "not_required" ? "cleanup_unconfirmed" : processResult.cleanupOutcome });
         if (transport.retryable && attempts.filter((item) => item.outcome === "transport_failure" || item.outcome === "timeout").length < maxAttempts) continue;
         break;
       }
@@ -466,8 +507,17 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
     if (apiCost === null) disqualifiers.add("COST_UNKNOWN");
     if (typeof options.candidate.max_trial_cost_usd === "number" && (apiCost === null || apiCost > options.candidate.max_trial_cost_usd)) disqualifiers.add(apiCost === null ? "TRIAL_COST_LIMIT_UNVERIFIABLE" : "TRIAL_COST_LIMIT_EXCEEDED");
     if (!finalValidation && connectionFailures.length > 0) disqualifiers.add("TRANSPORT_FAILURE");
-    const rawVerdict = secretExposure ? "FAIL" : finalValidation?.raw_verdict ?? "ERROR";
-    const accepted = !secretExposure && (finalValidation?.accepted ?? false) && disqualifiers.size === 0;
+    let rawVerdict = secretExposure ? "FAIL" : finalValidation?.raw_verdict ?? "ERROR";
+    let accepted = !secretExposure && (finalValidation?.accepted ?? false) && disqualifiers.size === 0;
+    const safeArgs = authoritativeArgs.map((arg, index) => { const value=redactSecrets(arg,`hermes-argument-${index}`,secretSentinels); redactionEvents.push(...value.events); secretExposure ||= value.confirmed; return value.text; });
+    if(secretExposure){disqualifiers.add("SECRET_EXPOSURE");rawVerdict="FAIL";accepted=false;}
+    const configurationDigest = sha256(canonicalJson({ public_configuration: options.candidate.hermes_configuration, hermes_arguments: safeArgs, hermes_launcher_digest: runtime.launcher_digest, terminal_sandbox_digest: runtime.terminal_sandbox_digest, hermes_executable_digest: runtime.hermes_executable_digest, runtime_policy_digest: runtime.policy_digest, limits: { max_turns: options.candidate.max_turns ?? 24, max_output_tokens: options.candidate.max_output_tokens ?? 8192 }, environment_policy: "env-i/single-provider-credential/provider-only/air-gapped-terminal" }));
+    const systemPromptDigest = sha256(canonicalJson({ task_prompt: prompt, prompt_implementation_digest: promptImplementationDigest, hermes_executable_digest: runtime.hermes_executable_digest }));
+    const toolRegistryDigest = sha256(canonicalJson({ implementation_digest: toolImplementationDigest, enabled_toolsets: options.candidate.hermes_configuration.toolsets ?? [], permitted_trial_tools: trial.permitted_tools, terminal_sandbox_digest: runtime.terminal_sandbox_digest }));
+    const evidenceBase = path.join("artifacts", options.run_id, trialId);
+    evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"trusted-authority.json"),`${canonicalJson({schema_version:"howa.ddv1-authority.v1",run_id:options.run_id,trial_id:trialId,nonce_hex:entropy.nonce.toString("hex"),entropy_commitment:entropy.commitment,fixture_digest:fixtureDigest})}\n`));
+    evidence.push(await writeEvidence(options.output_root,path.join(evidenceBase,"runtime-identity.json"),`${canonicalJson({hermes_launcher_digest:runtime.launcher_digest,terminal_sandbox_digest:runtime.terminal_sandbox_digest,hermes_executable_digest:runtime.hermes_executable_digest,runtime_policy_version:runtime.policy_version,runtime_policy_digest:runtime.policy_digest,hermes_configuration_digest:configurationDigest,system_prompt_digest:systemPromptDigest,tool_registry_digest:toolRegistryDigest,cost_rate_card_version:DAILY_DRIVER_RATE_CARD_VERSION,campaign_entropy_commitment:entropy.commitment})}\n`));
+    const manifest = await buildEvidenceManifest(options.output_root,options.run_id,trialId,evidence);
     const receipt = sealReceipt({
       schema_version: DAILY_DRIVER_SCHEMA_VERSION,
       trial_id: trial.id,
@@ -479,24 +529,20 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       provider_route: options.candidate.provider_route,
       reasoning_level: options.candidate.reasoning_level,
       served_model_identity: servedModelIdentity,
-      hermes_version: options.candidate.hermes_version,
-      hermes_commit: options.candidate.hermes_commit,
-      hermes_launcher_digest: launcherHash,
-      hermes_executable_digest: executableHash,
-      hermes_arguments: authoritativeArgs.map((arg) => redactSecrets(arg).text),
+      hermes_version: runtime.hermes_version,
+      hermes_commit: runtime.hermes_commit,
+      hermes_launcher_digest: runtime.launcher_digest,
+      terminal_sandbox_digest: runtime.terminal_sandbox_digest,
+      runtime_policy_version: runtime.policy_version,
+      runtime_policy_digest: runtime.policy_digest,
+      hermes_executable_digest: runtime.hermes_executable_digest,
+      hermes_arguments: safeArgs,
       requested_temperature: options.candidate.temperature ?? null,
-      hermes_configuration_digest: sha256(canonicalJson({
-        public_configuration: options.candidate.hermes_configuration,
-        hermes_arguments: authoritativeArgs.map((arg) => redactSecrets(arg).text),
-        hermes_launcher_digest: launcherHash,
-        hermes_executable_digest: executableHash,
-        terminal_sandbox_digest: launcherHash,
-        limits: { max_turns: options.candidate.max_turns ?? 24, max_output_tokens: options.candidate.max_output_tokens ?? 8192 },
-        environment_policy: "env-i/single-provider-credential/provider-only/no-terminal-credential",
-      })),
-      system_prompt_digest: sha256(canonicalJson({ task_prompt: prompt, prompt_implementation_digest: promptImplementationDigest, hermes_executable_digest: executableHash })),
-      tool_registry_digest: sha256(canonicalJson({ implementation_digest: toolImplementationDigest, enabled_toolsets: options.candidate.hermes_configuration.toolsets ?? [], permitted_trial_tools: trial.permitted_tools })),
+      hermes_configuration_digest: configurationDigest,
+      system_prompt_digest: systemPromptDigest,
+      tool_registry_digest: toolRegistryDigest,
       fixture_digest: fixtureDigest,
+      campaign_entropy_commitment: entropy.commitment,
       start_timestamp: startTimestamp,
       end_timestamp: new Date(runFinishedMs).toISOString(),
       wall_clock_duration_ms: runFinishedMs - runStartedMs,
@@ -513,7 +559,7 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       subscription_quota_consumed: rate?.billing === "subscription" ? attempts.length : null,
       cost_rate_card_version: DAILY_DRIVER_RATE_CARD_VERSION,
       cost_provenance: rate?.billing === "subscription" ? "subscription" : rate?.billing === "token_plan" ? "token_plan" : apiCost === null ? "unknown" : "rate_card_estimate",
-      candidate_accommodations: [...(options.candidate.candidate_accommodations ?? []), ...(options.candidate.trusted_offline_reference ? ["trusted offline reference interaction manifest (self-test only)"] : [])],
+      candidate_accommodations: [...(options.candidate.candidate_accommodations ?? [])],
       max_turns: options.candidate.max_turns ?? 24,
       max_output_tokens: options.candidate.max_output_tokens ?? 8192,
       limits_enforcement: options.candidate.limits_enforcement ?? "enforced",
@@ -522,6 +568,10 @@ export async function runDailyDriverTrial(options: RunDailyDriverOptions, trialI
       deterministic_checks: finalValidation?.checks ?? [{ id: "transport.execution", passed: false, details: "No model output was available for deterministic validation", evidence_refs: evidence.filter((item) => item.kind === "stderr").map((item) => item.id) }],
       raw_verdict: rawVerdict,
       evidence_references: evidence,
+      evidence_manifest_path: manifest.path,
+      evidence_manifest_digest: manifest.digest,
+      evidence_bundle_mode: "receipt-plus-evidence-directory",
+      redaction_events: redactionEvents,
       correction_rounds: correctionRounds,
       accepted,
       disqualifier_codes: [...disqualifiers].sort(),
@@ -539,12 +589,13 @@ export async function runDailyDriverSuite(options: RunDailyDriverOptions): Promi
   const unique = new Set(ids);
   if (unique.size !== ids.length) throw new Error("trial_ids must not contain duplicates");
   const results: TrialRunResult[] = [];
+  const campaignEntropy = options.campaign_entropy ?? createCampaignEntropy(options.run_id);
   let campaignCost = 0;
   const isCanary = ids.length > 0 && ids.length <= 3 && Array.isArray(options.candidate.canary_trial_ids) && ids.every((id) => options.candidate.canary_trial_ids!.includes(id));
   const activeCostLimit = isCanary ? options.candidate.max_canary_cost_usd : options.candidate.max_campaign_cost_usd;
   for (const id of ids) {
     if (typeof activeCostLimit === "number" && campaignCost >= activeCostLimit) throw new Error(`${isCanary ? "canary" : "campaign"} cost limit reached before ${id}`);
-    const result = await runDailyDriverTrial(options, id);
+    const result = await runDailyDriverTrial({ ...options, campaign_entropy: campaignEntropy }, id);
     results.push(result);
     if (result.receipt.api_equivalent_cost_usd === null) throw new Error(`campaign cost cannot be enforced after ${id}: API-equivalent cost is unknown`);
     campaignCost += result.receipt.api_equivalent_cost_usd;

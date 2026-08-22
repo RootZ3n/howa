@@ -7,10 +7,7 @@ case "$workspace_real" in /tmp/howa-ddv1-*/fixture-attempt-*) ;; *) echo "refusi
 
 # Candidate tools see runtime files plus their single fixture. The host root,
 # user homes, Hermes capture, provider configuration, and network are absent.
-namespace_args=(--unshare-user-try --unshare-pid --unshare-ipc --unshare-uts --unshare-cgroup-try)
-if [[ "${HOWA_SANDBOX_FILESYSTEM_SELF_TEST:-0}" != 1 ]]; then
-  namespace_args+=(--unshare-net)
-fi
+namespace_args=(--unshare-user-try --unshare-pid --unshare-ipc --unshare-uts --unshare-cgroup-try --unshare-net)
 
 # Deliberately small command surface for all V1 trials. Shared libraries are
 # read-only; no host configuration, application data, package cache, provider
@@ -21,7 +18,7 @@ for executable in \
   /usr/bin/cat /usr/bin/chmod /usr/bin/cp /usr/bin/cut /usr/bin/dirname \
   /usr/bin/env /usr/bin/find /usr/bin/grep /usr/bin/head /usr/bin/ls \
   /usr/bin/mkdir /usr/bin/mv /usr/bin/readlink /usr/bin/realpath /usr/bin/rm \
-  /usr/bin/sed /usr/bin/sha256sum /usr/bin/sort /usr/bin/stat /usr/bin/tail \
+  /usr/bin/sed /usr/bin/sha256sum /usr/bin/sort /usr/bin/stat /usr/bin/tail /usr/bin/sleep \
   /usr/bin/tee /usr/bin/test /usr/bin/timeout /usr/bin/touch /usr/bin/tr \
   /usr/bin/uniq /usr/bin/wc /usr/bin/xargs
 do
@@ -38,6 +35,7 @@ exec /usr/bin/bwrap \
   "${runtime_args[@]}" \
   --ro-bind /usr/lib64 /usr/lib64 \
   --symlink usr/bin /bin \
+  --symlink bash /usr/bin/sh \
   --symlink usr/lib64 /lib64 \
   --dir /tmp \
   --dir /home \

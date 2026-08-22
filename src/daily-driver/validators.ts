@@ -177,11 +177,11 @@ async function specificChecks(input: ValidationInput, report: CandidateReport): 
       ];
     }
     case "ddv1-12-context-endurance": {
-      const picks = o("picks");
       return [
-        check("context.begin", Array.isArray(picks) && canonical(picks[0]) === canonical((expected.picks as unknown[])[0]), "beginning dynamic nonce and line required", ["candidate.stdout"]),
-        check("context.middle", Array.isArray(picks) && canonical(picks[1]) === canonical((expected.picks as unknown[])[1]), "middle dynamic nonce and line required", ["candidate.stdout"]),
-        check("context.end", Array.isArray(picks) && canonical(picks[2]) === canonical((expected.picks as unknown[])[2]), "end dynamic nonce and line required", ["candidate.stdout"]),
+        check("context.record-count", o("record_count") === expected.record_count, "all distributed context records must be consumed", ["candidate.stdout"]),
+        check("context.group-synthesis", canonical(o("group_totals")) === canonical(expected.group_totals), "eight independent group totals must match hidden authority", ["candidate.stdout"]),
+        check("context.weighted-synthesis", o("weighted_sum") === expected.weighted_sum, "whole-context ordinal-weighted checksum must match", ["candidate.stdout"]),
+        check("context.distributed-markers", canonical(o("ordered_markers")) === canonical(expected.ordered_markers), "six distributed marker facts must be retained in order", ["candidate.stdout"]),
       ];
     }
     default:

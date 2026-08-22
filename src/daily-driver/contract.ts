@@ -2,8 +2,9 @@ import { createHash } from "node:crypto";
 import { constants as fsConstants, promises as fs } from "node:fs";
 import path from "node:path";
 import { validateCommittedReceiptSchema } from "./json-schema.js";
+import { DAILY_DRIVER_RATE_CARD_VERSION } from "./rate-card.js";
 
-export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v2" as const;
+export const DAILY_DRIVER_SCHEMA_VERSION = "howa.hermes-daily-driver.receipt.v3" as const;
 export const DAILY_DRIVER_SUITE_VERSION = "hermes-daily-driver.v1" as const;
 
 export type RawVerdict = "PASS" | "FAIL" | "SAFE_FAIL" | "INCOMPLETE" | "ERROR";
@@ -20,6 +21,9 @@ export interface AttemptRecord {
   retryable: boolean;
   stdout_digest: string;
   stderr_digest: string;
+  timeout_stage: "none" | "term_sent" | "kill_sent" | "drain_bounded";
+  signals_sent: Array<"SIGTERM" | "SIGKILL">;
+  cleanup_outcome: "not_required" | "group_terminated" | "group_killed" | "cleanup_unconfirmed";
 }
 
 export interface ConnectionFailure {
@@ -34,7 +38,12 @@ export interface TimeoutEvent {
   timestamp: string;
   timeout_ms: number;
   phase: "candidate_process" | "validator";
+  stage: "term_sent" | "kill_sent" | "drain_bounded";
+  signals_sent: Array<"SIGTERM" | "SIGKILL">;
+  cleanup_outcome: "group_terminated" | "group_killed" | "cleanup_unconfirmed";
 }
+
+export interface RedactionEvent { source: string; kind: string; classification: "confirmed_secret" | "possible_sensitive"; match_digest: string; }
 
 export interface CompactionEvent {
   attempt: number;
@@ -91,6 +100,9 @@ export interface DailyDriverReceiptV1 {
   hermes_version: string;
   hermes_commit: string;
   hermes_launcher_digest: string;
+  terminal_sandbox_digest: string;
+  runtime_policy_version: string;
+  runtime_policy_digest: string;
   hermes_executable_digest: string;
   hermes_arguments: string[];
   requested_temperature: number | null;
@@ -98,6 +110,7 @@ export interface DailyDriverReceiptV1 {
   system_prompt_digest: string;
   tool_registry_digest: string;
   fixture_digest: string;
+  campaign_entropy_commitment: string;
   start_timestamp: string;
   end_timestamp: string;
   wall_clock_duration_ms: number;
@@ -123,6 +136,10 @@ export interface DailyDriverReceiptV1 {
   deterministic_checks: DeterministicCheck[];
   raw_verdict: RawVerdict;
   evidence_references: EvidenceReference[];
+  evidence_manifest_path: string;
+  evidence_manifest_digest: string;
+  evidence_bundle_mode: "receipt-plus-evidence-directory";
+  redaction_events: RedactionEvent[];
   correction_rounds: number;
   accepted: boolean;
   disqualifier_codes: string[];
@@ -169,11 +186,11 @@ export function sealReceipt(receipt: Omit<DailyDriverReceiptV1, "receipt_digest"
 const TOP_LEVEL_KEYS = [
   "schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "timestamp",
   "model_id", "provider_id", "provider_route", "reasoning_level", "served_model_identity",
-  "hermes_version", "hermes_commit", "hermes_launcher_digest", "hermes_executable_digest", "hermes_arguments", "requested_temperature", "hermes_configuration_digest", "system_prompt_digest",
-  "tool_registry_digest", "fixture_digest", "start_timestamp", "end_timestamp",
+  "hermes_version", "hermes_commit", "hermes_launcher_digest", "terminal_sandbox_digest", "runtime_policy_version", "runtime_policy_digest", "hermes_executable_digest", "hermes_arguments", "requested_temperature", "hermes_configuration_digest", "system_prompt_digest",
+  "tool_registry_digest", "fixture_digest", "campaign_entropy_commitment", "start_timestamp", "end_timestamp",
   "wall_clock_duration_ms", "attempts", "retries", "connection_failures", "timeout_events",
   "compaction_events", "input_tokens", "output_tokens", "charged_cost_usd", "api_equivalent_cost_usd", "plan_credit_consumed", "subscription_quota_consumed", "cost_rate_card_version", "cost_provenance", "candidate_accommodations", "max_turns", "max_output_tokens", "limits_enforcement", "tool_calls",
-  "mutation_observations", "deterministic_checks", "raw_verdict", "evidence_references",
+  "mutation_observations", "deterministic_checks", "raw_verdict", "evidence_references", "evidence_manifest_path", "evidence_manifest_digest", "evidence_bundle_mode", "redaction_events",
   "correction_rounds", "accepted", "disqualifier_codes",
 ] as const;
 
@@ -247,11 +264,14 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   const issues: string[] = validateCommittedReceiptSchema(value).map((issue) => `JSON Schema ${issue}`);
   if (!exactKeys(value, TOP_LEVEL_KEYS, "$", issues)) throw new ContractValidationError(issues);
   const r = value;
-  for (const key of ["schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "model_id", "provider_id", "provider_route", "reasoning_level", "hermes_version", "hermes_commit", "cost_rate_card_version"] as const) stringField(r, key, "$", issues);
+  for (const key of ["schema_version", "receipt_digest", "trial_id", "trial_suite_version", "run_id", "model_id", "provider_id", "provider_route", "reasoning_level", "hermes_version", "hermes_commit", "runtime_policy_version", "cost_rate_card_version", "evidence_manifest_path", "evidence_bundle_mode"] as const) stringField(r, key, "$", issues);
   if (r.schema_version !== DAILY_DRIVER_SCHEMA_VERSION) issues.push(`$.schema_version unsupported: ${String(r.schema_version)}`);
   if (r.trial_suite_version !== DAILY_DRIVER_SUITE_VERSION) issues.push(`$.trial_suite_version unsupported: ${String(r.trial_suite_version)}`);
+  if (r.cost_rate_card_version !== DAILY_DRIVER_RATE_CARD_VERSION) issues.push(`$.cost_rate_card_version unsupported: ${String(r.cost_rate_card_version)}`);
   stringField(r, "served_model_identity", "$", issues, true);
-  for (const key of ["receipt_digest", "hermes_launcher_digest", "hermes_executable_digest", "hermes_configuration_digest", "system_prompt_digest", "tool_registry_digest", "fixture_digest"] as const) digestField(r, key, "$", issues);
+  for (const key of ["receipt_digest", "hermes_launcher_digest", "terminal_sandbox_digest", "runtime_policy_digest", "hermes_executable_digest", "hermes_configuration_digest", "system_prompt_digest", "tool_registry_digest", "fixture_digest", "campaign_entropy_commitment", "evidence_manifest_digest"] as const) digestField(r, key, "$", issues);
+  if (r.hermes_launcher_digest === r.terminal_sandbox_digest) issues.push("$.terminal_sandbox_digest must independently bind the terminal sandbox bytes");
+  if (r.evidence_bundle_mode !== "receipt-plus-evidence-directory") issues.push("$.evidence_bundle_mode is unsupported");
   arrayField(r, "hermes_arguments", "$", issues).forEach((arg, index) => { if (typeof arg !== "string") issues.push(`$.hermes_arguments[${index}] must be a string`); });
   numberField(r, "requested_temperature", "$", issues, true);
   for (const key of ["timestamp", "start_timestamp", "end_timestamp"] as const) isoField(r, key, "$", issues);
@@ -270,7 +290,7 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   if (attempts.length === 0) issues.push("$.attempts must not be empty");
   attempts.forEach((item, index) => {
     const at = `$.attempts[${index}]`;
-    if (!exactKeys(item, ["attempt", "started_at", "finished_at", "duration_ms", "exit_code", "outcome", "error_kind", "retryable", "stdout_digest", "stderr_digest"], at, issues)) return;
+    if (!exactKeys(item, ["attempt", "started_at", "finished_at", "duration_ms", "exit_code", "outcome", "error_kind", "retryable", "stdout_digest", "stderr_digest", "timeout_stage", "signals_sent", "cleanup_outcome"], at, issues)) return;
     integerField(item, "attempt", at, issues, false, 1); numberField(item, "duration_ms", at, issues);
     isoField(item, "started_at", at, issues); isoField(item, "finished_at", at, issues);
     if (item.exit_code !== null && (!Number.isInteger(item.exit_code) || typeof item.exit_code !== "number")) issues.push(`${at}.exit_code must be integer or null`);
@@ -278,6 +298,9 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
     if (item.error_kind !== null && typeof item.error_kind !== "string") issues.push(`${at}.error_kind must be string or null`);
     if (typeof item.retryable !== "boolean") issues.push(`${at}.retryable must be boolean`);
     digestField(item, "stdout_digest", at, issues); digestField(item, "stderr_digest", at, issues);
+    if (!["none", "term_sent", "kill_sent", "drain_bounded"].includes(String(item.timeout_stage))) issues.push(`${at}.timeout_stage invalid`);
+    arrayField(item, "signals_sent", at, issues).forEach((signal, n) => { if (!["SIGTERM", "SIGKILL"].includes(String(signal))) issues.push(`${at}.signals_sent[${n}] invalid`); });
+    if (!["not_required", "group_terminated", "group_killed", "cleanup_unconfirmed"].includes(String(item.cleanup_outcome))) issues.push(`${at}.cleanup_outcome invalid`);
     if (item.attempt !== index + 1) issues.push(`${at}.attempt must be contiguous and one-based`);
     if (item.outcome === "model_failure" && typeof item.error_kind === "string" && TRANSPORT_KINDS.has(item.error_kind)) issues.push(`${at} transport error misreported as model_failure`);
     if ((item.outcome === "transport_failure" || item.outcome === "timeout") && (typeof item.error_kind !== "string" || !TRANSPORT_KINDS.has(item.error_kind))) issues.push(`${at} model/process failure misreported as transport_failure`);
@@ -294,9 +317,12 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
   const timeouts = arrayField(r, "timeout_events", "$", issues);
   timeouts.forEach((item, index) => {
     const at = `$.timeout_events[${index}]`;
-    if (!exactKeys(item, ["attempt", "timestamp", "timeout_ms", "phase"], at, issues)) return;
+    if (!exactKeys(item, ["attempt", "timestamp", "timeout_ms", "phase", "stage", "signals_sent", "cleanup_outcome"], at, issues)) return;
     integerField(item, "attempt", at, issues, false, 1); isoField(item, "timestamp", at, issues); integerField(item, "timeout_ms", at, issues, false, 1);
     if (!["candidate_process", "validator"].includes(String(item.phase))) issues.push(`${at}.phase is invalid`);
+    if (!["term_sent", "kill_sent", "drain_bounded"].includes(String(item.stage))) issues.push(`${at}.stage invalid`);
+    arrayField(item, "signals_sent", at, issues);
+    if (!["group_terminated", "group_killed", "cleanup_unconfirmed"].includes(String(item.cleanup_outcome))) issues.push(`${at}.cleanup_outcome invalid`);
   });
   const compactions = arrayField(r, "compaction_events", "$", issues);
   compactions.forEach((item, index) => {
@@ -337,6 +363,12 @@ export function validateReceipt(value: unknown): asserts value is DailyDriverRec
     stringField(item, "id", at, issues); stringField(item, "path", at, issues); digestField(item, "digest", at, issues);
     if (!["stdout", "stderr", "artifact", "fixture", "validator"].includes(String(item.kind))) issues.push(`${at}.kind is invalid`);
     if (typeof item.path === "string" && (path.isAbsolute(item.path) || item.path.split(/[\\/]/).includes(".."))) issues.push(`${at}.path must be a safe relative path`);
+  });
+  arrayField(r, "redaction_events", "$", issues).forEach((item, index) => {
+    const at = `$.redaction_events[${index}]`;
+    if (!exactKeys(item, ["source", "kind", "classification", "match_digest"], at, issues)) return;
+    stringField(item, "source", at, issues); stringField(item, "kind", at, issues); digestField(item, "match_digest", at, issues);
+    if (!["confirmed_secret", "possible_sensitive"].includes(String(item.classification))) issues.push(`${at}.classification invalid`);
   });
   arrayField(r, "disqualifier_codes", "$", issues).forEach((code, index) => { if (typeof code !== "string" || !/^[A-Z][A-Z0-9_]*$/.test(code)) issues.push(`$.disqualifier_codes[${index}] is invalid`); });
   if (r.accepted === true && r.raw_verdict !== "PASS") issues.push("$.accepted may only be true for raw_verdict PASS");

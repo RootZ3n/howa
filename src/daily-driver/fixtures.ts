@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
+import { createHmac, randomBytes } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { canonicalJson, sha256, type MutationObservation } from "./contract.js";
+import { canonicalJson, DAILY_DRIVER_SUITE_VERSION, sha256, type MutationObservation } from "./contract.js";
 import { getDailyDriverTrial } from "./suite.js";
 
 export interface FixtureSnapshot {
@@ -23,8 +24,20 @@ export interface AuthoritativeFixture {
   authority: FixtureAuthority;
 }
 
-function stableToken(trialId: string, label: string, length = 8): string {
-  return sha256(`${trialId}:${label}`).slice(7, 7 + length).toUpperCase();
+export interface CampaignEntropy {
+  run_id: string;
+  nonce: Buffer;
+  commitment: string;
+}
+
+export function createCampaignEntropy(runId: string): CampaignEntropy {
+  const nonce = randomBytes(32);
+  return { run_id: runId, nonce, commitment: sha256(Buffer.concat([Buffer.from("howa-ddv1-entropy-commitment\0"), nonce])) };
+}
+
+function campaignToken(entropy: CampaignEntropy, trialId: string, label: string, length = 8): string {
+  const domain = canonicalJson({ suite_version: DAILY_DRIVER_SUITE_VERSION, run_id: entropy.run_id, trial_id: trialId, fixture_identity: `${entropy.run_id}:${trialId}:frozen-v1`, label });
+  return createHmac("sha256", entropy.nonce).update("howa-ddv1-fixture-v2\0").update(domain).digest("hex").slice(0, length).toUpperCase();
 }
 
 const GIT_ENV = {
@@ -56,7 +69,8 @@ async function initGit(root: string): Promise<void> {
   git(root, ["init", "-q", "-b", "fixture"]);
 }
 
-async function setupTrial(root: string, trialId: string): Promise<void> {
+async function setupTrial(root: string, trialId: string, entropy: CampaignEntropy): Promise<void> {
+  const stableToken = (id: string, label: string, length = 8) => campaignToken(entropy, id, label, length);
   switch (trialId) {
     case "ddv1-01-porcelain-parser": {
       await initGit(root);
@@ -135,17 +149,16 @@ async function setupTrial(root: string, trialId: string): Promise<void> {
       git(root, ["add", "-A"]); git(root, ["commit", "-q", "-m", "bounded fixture"]);
       return;
     case "ddv1-12-context-endurance": {
-      const nonces = ["BEGIN", "MIDDLE", "END"].map((label) => `${label}-${stableToken(trialId, label, 10)}`);
-      const lines: string[] = [];
+      const groups = ["amber", "blue", "copper", "dawn", "ember", "frost", "green", "haze"];
+      const rows: Array<{ ordinal: number; group: string; value: number; marker?: string }> = [];
       for (let i = 1; i <= 1_200; i++) {
-        if (i === 3) lines.push(`BEGIN_NONCE=${nonces[0]}; evidence anchor ${stableToken(trialId, "begin-anchor")}`);
-        else if (i === 601) lines.push(`MIDDLE_NONCE=${nonces[1]}; evidence anchor ${stableToken(trialId, "middle-anchor")}`);
-        else if (i === 1198) lines.push(`END_NONCE=${nonces[2]}; evidence anchor ${stableToken(trialId, "end-anchor")}`);
-        else if (i % 113 === 0) lines.push(`decoy ${String(i).padStart(4, "0")}: nonce=DECOY-${i * 7}`);
-        else lines.push(`context line ${String(i).padStart(4, "0")}: deterministic filler for endurance verification.`);
+        const value = 1 + Number.parseInt(stableToken(trialId, `row-${i}`, 4), 16) % 997;
+        const row: { ordinal: number; group: string; value: number; marker?: string } = { ordinal: i, group: groups[(i * 7 + value) % groups.length]!, value };
+        if ([37, 241, 509, 777, 963, 1181].includes(i)) row.marker = stableToken(trialId, `marker-${i}`, 14);
+        rows.push(row);
       }
-      await write(root, "context.txt", lines.map((line, index) => `${String(index + 1).padStart(4, "0")}: ${line}`).join("\n") + "\n");
-      await write(root, "questions.json", JSON.stringify({ required: ["BEGIN_NONCE", "MIDDLE_NONCE", "END_NONCE"], require_line_citations: true }, null, 2) + "\n");
+      await write(root, "context.txt", rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
+      await write(root, "questions.json", JSON.stringify({ required: ["record_count", "group_totals", "weighted_sum", "ordered_markers"], synthesis: "consume every JSONL record; sum values by group; compute sum(ordinal*value); list ordinal:marker in order" }, null, 2) + "\n");
       return;
     }
     default:
@@ -190,10 +203,10 @@ export async function snapshotFixture(root: string): Promise<FixtureSnapshot> {
   return { ...state, digest: sha256(canonicalJson(state)) };
 }
 
-export async function createFrozenFixture(root: string, trialId: string): Promise<FixtureSnapshot> {
+export async function createFrozenFixture(root: string, trialId: string, entropy: CampaignEntropy): Promise<FixtureSnapshot> {
   getDailyDriverTrial(trialId);
   await fs.mkdir(root, { recursive: false });
-  await setupTrial(root, trialId);
+  await setupTrial(root, trialId, entropy);
   return snapshotFixture(root);
 }
 
@@ -213,15 +226,15 @@ async function fixtureAuthority(root: string, trialId: string, snapshot: Fixture
     case "ddv1-09-concurrent-drift": { const planned = await json("planned-change.json"); const current = await json("state.json"); expected = { drift_detected: planned.based_on_generation !== current.generation, planned_generation: planned.based_on_generation, current_generation: current.generation }; required_sources = ["planned-change.json", "state.json"]; break; }
     case "ddv1-10-provider-retry-accounting": { const history = await json("attempts.json"); const attempts = history.attempts as Array<Record<string, unknown>>; expected = { attempts: attempts.length, retries: history.retries, connection_failures: history.connection_failures, first_failure_origin: attempts[0]?.outcome === "transport_failure" ? "transport" : "model" }; required_sources = ["attempts.json"]; break; }
     case "ddv1-11-bounded-implementation": expected = { implementation: "sum" }; required_sources = ["src/sum.js", "test.mjs", "exec:node test.mjs"]; break;
-    case "ddv1-12-context-endurance": { const lines = (await fs.readFile(path.join(root, "context.txt"), "utf8")).split("\n"); const picks = [3, 601, 1198].map((n) => ({ line: n, nonce: lines[n - 1]?.match(/_NONCE=([^;]+)/)?.[1] })); expected = { picks }; required_sources = ["context.txt", "questions.json"]; break; }
+    case "ddv1-12-context-endurance": { const rows = (await fs.readFile(path.join(root, "context.txt"), "utf8")).trim().split("\n").map((line) => JSON.parse(line) as { ordinal: number; group: string; value: number; marker?: string }); const group_totals: Record<string, number> = {}; let weighted_sum = 0; const ordered_markers: string[] = []; for (const row of rows) { group_totals[row.group] = (group_totals[row.group] ?? 0) + row.value; weighted_sum += row.ordinal * row.value; if (row.marker) ordered_markers.push(`${row.ordinal}:${row.marker}`); } expected = { record_count: rows.length, group_totals, weighted_sum, ordered_markers }; required_sources = ["context.txt", "questions.json"]; break; }
     default: throw new Error(`no authority for ${trialId}`);
   }
   const unsigned = { trial_id: trialId, expected, required_sources, fixture_digest: snapshot.digest };
   return { ...unsigned, authority_digest: sha256(canonicalJson(unsigned)) };
 }
 
-export async function createAuthoritativeFixture(root: string, trialId: string): Promise<AuthoritativeFixture> {
-  const snapshot = await createFrozenFixture(root, trialId);
+export async function createAuthoritativeFixture(root: string, trialId: string, entropy: CampaignEntropy): Promise<AuthoritativeFixture> {
+  const snapshot = await createFrozenFixture(root, trialId, entropy);
   return { snapshot, authority: await fixtureAuthority(root, trialId, snapshot) };
 }
 

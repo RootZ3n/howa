@@ -15,6 +15,8 @@ import { compareTrials, TrialNotFoundError } from "../trials/compare.js";
 import { writeFileAtomic } from "../utils/atomic-write.js";
 import { runDailyDriverSuite, type DailyDriverCandidate } from "../daily-driver/runner.js";
 import { HERMES_DAILY_DRIVER_V1 } from "../daily-driver/suite.js";
+import { validateReceipt, type DailyDriverReceiptV1 } from "../daily-driver/contract.js";
+import { verifyReceiptEvidence } from "../daily-driver/evidence.js";
 
 const INIT_STATE_ROOT_PROMPT_DEFAULT = "~/.howa";
 
@@ -450,29 +452,32 @@ program
 
 program
   .command("daily-driver")
-  .argument("<action>", "list | run")
+  .argument("<action>", "list | run | verify")
   .option("--candidate <file>", "Secret-free candidate JSON (required for run)")
   .option("--output <dir>", "Application-write-once receipt/export root", "howa-daily-driver")
   .option("--run-id <id>", "Stable run/campaign identity")
   .option("--trial <ids...>", "Run only the named V1 trial ids")
   .option("--keep-fixtures", "Preserve temporary synthetic fixtures for debugging")
+  .option("--receipt <file>", "Receipt to verify")
+  .option("--evidence-root <dir>", "Root containing the receipt evidence directory")
   .description("List or run the Hermes Daily Driver V1 proving suite")
   .action(async (action: string, raw) => {
-    const opts = raw as { candidate?: string; output: string; runId?: string; trial?: string[]; keepFixtures?: boolean };
+    const opts = raw as { candidate?: string; output: string; runId?: string; trial?: string[]; keepFixtures?: boolean; receipt?: string; evidenceRoot?: string };
     if (action === "list") {
       for (const trial of HERMES_DAILY_DRIVER_V1.trials) {
         process.stdout.write(`${trial.id}\t${trial.title}\t${trial.timeout_ms}ms\n`);
       }
       return;
     }
+    if(action==="verify"){
+      if(!opts.receipt||!opts.evidenceRoot) throw new Error("Usage: howa daily-driver verify --receipt <receipt.json> --evidence-root <dir>");
+      const receipt=JSON.parse(await fs.readFile(path.resolve(opts.receipt),"utf8")) as DailyDriverReceiptV1; validateReceipt(receipt); await verifyReceiptEvidence(receipt,path.resolve(opts.evidenceRoot),true); process.stdout.write(`VERIFIED\t${receipt.receipt_digest}\n`); return;
+    }
     if (action !== "run" || !opts.candidate || !opts.runId) {
       throw new Error("Usage: howa daily-driver run --candidate <candidate.json> --run-id <id> [--output <dir>] [--trial <ids...>]");
     }
     const candidatePath = path.resolve(opts.candidate);
     const candidate = JSON.parse(await fs.readFile(candidatePath, "utf8")) as DailyDriverCandidate;
-    if (candidate.hermes_command.startsWith("./") || candidate.hermes_command.startsWith("../")) {
-      candidate.hermes_command = path.resolve(path.dirname(candidatePath), candidate.hermes_command);
-    }
     const results = await runDailyDriverSuite({ candidate, output_root: path.resolve(opts.output), run_id: opts.runId, trial_ids: opts.trial, keep_fixtures: opts.keepFixtures });
     for (const result of results) {
       process.stdout.write(`${result.receipt.trial_id}\t${result.receipt.raw_verdict}\t${result.receipt.receipt_digest}\t${result.receipt_path}\n`);
