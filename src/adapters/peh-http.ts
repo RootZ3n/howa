@@ -9,6 +9,7 @@ import type {
 } from "../types.js";
 import type { AgentAdapter } from "./types.js";
 import { probeAgentContract, type ContractProbeResult } from "./contract-probe.js";
+import { principalHeaders } from "./request-principal.js";
 
 type PehVariant = "public" | "v2";
 
@@ -185,9 +186,16 @@ function createPehHttpAdapter(config: {
       let finalAnswer: string | undefined;
 
       try {
+        /*
+          The Trio's chat lane is authorised per request. This adapter presents the principal
+          issued for Howa -- which names the one agent it may reach, the lanes it may use and the
+          tools it may spend -- alongside the content type. It is not authentication bolted on: the
+          agent verifies it against an issuer named by its own root-owned service lease, and no
+          value this process can set changes that answer.
+        */
         const res = await fetch(`${session.endpoint}${chatPath(session.variant)}`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: principalHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(requestBody(session.variant, prompt, session.modelInfo.model, session.workspace)),
           signal: AbortSignal.timeout(session.timeoutMs),
         });
